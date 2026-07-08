@@ -140,22 +140,32 @@ print(folder_path)
 """
             result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True)
             folder_path = result.stdout.strip()
+        elif sys.platform == 'win32':
+            # On Windows, use PowerShell to show a native folder picker.
+            # This avoids Tkinter thread restrictions and PyInstaller bundling issues entirely.
+            ps_script = '''
+[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = "Select Base Path"
+$dialog.ShowNewFolderButton = $true
+$dialog.RootFolder = "MyComputer"
+if($dialog.ShowDialog() -eq "OK"){
+    Write-Output $dialog.SelectedPath
+}
+'''
+            result = subprocess.run(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_script], capture_output=True, text=True)
+            folder_path = result.stdout.strip()
         else:
-            # On Windows/Linux, Tkinter can safely run in a background thread.
-            # This is crucial for PyInstaller where sys.executable is the app.exe itself, not python.
-            import tkinter as tk
-            from tkinter import filedialog
-            root = tk.Tk()
-            root.withdraw()
-            root.attributes('-topmost', True)
-            folder_path = filedialog.askdirectory(title="Select Base Path")
-            root.destroy()
+            # Fallback for Linux or other systems if needed
+            folder_path = ""
         
         if folder_path:
             return jsonify({"success": True, "path": folder_path})
         else:
+            # In case the user cancels the dialog, it returns empty string
             return jsonify({"success": False, "error": "No directory selected"})
     except Exception as e:
+        print("Error in choose_directory:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/generate_plots', methods=['POST'])
