@@ -145,10 +145,12 @@ def select_runs():
 def choose_directory():
     try:
         import sys
-        if sys.platform == 'darwin':
-            # Spawn a separate Python process to run Tkinter on its own main thread
-            # This bypasses the macOS "NSWindow should only be instantiated on the main thread" error
-            script = """
+        
+        # We spawn a separate Python process to run Tkinter on its own main thread.
+        # This bypasses the macOS "NSWindow should only be instantiated on the main thread" error,
+        # and on Windows it avoids Flask worker thread "Tcl apartment" crashes.
+        # Since you are running via a portable python.exe (not PyInstaller), sys.executable is safe.
+        script = """
 import tkinter as tk
 from tkinter import filedialog
 root = tk.Tk()
@@ -158,31 +160,12 @@ folder_path = filedialog.askdirectory(title="Select Base Path")
 root.destroy()
 print(folder_path)
 """
-            result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True)
-            folder_path = result.stdout.strip()
-        elif sys.platform == 'win32':
-            # On Windows, use PowerShell to show a native folder picker.
-            # This avoids Tkinter thread restrictions and PyInstaller bundling issues entirely.
-            ps_script = '''
-[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
-$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-$dialog.Description = "Select Base Path"
-$dialog.ShowNewFolderButton = $true
-$dialog.RootFolder = "MyComputer"
-if($dialog.ShowDialog() -eq "OK"){
-    Write-Output $dialog.SelectedPath
-}
-'''
-            result = subprocess.run(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_script], capture_output=True, text=True)
-            folder_path = result.stdout.strip()
-        else:
-            # Fallback for Linux or other systems if needed
-            folder_path = ""
+        result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True)
+        folder_path = result.stdout.strip()
         
         if folder_path:
             return jsonify({"success": True, "path": folder_path})
         else:
-            # In case the user cancels the dialog, it returns empty string
             return jsonify({"success": False, "error": "No directory selected"})
     except Exception as e:
         print("Error in choose_directory:", str(e))
