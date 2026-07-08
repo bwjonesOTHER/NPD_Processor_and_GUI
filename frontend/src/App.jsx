@@ -60,9 +60,12 @@ function App() {
       const data = await res.json();
       if (data.success && data.path) {
         setFormData(prev => ({ ...prev, basePath: data.path }));
+      } else if (!data.success && data.error && data.error !== "No directory selected") {
+        alert("Error opening directory picker: " + data.error);
       }
     } catch (err) {
       console.error("Failed to choose directory:", err);
+      alert("Network error opening directory picker: " + err.message);
     }
   };
 
