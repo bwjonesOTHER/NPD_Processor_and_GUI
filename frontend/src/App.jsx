@@ -43,13 +43,9 @@ function App() {
   const [runA, setRunA] = useState('');
   const [runB, setRunB] = useState('');
 
-  const terminalRef = useRef(null);
 
-  useEffect(() => {
-    if (terminalRef.current) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-    }
-  }, [terminalOutput]);
+
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
