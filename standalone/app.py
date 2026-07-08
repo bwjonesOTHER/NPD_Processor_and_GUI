@@ -119,13 +119,20 @@ def upload_files():
 
 @app.route('/api/folders', methods=['GET'])
 def get_folders():
-    path = read_txt("path.txt")
+    path = read_txt("upload_path.txt") # Use upload_path so Test 3 looks inside the SN folder
+    if not path:
+        path = read_txt("path.txt")
+    if path:
+        path = path.strip('"').strip("'").strip()
+        
     folders = []
-    if os.path.exists(path) and os.path.isdir(path):
+    if path and os.path.exists(path) and os.path.isdir(path):
         try:
             folders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f)) and 'run' in f.lower()]
         except Exception as e:
-            pass
+            print("Error in get_folders:", str(e))
+    else:
+        print(f"Path does not exist or is not a directory: {path}")
     return jsonify({"folders": folders})
 
 @app.route('/api/select-runs', methods=['POST'])
