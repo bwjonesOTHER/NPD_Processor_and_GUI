@@ -156,24 +156,70 @@ def choose_directory():
         import subprocess
         
         if sys.platform == 'win32':
-            # Use PowerShell to spawn a native FolderBrowserDialog attached to a TopMost dummy form.
-            # This ensures the dialog appears on top of the browser window.
-            ps_script = """
-Add-Type -AssemblyName System.Windows.Forms
-$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-$dialog.Description = "Select Base Path"
-$dialog.ShowNewFolderButton = $true
-$form = New-Object System.Windows.Forms.Form
-$form.TopMost = $true
-$form.TopLevel = $true
-$result = $dialog.ShowDialog($form)
-if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-    Write-Output $dialog.SelectedPath
-}
+            # Use native Python ctypes in a subprocess for instant load time.
+            # Explicitly define restype and argtypes to prevent 64-bit pointer truncation (which caused the OSError).
+            py_script = """
+import ctypes
+from ctypes import wintypes
+
+shell32 = ctypes.windll.shell32
+user32 = ctypes.windll.user32
+ole32 = ctypes.windll.ole32
+
+shell32.SHBrowseForFolderW.restype = ctypes.c_void_p
+shell32.SHBrowseForFolderW.argtypes = [ctypes.c_void_p]
+
+shell32.SHGetPathFromIDListW.restype = wintypes.BOOL
+shell32.SHGetPathFromIDListW.argtypes = [ctypes.c_void_p, wintypes.LPWSTR]
+
+user32.GetForegroundWindow.restype = wintypes.HWND
+user32.GetForegroundWindow.argtypes = []
+
+ole32.CoTaskMemFree.restype = None
+ole32.CoTaskMemFree.argtypes = [ctypes.c_void_p]
+
+class BROWSEINFO(ctypes.Structure):
+    _fields_ = [
+        ("hwndOwner", wintypes.HWND),
+        ("pidlRoot", wintypes.LPVOID),
+        ("pszDisplayName", wintypes.LPWSTR),
+        ("lpszTitle", wintypes.LPCWSTR),
+        ("ulFlags", wintypes.UINT),
+        ("lpfn", wintypes.LPVOID),
+        ("lParam", wintypes.LPARAM),
+        ("iImage", wintypes.INT),
+    ]
+
+ole32.CoInitialize(None)
+
+bi = BROWSEINFO()
+bi.hwndOwner = user32.GetForegroundWindow() # Attach to active browser window to force TopMost
+bi.pidlRoot = None
+
+display_name_buffer = ctypes.create_unicode_buffer(260)
+bi.pszDisplayName = ctypes.cast(display_name_buffer, wintypes.LPWSTR)
+bi.lpszTitle = "Select Base Path"
+bi.ulFlags = 0x00000041  # BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE
+bi.lpfn = None
+bi.lParam = 0
+bi.iImage = 0
+
+pidl = shell32.SHBrowseForFolderW(ctypes.byref(bi))
+path = ""
+if pidl:
+    path_buffer = ctypes.create_unicode_buffer(260)
+    if shell32.SHGetPathFromIDListW(pidl, path_buffer):
+        path = path_buffer.value
+    ole32.CoTaskMemFree(pidl)
+
+ole32.CoUninitialize()
+print(path)
 """
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
             result = subprocess.run(
-                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", ps_script],
-                capture_output=True, text=True
+                [sys.executable, "-c", py_script],
+                capture_output=True, text=True, env=env
             )
             folder_path = result.stdout.strip()
         else:
