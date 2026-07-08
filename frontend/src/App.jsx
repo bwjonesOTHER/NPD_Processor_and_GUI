@@ -1,0 +1,441 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity } from 'lucide-react';
+import './App.css';
+
+const API_BASE = 'http://127.0.0.1:5000/api';
+
+function App() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [testType, setTestType] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [terminalOutput, setTerminalOutput] = useState([]);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    password: '',
+    basePath: '',
+    lmoNumber: '',
+    runNumber: '',
+    capNumber: '',
+    serialNumber: '',
+    pmaArea: '',
+    runEntry: '',
+  });
+
+  const [files, setFiles] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [runA, setRunA] = useState('');
+  const [runB, setRunB] = useState('');
+
+  const terminalRef = useRef(null);
+
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [terminalOutput]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const submitCredentials = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          password: formData.password
+        })
+      });
+      if (res.ok) {
+        setIsConnected(true);
+        setCurrentStep(2);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to backend");
+    }
+  };
+
+  const submitFileInfo = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/file-info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testType,
+          ...formData
+        })
+      });
+      if (res.ok) {
+        setCurrentStep(3);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit file info");
+    }
+  };
+
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files) {
+      setFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+  
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files));
+    }
+  };
+
+  const uploadFiles = async () => {
+    if (files.length === 0) return;
+    const data = new FormData();
+    files.forEach(f => data.append('files', f));
+    
+    try {
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        body: data
+      });
+      if (res.ok) {
+        if (testType === 1 || testType === 3) {
+          fetchFolders();
+          setCurrentStep(4);
+        } else {
+          setCurrentStep(5);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload files");
+    }
+  };
+
+  const fetchFolders = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/folders`);
+      const data = await res.json();
+      setFolders(data.folders || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const submitRuns = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/select-runs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runA, runB })
+      });
+      if (res.ok) {
+        setCurrentStep(5);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit runs");
+    }
+  };
+
+  const startProcessing = () => {
+    setIsProcessing(true);
+    setTerminalOutput([{ type: 'info', text: 'Starting processing...' }]);
+    
+    const eventSource = new EventSource(`${API_BASE}/process?testType=${testType}`);
+    
+    eventSource.onmessage = (event) => {
+      const data = event.data;
+      if (data === '[PROCESS_COMPLETED]') {
+        eventSource.close();
+        setIsProcessing(false);
+        setTerminalOutput(prev => [...prev, { type: 'success', text: 'Processing completed successfully!' }]);
+      } else if (data === '[PROCESS_ERROR]') {
+        eventSource.close();
+        setIsProcessing(false);
+        setTerminalOutput(prev => [...prev, { type: 'error', text: 'Processing stopped due to error!' }]);
+      } else {
+        setTerminalOutput(prev => [...prev, { type: 'info', text: data }]);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("EventSource failed:", err);
+      eventSource.close();
+      setIsProcessing(false);
+      setTerminalOutput(prev => [...prev, { type: 'error', text: 'Connection to server lost.' }]);
+    };
+  };
+
+  const steps = [
+    { id: 0, title: 'Test Type' },
+    { id: 1, title: 'Credentials' },
+    { id: 2, title: 'File Info' },
+    { id: 3, title: 'Upload Files' },
+    ...(testType === 1 || testType === 3 ? [{ id: 4, title: 'Select Runs' }] : []),
+    { id: 5, title: 'Process' },
+  ];
+
+  return (
+    <div className="container">
+      <header className="app-header">
+        <h1 className="app-title">NPD Data Processor</h1>
+        <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
+      </header>
+
+      <div className="wizard-container">
+        {/* Sidebar */}
+        <div className="wizard-sidebar">
+          {steps.map((step) => (
+            <div 
+              key={step.id} 
+              className={`wizard-step-indicator ${currentStep === step.id ? 'active' : ''} ${currentStep > step.id ? 'completed' : ''}`}
+            >
+              <div className="step-number">
+                {currentStep > step.id ? <CheckCircle size={16} /> : step.id}
+              </div>
+              <div>{step.title}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="wizard-content card">
+          {currentStep === 0 && (
+            <div className="step-card">
+              <h2>Select Test Type</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Choose the type of test data you are processing.</p>
+              
+              <div className="test-type-cards">
+                <div className={`test-type-card ${testType === 1 ? 'selected' : ''}`} onClick={() => setTestType(1)}>
+                  <Activity size={32} color="var(--accent)" style={{ marginBottom: '1rem' }} />
+                  <h3>Over Temp</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Test 1</p>
+                </div>
+                <div className={`test-type-card ${testType === 2 ? 'selected' : ''}`} onClick={() => setTestType(2)}>
+                  <Server size={32} color="var(--accent)" style={{ marginBottom: '1rem' }} />
+                  <h3>Single Tile Bench NPD</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Test 2</p>
+                </div>
+                <div className={`test-type-card ${testType === 3 ? 'selected' : ''}`} onClick={() => setTestType(3)}>
+                  <Server size={32} color="var(--accent)" style={{ marginBottom: '1rem' }} />
+                  <h3>Full PMA Array Bench NPD</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Test 3</p>
+                </div>
+              </div>
+
+              <div className="btn-group">
+                <button onClick={() => setCurrentStep(1)} disabled={!testType}>
+                  Continue <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 1 && (
+            <div className="step-card">
+              <h2>User Credentials & Setup</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Enter your details and the base path for processing.</p>
+
+              <div className="form-group">
+                <label>Base Directory Path for Inputs</label>
+                <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder="e.g. C:\Data\NPD" />
+              </div>
+
+              <div className="form-group">
+                <label>First Name</label>
+                <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} />
+              </div>
+              
+              <div className="form-group">
+                <label>Last Name</label>
+                <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} />
+              </div>
+
+              <div className="form-group">
+                <label>SharePoint Password</label>
+                <input type="password" name="password" value={formData.password} onChange={handleInputChange} />
+              </div>
+
+              <div style={{ marginTop: '1rem' }}>
+                <span className={`status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
+                  {isConnected ? <CheckCircle size={14} /> : <div style={{width: 8, height: 8, borderRadius: '50%', background: 'currentColor'}} />}
+                  {isConnected ? 'Connected to SharePoint' : 'Not Connected'}
+                </span>
+              </div>
+
+              <div className="btn-group">
+                <button className="secondary" onClick={() => setCurrentStep(0)}>Back</button>
+                <button onClick={submitCredentials}>Submit & Connect</button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div className="step-card">
+              <h2>File Information</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide metadata for the test files.</p>
+
+              <div className="form-group">
+                <label>LMO Number (####-##)</label>
+                <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
+              </div>
+
+              {testType === 1 && (
+                <>
+                  <div className="form-group">
+                    <label>Run Number (#)</label>
+                    <input type="text" name="runNumber" value={formData.runNumber} onChange={handleInputChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Cap Number (##)</label>
+                    <input type="text" name="capNumber" value={formData.capNumber} onChange={handleInputChange} />
+                  </div>
+                </>
+              )}
+
+              {testType === 2 && (
+                <>
+                  <div className="form-group">
+                    <label>Serial Number (####)</label>
+                    <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>PMA Area (L110173C or L110172E)</label>
+                    <input type="text" name="pmaArea" value={formData.pmaArea} onChange={handleInputChange} />
+                  </div>
+                </>
+              )}
+
+              {testType === 3 && (
+                <>
+                  <div className="form-group">
+                    <label>Serial Number (####)</label>
+                    <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Run Entry (Run_#_#.###A)</label>
+                    <input type="text" name="runEntry" value={formData.runEntry} onChange={handleInputChange} />
+                  </div>
+                </>
+              )}
+
+              <div className="btn-group">
+                <button className="secondary" onClick={() => setCurrentStep(1)}>Back</button>
+                <button onClick={submitFileInfo}>Submit Info</button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="step-card">
+              <h2>Upload Data Files</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select all relevant data files (.csv + .s2p).</p>
+
+              <div 
+                className="file-upload-zone"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleFileDrop}
+                onClick={() => document.getElementById('fileInput').click()}
+              >
+                <Upload className="file-upload-icon" />
+                <p>Drag & drop files here, or click to select</p>
+                <input 
+                  type="file" 
+                  id="fileInput" 
+                  multiple 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileChange}
+                />
+              </div>
+
+              {files.length > 0 && (
+                <div style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0' }}>Selected Files ({files.length})</h4>
+                  <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                    {files.slice(0, 5).map((f, i) => <li key={i}>{f.name}</li>)}
+                    {files.length > 5 && <li>...and {files.length - 5} more</li>}
+                  </ul>
+                </div>
+              )}
+
+              <div className="btn-group">
+                <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
+                <button onClick={uploadFiles} disabled={files.length === 0}>Upload Files</button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (testType === 1 || testType === 3) && (
+            <div className="step-card">
+              <h2>Select Runs</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select Run A and Run B folders to process.</p>
+
+              <div className="form-group">
+                <label>Run A</label>
+                <select value={runA} onChange={e => setRunA(e.target.value)}>
+                  <option value="">Select a folder...</option>
+                  {folders.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Run B</label>
+                <select value={runB} onChange={e => setRunB(e.target.value)}>
+                  <option value="">Select a folder...</option>
+                  {folders.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </div>
+
+              <div className="btn-group">
+                <button className="secondary" onClick={() => setCurrentStep(3)}>Back</button>
+                <button onClick={submitRuns}>Continue</button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 5 && (
+            <div className="step-card">
+              <h2>Process Data</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Ready to process data files for Test {testType}.</p>
+
+              {!isProcessing && terminalOutput.length === 0 && (
+                <button onClick={startProcessing} style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Play size={18} /> Start Processing
+                </button>
+              )}
+
+              {isProcessing && (
+                <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent)' }}>
+                  <Activity className="animate-spin" size={18} /> Processing in background...
+                </div>
+              )}
+
+              <div className="terminal-container" ref={terminalRef}>
+                <div style={{ color: '#4ade80', marginBottom: '1rem' }}>$ NPD Processor Terminal initialized...</div>
+                {terminalOutput.map((line, i) => (
+                  <pre key={i} className={`terminal-line ${line.type}`}>{line.text}</pre>
+                ))}
+              </div>
+
+              <div className="btn-group">
+                <button className="secondary" onClick={() => setCurrentStep(0)}>Start Over</button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
