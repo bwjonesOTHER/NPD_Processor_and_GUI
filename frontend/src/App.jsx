@@ -189,7 +189,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.3.4 Alpaca</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.3.5 Alpaca</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -302,17 +302,17 @@ function App() {
               <div className="btn-group" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                 <button className="secondary" onClick={() => setCurrentStep(0)}>Back</button>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={() => {
-                    submitFileInfo();
+                  <button onClick={async () => {
+                    await submitFileInfo();
                     if (testType === 2) {
                       setCurrentStep(4);
                     } else {
-                      fetchFolders();
+                      await fetchFolders();
                       setCurrentStep(3);
                     }
                   }} className="primary">Access</button>
-                  <button onClick={() => {
-                    submitFileInfo();
+                  <button onClick={async () => {
+                    await submitFileInfo();
                     setCurrentStep(2);
                   }} className="primary">Upload</button>
                 </div>
