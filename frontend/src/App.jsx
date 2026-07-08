@@ -388,52 +388,53 @@ function App() {
           )}
 
           {currentStep === 4 && (
-            <div className="step-card">
+            <div className="step-card glass" style={{ border: 'none', padding: '2rem' }}>
               <h2>Plot Configuration</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-                <div className="form-group">
+              <div className="form-grid">
+                <div className="input-group">
                   <label>Min Frequency (GHz)</label>
                   <input type="number" step="0.1" name="freq_min" value={plotParams.freq_min} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>Max Frequency (GHz)</label>
                   <input type="number" step="0.1" name="freq_max" value={plotParams.freq_max} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>reqS11Val</label>
                   <input type="number" step="1" name="reqS11Val" value={plotParams.reqS11Val} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>reqS21Val</label>
                   <input type="number" step="1" name="reqS21Val" value={plotParams.reqS21Val} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>Averaging (n_avg)</label>
                   <input type="number" step="2" name="n_avg" value={plotParams.n_avg} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>S21 Upper Bound Offset</label>
                   <input type="number" step="0.1" name="u_bound_s21" value={plotParams.u_bound_s21} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>S21 Lower Bound Offset</label>
                   <input type="number" step="0.1" name="l_bound_s21" value={plotParams.l_bound_s21} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>NPD Upper Bound Offset</label>
                   <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>NPD Lower Bound Offset</label>
                   <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
+
                 </div>
               </div>
 
               {error && <div style={{ color: 'var(--error)', marginBottom: '1rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{error}</div>}
 
-              <button onClick={startProcessing} disabled={isProcessing} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
+              <button className="btn-primary" onClick={startProcessing} disabled={isProcessing} style={{ marginTop: '2rem' }}>
                 {isProcessing ? <Activity className="animate-spin" size={18} /> : <Play size={18} />}
                 {isProcessing ? 'Generating Plots...' : 'Generate Plots'}
               </button>

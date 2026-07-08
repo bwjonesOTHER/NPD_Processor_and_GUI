@@ -92,26 +92,5 @@ def generate_plots(params):
         try: NPD_GT_functions.s21_temp_diff_plot(sp25, sp64, spn38, len(runs), freq_min, freq_max, folder_path, show_plot)
         except Exception as e: print("Error in temp diff plot S21:", e)
 
-    # S11, S22, Group Delay
-    if spar_all:
-        NPD_GT_functions.plotS11_multi(spar_all, 'All', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotS22_multi(spar_all, 'All', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotGroupDelay_multi(spar_all, 'All', freq_min, freq_max, folder_path, show_plot)
-        
-    if spar_25C:
-        NPD_GT_functions.plotS11_multi(spar_25C, '25C', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotS22_multi(spar_25C, '25C', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotGroupDelay_multi(spar_25C, '25C', freq_min, freq_max, folder_path, show_plot)
-
-    if spar_64C:
-        NPD_GT_functions.plotS11_multi(spar_64C, '64C', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotS22_multi(spar_64C, '64C', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotGroupDelay_multi(spar_64C, '64C', freq_min, freq_max, folder_path, show_plot)
-
-    if spar_n38C:
-        NPD_GT_functions.plotS11_multi(spar_n38C, '-38C', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotS22_multi(spar_n38C, '-38C', freq_min, freq_max, folder_path, show_plot)
-        NPD_GT_functions.plotGroupDelay_multi(spar_n38C, '-38C', freq_min, freq_max, folder_path, show_plot)
-
     png_files = glob.glob(os.path.join(folder_path, '*.png'))
     return png_files

@@ -81,18 +81,25 @@ def plotNPD_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperature, freq_
             chain_type = extract_pri_red(file)
             
             loss, loss_bulkhead = cap_search(file, run['folder'])
-            if not loss or not loss_bulkhead: continue
             
-            UUT_cable = rf.Network(loss)
-            UUT_cable_s21 = UUT_cable.s_db[:,1,0]
-            
-            UUT_bulkhead = rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:,1,0]
+            if loss:
+                UUT_cable = rf.Network(loss)
+                UUT_cable_s21 = UUT_cable.s_db[:,1,0]
+            else:
+                UUT_cable_s21 = 0
+                
+            if loss_bulkhead:
+                UUT_bulkhead = rf.Network(loss_bulkhead)
+                UUT_bulkhead_s21 = UUT_bulkhead.s_db[:,1,0]
+            else:
+                UUT_bulkhead_s21 = 0
             
             specA_cables = search_files(run['folder'], 'SpecA')
-            if not specA_cables: continue
-            specA_cable_loss = rf.Network(specA_cables[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            if specA_cables:
+                specA_cable_loss = rf.Network(specA_cables[0])
+                specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            else:
+                specA_s21 = 0
             
             df_all = pd.read_csv(file)
             num_df = df_all.apply(pd.to_numeric, errors='coerce')
@@ -102,9 +109,12 @@ def plotNPD_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperature, freq_
             if n_avg > 1:
                 noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
                 freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+                if isinstance(UUT_cable_s21, np.ndarray):
+                    UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+                if isinstance(specA_s21, np.ndarray):
+                    specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+                if isinstance(UUT_bulkhead_s21, np.ndarray):
+                    UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
                 
             noise_pow_mod = noise_pow - specA_s21 - UUT_cable_s21 - UUT_bulkhead_s21
             all_files_avg.append(noise_pow_mod)
@@ -168,18 +178,25 @@ def plotNPD_density_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperatur
             chain_type = extract_pri_red(file)
             
             loss, loss_bulkhead = cap_search(file, run['folder'])
-            if not loss or not loss_bulkhead: continue
             
-            UUT_cable = rf.Network(loss)
-            UUT_cable_s21 = UUT_cable.s_db[:,1,0]
-            
-            UUT_bulkhead = rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:,1,0]
+            if loss:
+                UUT_cable = rf.Network(loss)
+                UUT_cable_s21 = UUT_cable.s_db[:,1,0]
+            else:
+                UUT_cable_s21 = 0
+                
+            if loss_bulkhead:
+                UUT_bulkhead = rf.Network(loss_bulkhead)
+                UUT_bulkhead_s21 = UUT_bulkhead.s_db[:,1,0]
+            else:
+                UUT_bulkhead_s21 = 0
             
             specA_cables = search_files(run['folder'], 'SpecA')
-            if not specA_cables: continue
-            specA_cable_loss = rf.Network(specA_cables[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            if specA_cables:
+                specA_cable_loss = rf.Network(specA_cables[0])
+                specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            else:
+                specA_s21 = 0
             
             df_all = pd.read_csv(file)
             num_df = df_all.apply(pd.to_numeric, errors='coerce')
@@ -189,9 +206,12 @@ def plotNPD_density_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperatur
             if n_avg > 1:
                 noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
                 freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+                if isinstance(UUT_cable_s21, np.ndarray):
+                    UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+                if isinstance(specA_s21, np.ndarray):
+                    specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+                if isinstance(UUT_bulkhead_s21, np.ndarray):
+                    UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
                 
             noise_pow_mod = noise_pow - specA_s21 - UUT_cable_s21 - UUT_bulkhead_s21
             all_files_avg.append(noise_pow_mod)
