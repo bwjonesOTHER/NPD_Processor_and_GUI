@@ -123,7 +123,7 @@ def get_folders():
     folders = []
     if os.path.exists(path) and os.path.isdir(path):
         try:
-            folders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
+            folders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f)) and 'run' in f.lower()]
         except Exception as e:
             pass
     return jsonify({"folders": folders})
