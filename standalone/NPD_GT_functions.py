@@ -467,3 +467,172 @@ def npd_temp_diff_plot(NPD25, NPD64, NPDn38, num_runs, freq_min, freq_max, folde
     plt.savefig(save_path, dpi=300)
     if show_plot == 1: plt.show()
     plt.close()
+
+def plotS11_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_plot):
+    plt.figure(figsize=(8, 4), dpi=150)
+    my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
+    base_line_styles = ['solid', 'dashed', 'dotted', 'dashdot', (0, (3, 5, 1, 5, 1, 5))]
+    
+    all_files_avg = []
+    freq_ghz_out = None
+
+    for i, run in enumerate(runs_data):
+        color_cycle = itertools.cycle(my_colors)
+        line_style = base_line_styles[i % len(base_line_styles)]
+        
+        for file in run['files']:
+            chain_type = extract_pri_red(file)
+            net = rf.Network(file)
+            freq_ghz = net.f / 1e9
+            freq_ghz_out = freq_ghz
+            serial = extract_serial(file)
+            
+            c = next(color_cycle)
+            label = f"{serial[-16:-8:1]} {chain_type}"
+            if len(runs_data) > 1: label += f" ({run['name']})"
+            
+            s11_data = net.s_db[:, 0, 0]
+            plt.plot(freq_ghz, s11_data, label=label, color=c, linestyle=line_style)
+            all_files_avg.append(s11_data)
+            
+    if len(all_files_avg) == 0:
+        return None, None
+        
+    try: plt.xlim(freq_ghz_out[0], freq_ghz_out[-1])
+    except: pass
+    plt.ylim(-30, 0)
+    plt.grid(True)
+    
+    title = _get_title(runs_data, temperature, 'S11')
+    plt.title(title)
+    plt.xlabel('Frequency (GHz)')
+    plt.ylabel('S11 (dB)')
+    
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
+    plt.axvline(x=freq_min, color='grey', label='axvline - full height')
+    plt.axvline(x=freq_max, color='grey', label='axvline - full height')
+    plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
+    plt.subplots_adjust(right=0.7)
+    
+    current_date = datetime.now()
+    formatted_date = current_date.strftime("%Y%m%d")
+    filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
+    save_path = os.path.join(folder_path, f"{formatted_date}_{filename_safe_title}")
+    plt.savefig(save_path, dpi=300)
+    if show_plot == 1: plt.show()
+    plt.close()
+    
+    return freq_ghz_out, all_files_avg
+
+def plotS22_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_plot):
+    plt.figure(figsize=(8, 4), dpi=150)
+    my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
+    base_line_styles = ['solid', 'dashed', 'dotted', 'dashdot', (0, (3, 5, 1, 5, 1, 5))]
+    
+    all_files_avg = []
+    freq_ghz_out = None
+
+    for i, run in enumerate(runs_data):
+        color_cycle = itertools.cycle(my_colors)
+        line_style = base_line_styles[i % len(base_line_styles)]
+        
+        for file in run['files']:
+            chain_type = extract_pri_red(file)
+            net = rf.Network(file)
+            freq_ghz = net.f / 1e9
+            freq_ghz_out = freq_ghz
+            serial = extract_serial(file)
+            
+            c = next(color_cycle)
+            label = f"{serial[-16:-8:1]} {chain_type}"
+            if len(runs_data) > 1: label += f" ({run['name']})"
+            
+            s22_data = net.s_db[:, 1, 1]
+            plt.plot(freq_ghz, s22_data, label=label, color=c, linestyle=line_style)
+            all_files_avg.append(s22_data)
+            
+    if len(all_files_avg) == 0:
+        return None, None
+        
+    try: plt.xlim(freq_ghz_out[0], freq_ghz_out[-1])
+    except: pass
+    plt.ylim(-30, 0)
+    plt.grid(True)
+    
+    title = _get_title(runs_data, temperature, 'S22')
+    plt.title(title)
+    plt.xlabel('Frequency (GHz)')
+    plt.ylabel('S22 (dB)')
+    
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
+    plt.axvline(x=freq_min, color='grey', label='axvline - full height')
+    plt.axvline(x=freq_max, color='grey', label='axvline - full height')
+    plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
+    plt.subplots_adjust(right=0.7)
+    
+    current_date = datetime.now()
+    formatted_date = current_date.strftime("%Y%m%d")
+    filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
+    save_path = os.path.join(folder_path, f"{formatted_date}_{filename_safe_title}")
+    plt.savefig(save_path, dpi=300)
+    if show_plot == 1: plt.show()
+    plt.close()
+    
+    return freq_ghz_out, all_files_avg
+
+def plotGroupDelay_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_plot):
+    plt.figure(figsize=(8, 4), dpi=150)
+    my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
+    base_line_styles = ['solid', 'dashed', 'dotted', 'dashdot', (0, (3, 5, 1, 5, 1, 5))]
+    
+    all_files_avg = []
+    freq_ghz_out = None
+
+    for i, run in enumerate(runs_data):
+        color_cycle = itertools.cycle(my_colors)
+        line_style = base_line_styles[i % len(base_line_styles)]
+        
+        for file in run['files']:
+            chain_type = extract_pri_red(file)
+            net = rf.Network(file)
+            freq_ghz = net.f / 1e9
+            freq_ghz_out = freq_ghz
+            serial = extract_serial(file)
+            
+            group_delay = -np.gradient(np.unwrap(net.s_rad[:, 1, 0])) / np.gradient(net.f)
+            group_delay_ns = group_delay * 1e9
+            
+            c = next(color_cycle)
+            label = f"{serial[-16:-8:1]} {chain_type}"
+            if len(runs_data) > 1: label += f" ({run['name']})"
+            
+            plt.plot(freq_ghz, group_delay_ns, label=label, color=c, linestyle=line_style)
+            all_files_avg.append(group_delay_ns)
+            
+    if len(all_files_avg) == 0:
+        return None, None
+        
+    try: plt.xlim(freq_ghz_out[0], freq_ghz_out[-1])
+    except: pass
+    plt.grid(True)
+    
+    title = _get_title(runs_data, temperature, 'Group Delay')
+    plt.title(title)
+    plt.xlabel('Frequency (GHz)')
+    plt.ylabel('Group Delay (ns)')
+    
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
+    plt.axvline(x=freq_min, color='grey', label='axvline - full height')
+    plt.axvline(x=freq_max, color='grey', label='axvline - full height')
+    plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
+    plt.subplots_adjust(right=0.7)
+    
+    current_date = datetime.now()
+    formatted_date = current_date.strftime("%Y%m%d")
+    filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
+    save_path = os.path.join(folder_path, f"{formatted_date}_{filename_safe_title}")
+    plt.savefig(save_path, dpi=300)
+    if show_plot == 1: plt.show()
+    plt.close()
+    
+    return freq_ghz_out, all_files_avg

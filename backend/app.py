@@ -238,7 +238,7 @@ def api_generate_plots():
     
     # We need to set folder_path and runs for Test 1
     if test == 1:
-        import Macallan_PMA_NPDxoverTemp_GT_MPedits_V3
+        import plot_generator
         folder_path = read_txt("upload_path.txt")
         if not folder_path:
             folder_path = read_txt("path.txt")
@@ -248,7 +248,7 @@ def api_generate_plots():
         params['runs'] = [run for run in [run_a, run_b] if run]
         
         try:
-            png_files = Macallan_PMA_NPDxoverTemp_GT_MPedits_V3.generate_plots(params)
+            png_files = plot_generator.generate_plots(params)
         except Exception as e:
             import traceback
             traceback.print_exc()
