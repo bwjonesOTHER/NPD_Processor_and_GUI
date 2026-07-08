@@ -121,6 +121,40 @@ def select_runs():
         
     return jsonify({"status": "success"})
 
+@app.route('/api/choose_directory', methods=['GET'])
+def choose_directory():
+    try:
+        import sys
+        import os
+        
+        script = """
+import tkinter as tk
+from tkinter import filedialog
+root = tk.Tk()
+root.withdraw()
+root.attributes('-topmost', True)
+folder_path = filedialog.askdirectory(title="Select Base Path")
+root.destroy()
+print(folder_path)
+"""
+        env = os.environ.copy()
+        env['PYTHONPATH'] = os.pathsep.join(sys.path)
+        
+        result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
+        
+        if result.returncode != 0:
+            return jsonify({"success": False, "error": result.stderr.strip()})
+            
+        folder_path = result.stdout.strip()
+        
+        if folder_path:
+            return jsonify({"success": True, "path": folder_path})
+        else:
+            return jsonify({"success": False, "error": "No directory selected"})
+    except Exception as e:
+        print("Error in choose_directory:", str(e))
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 @app.route('/api/generate_plots', methods=['POST'])
 def api_generate_plots():
