@@ -54,20 +54,7 @@ function App() {
     setPlotParams(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleBrowseDirectory = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/choose_directory`);
-      const data = await res.json();
-      if (data.success && data.path) {
-        setFormData(prev => ({ ...prev, basePath: data.path }));
-      } else if (!data.success && data.error && data.error !== "No directory selected") {
-        alert("Error opening directory picker: " + data.error);
-      }
-    } catch (err) {
-      console.error("Failed to choose directory:", err);
-      alert("Network error opening directory picker: " + err.message);
-    }
-  };
+
 
 
 
@@ -191,7 +178,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.2.3 Alpaca</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.2.4 Alpaca</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -251,10 +238,7 @@ function App() {
 
               <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                 <label>Base Path (for inputs)</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder="e.g. C:\Data\NPD" style={{ flex: 1 }} />
-                  <button type="button" onClick={handleBrowseDirectory} className="secondary" style={{ whiteSpace: 'nowrap' }}>Browse...</button>
-                </div>
+                <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder="e.g. C:\Data\NPD" style={{ width: '100%' }} />
               </div>
 
               <div className="form-group">
