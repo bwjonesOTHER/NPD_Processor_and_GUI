@@ -12,18 +12,24 @@ def generate_plots(params):
     if not runs or not folder_path:
         raise ValueError("At least one run and folder_path are required.")
 
-    freq_min = float(params.get('freq_min', 2.7))
+    freq_min = float(params.get('freq_min', 2.6))
     freq_max = float(params.get('freq_max', 4.1))
     reqS11Val = float(params.get('reqS11Val', -10))
-    reqS21Val = float(params.get('reqS21Val', -14))
+    reqS21Val = float(params.get('reqS21Val', 10))
+    n_avg = int(params.get('n_avg', 51))
     
-    n_avg = int(params.get('n_avg', 20))
+    u_bound_s21 = float(params.get('u_bound_s21', 1.0))
+    l_bound_s21 = float(params.get('l_bound_s21', 1.0))
+    
+    u_bound_npd = float(params.get('u_bound_npd', 1.0))
+    l_bound_npd = float(params.get('l_bound_npd', 1.0))
+
     show_plot = 0
-    
-    u_bound_s21 = float(params.get('u_bound_s21', 2))
-    l_bound_s21 = float(params.get('l_bound_s21', 2))
-    u_bound_npd = float(params.get('u_bound_npd', 2))
-    l_bound_npd = float(params.get('l_bound_npd', 2))
+
+    # Delete old PNGs to avoid returning previous plots
+    for old_png in glob.glob(os.path.join(folder_path, '*.png')):
+        try: os.remove(old_png)
+        except: pass
 
     def _collect_files(runs_list, suffix):
         runs_data = []
