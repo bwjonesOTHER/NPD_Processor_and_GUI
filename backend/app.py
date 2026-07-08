@@ -127,20 +127,63 @@ def choose_directory():
         import sys
         import os
         
-        # We spawn a separate Python process to run Tkinter on its own main thread.
-        # This bypasses the macOS "NSWindow should only be instantiated on the main thread" error,
-        # and on Windows it avoids Flask worker thread "Tcl apartment" crashes.
+        # We spawn a separate Python process to run the dialog on its own main thread.
+        # For Windows, since portable python might lack tkinter, we use native ctypes.
+        # For macOS/Linux, we use tkinter.
         script = """
-import tkinter as tk
-from tkinter import filedialog
-root = tk.Tk()
-root.withdraw()
-root.attributes('-topmost', True)
-folder_path = filedialog.askdirectory(title="Select Base Path")
-root.destroy()
-print(folder_path)
+import sys
+import os
+
+if sys.platform == 'win32':
+    import ctypes
+    from ctypes import wintypes
+
+    class BROWSEINFO(ctypes.Structure):
+        _fields_ = [
+            ("hwndOwner", wintypes.HWND),
+            ("pidlRoot", wintypes.LPVOID),
+            ("pszDisplayName", wintypes.LPWSTR),
+            ("lpszTitle", wintypes.LPCWSTR),
+            ("ulFlags", wintypes.UINT),
+            ("lpfn", wintypes.LPVOID),
+            ("lParam", wintypes.LPARAM),
+            ("iImage", wintypes.INT),
+        ]
+
+    shell32 = ctypes.windll.shell32
+    ole32 = ctypes.windll.ole32
+    ole32.CoInitialize(None)
+
+    bi = BROWSEINFO()
+    bi.hwndOwner = None
+    bi.pidlRoot = None
+    bi.pszDisplayName = ctypes.create_unicode_buffer(260)
+    bi.lpszTitle = "Select Base Path"
+    bi.ulFlags = 0x00000041  # BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE
+    bi.lpfn = None
+    bi.lParam = 0
+    bi.iImage = 0
+
+    pidl = shell32.SHBrowseForFolderW(ctypes.byref(bi))
+    path = ""
+    if pidl:
+        path_buffer = ctypes.create_unicode_buffer(260)
+        if shell32.SHGetPathFromIDListW(pidl, path_buffer):
+            path = path_buffer.value
+        ole32.CoTaskMemFree(pidl)
+
+    ole32.CoUninitialize()
+    print(path)
+else:
+    import tkinter as tk
+    from tkinter import filedialog
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes('-topmost', True)
+    folder_path = filedialog.askdirectory(title="Select Base Path")
+    root.destroy()
+    print(folder_path)
 """
-        # Pass the current sys.path via PYTHONPATH so the subprocess can find portable packages like tkinter
         env = os.environ.copy()
         env['PYTHONPATH'] = os.pathsep.join(sys.path)
         
