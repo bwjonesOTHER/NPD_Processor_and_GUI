@@ -12,46 +12,21 @@ from glob import glob
 from colorama import init, Fore
 
 
-def main():
+def generate_plots(params):
 
+    folder_path = params.get('folder_path', '')
+    runs = params.get('runs', [])
+    RunA = runs[0] if len(runs) > 0 else ""
+    RunB = runs[1] if len(runs) > 1 else ""
 
-
-
-    def get_saved_path():
-        try:
-            with open("path.txt", "r") as f:
-                return f.read().strip()
-        except FileNotFoundError:
-            return None
-
-
-    def get_saved_pathA():
-        try:
-            with open("RunA_Path.txt", "r") as f:
-                return f.read().strip()
-        except FileNotFoundError:
-            return None
-
-
-    def get_saved_pathB():
-        try:
-            with open("RunB_Path.txt", "r") as f:
-                return f.read().strip()
-        except FileNotFoundError:
-            return None
-
-
-    RunA = get_saved_pathA()
-    RunB = get_saved_pathB()
-
-    freq_min = 2.7 #operational freq range
-    freq_max = 4.1 #operational freq range
+    freq_min = float(params.get('freq_min', 2.7))
+    freq_max = float(params.get('freq_max', 4.1))
     reqS11Ns = [700,2100]
-    reqS11Val = -10
-    reqS21Val = -14
+    reqS11Val = float(params.get('reqS11Val', -10))
+    reqS21Val = float(params.get('reqS21Val', -14))
 
-    n_avg = 20 #use even numbers
-    show_plot = 1
+    n_avg = int(params.get('n_avg', 20))
+    show_plot = 0
 
     #Creates set of line colors and styles to cycle through when plotting
     my_colors=['black','blue','orange','green','purple','pink','brown','cyan','gold','violet']
@@ -86,7 +61,8 @@ def main():
         return arr[mask]
 
     """Collect and categorize files"""
-    folder_path = get_saved_path()
+    if not folder_path:
+        raise ValueError("folder_path is missing in params")
 
 
     lmoFolderA = folder_path+'\\'+RunA
@@ -837,7 +813,6 @@ def main():
     # elif len(filesSparB_64C)==0:
     #     temperature='64C'
     #     plotS21_single(filesSparA_64C,temperature)
-    # #
     # if filesSparA_n38C and filesSparB_n38C:
     #     temperature='-38C'
     #     plotS21(filesSparA_n38C,filesSparB_n38C,temperature)
@@ -861,5 +836,11 @@ def main():
     if filesSpar:
         plotPD(filesSpar)
     """
+
+    # Collect all generated PNGs
+    png_files = glob(os.path.join(folder_path, '*.png'))
+    return png_files
+
 if __name__ == "__main__":
-    main()
+    # For testing, we could pass dummy params here
+    pass
