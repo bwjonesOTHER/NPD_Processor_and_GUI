@@ -7,16 +7,13 @@ const API_BASE = 'http://127.0.0.1:5000/api';
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [testType, setTestType] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(true); // Always true now since we removed SharePoint
   const [isProcessing, setIsProcessing] = useState(false);
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    password: '',
     basePath: '',
     lmoNumber: '',
     runNumber: '',
@@ -69,26 +66,7 @@ function App() {
     }
   };
 
-  const submitCredentials = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          password: formData.password
-        })
-      });
-      if (res.ok) {
-        setIsConnected(true);
-        setCurrentStep(2);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to connect to backend");
-    }
-  };
+
 
   const submitFileInfo = async () => {
     try {
@@ -101,7 +79,7 @@ function App() {
         })
       });
       if (res.ok) {
-        setCurrentStep(3);
+        // Validation passed in backend, now we decide where to go (Upload or Access, handled by the button click directly)
       }
     } catch (err) {
       console.error(err);
@@ -135,9 +113,9 @@ function App() {
       if (res.ok) {
         if (testType === 1 || testType === 3) {
           fetchFolders();
-          setCurrentStep(4);
+          setCurrentStep(3);
         } else {
-          setCurrentStep(5);
+          setCurrentStep(4);
         }
       }
     } catch (err) {
@@ -164,7 +142,7 @@ function App() {
         body: JSON.stringify({ runA, runB })
       });
       if (res.ok) {
-        setCurrentStep(5);
+        setCurrentStep(4);
       }
     } catch (err) {
       console.error(err);
@@ -200,11 +178,10 @@ function App() {
 
   const steps = [
     { id: 0, title: 'Test Type' },
-    { id: 1, title: 'Credentials' },
-    { id: 2, title: 'File Info' },
-    { id: 3, title: 'Upload Files' },
-    ...(testType === 1 || testType === 3 ? [{ id: 4, title: 'Select Runs' }] : []),
-    { id: 5, title: 'Process' },
+    { id: 1, title: 'Data Source & Info' },
+    { id: 2, title: 'Upload Files' },
+    ...(testType === 1 || testType === 3 ? [{ id: 3, title: 'Select Runs' }] : []),
+    { id: 4, title: 'Process' },
   ];
 
   return (
@@ -265,8 +242,8 @@ function App() {
 
           {currentStep === 1 && (
             <div className="step-card">
-              <h2>User Credentials & Setup</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Enter your details and the base path for processing.</p>
+              <h2>Data Source & Info</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
 
               <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                 <label>Base Path (for inputs)</label>
@@ -275,40 +252,6 @@ function App() {
                   <button type="button" onClick={handleBrowseDirectory} className="secondary" style={{ whiteSpace: 'nowrap' }}>Browse...</button>
                 </div>
               </div>
-
-              <div className="form-group">
-                <label>First Name</label>
-                <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} />
-              </div>
-              
-              <div className="form-group">
-                <label>Last Name</label>
-                <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} />
-              </div>
-
-              <div className="form-group">
-                <label>SharePoint Password</label>
-                <input type="password" name="password" value={formData.password} onChange={handleInputChange} />
-              </div>
-
-              <div style={{ marginTop: '1rem' }}>
-                <span className={`status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
-                  {isConnected ? <CheckCircle size={14} /> : <div style={{width: 8, height: 8, borderRadius: '50%', background: 'currentColor'}} />}
-                  {isConnected ? 'Connected to SharePoint' : 'Not Connected'}
-                </span>
-              </div>
-
-              <div className="btn-group">
-                <button className="secondary" onClick={() => setCurrentStep(0)}>Back</button>
-                <button onClick={submitCredentials}>Submit & Connect</button>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="step-card">
-              <h2>File Information</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide metadata for the test files.</p>
 
               <div className="form-group">
                 <label>LMO Number (####-##)</label>
@@ -354,28 +297,28 @@ function App() {
                 </>
               )}
 
-              <div className="btn-group">
-                <button className="secondary" onClick={() => setCurrentStep(1)}>Back</button>
+              <div className="btn-group" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                <button className="secondary" onClick={() => setCurrentStep(0)}>Back</button>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button onClick={() => {
                     submitFileInfo();
                     if (testType === 2) {
-                      setCurrentStep(5);
+                      setCurrentStep(4);
                     } else {
                       fetchFolders();
-                      setCurrentStep(4);
+                      setCurrentStep(3);
                     }
-                  }} className="secondary">Access</button>
+                  }} className="primary">Access</button>
                   <button onClick={() => {
                     submitFileInfo();
-                    setCurrentStep(3);
-                  }}>Upload</button>
+                    setCurrentStep(2);
+                  }} className="primary">Upload</button>
                 </div>
               </div>
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <div className="step-card">
               <h2>Upload Data Files</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select all relevant data files (.csv + .s2p).</p>
@@ -408,13 +351,13 @@ function App() {
               )}
 
               <div className="btn-group">
-                <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
+                <button className="secondary" onClick={() => setCurrentStep(1)}>Back</button>
                 <button onClick={uploadFiles} disabled={files.length === 0}>Upload Files</button>
               </div>
             </div>
           )}
 
-          {currentStep === 4 && (testType === 1 || testType === 3) && (
+          {currentStep === 3 && (testType === 1 || testType === 3) && (
             <div className="step-card">
               <h2>Select Runs</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select Run A and Run B folders to process.</p>
@@ -436,13 +379,13 @@ function App() {
               </div>
 
               <div className="btn-group">
-                <button className="secondary" onClick={() => setCurrentStep(3)}>Back</button>
+                <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
                 <button onClick={submitRuns}>Continue</button>
               </div>
             </div>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 4 && (
             <div className="step-card">
               <h2>Plot Configuration</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
