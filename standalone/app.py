@@ -145,11 +145,11 @@ def select_runs():
 def choose_directory():
     try:
         import sys
+        import os
         
         # We spawn a separate Python process to run Tkinter on its own main thread.
         # This bypasses the macOS "NSWindow should only be instantiated on the main thread" error,
         # and on Windows it avoids Flask worker thread "Tcl apartment" crashes.
-        # Since you are running via a portable python.exe (not PyInstaller), sys.executable is safe.
         script = """
 import tkinter as tk
 from tkinter import filedialog
@@ -160,7 +160,15 @@ folder_path = filedialog.askdirectory(title="Select Base Path")
 root.destroy()
 print(folder_path)
 """
-        result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True)
+        # Pass the current sys.path via PYTHONPATH so the subprocess can find portable packages like tkinter
+        env = os.environ.copy()
+        env['PYTHONPATH'] = os.pathsep.join(sys.path)
+        
+        result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
+        
+        if result.returncode != 0:
+            return jsonify({"success": False, "error": result.stderr.strip()})
+            
         folder_path = result.stdout.strip()
         
         if folder_path:
