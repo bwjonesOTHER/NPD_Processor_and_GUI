@@ -147,27 +147,28 @@ def choose_directory():
         import sys
         import os
         import subprocess
-        import tempfile
         
         if sys.platform == 'win32':
-            # Use a tiny native VBScript. It requires zero Python dependencies (no tkinter),
-            # executes flawlessly on all Windows machines via cscript, and has no memory/apartment issues.
-            vbs_code = """
-Set objShell = CreateObject("Shell.Application")
-' 0 = BIF_RETURNONLYFSDIRS
-Set objFolder = objShell.BrowseForFolder(0, "Select Base Path", 0, 0)
-If Not objFolder Is Nothing Then
-    Wscript.Echo objFolder.Self.Path
-End If
+            # Use PowerShell to spawn a native FolderBrowserDialog attached to a TopMost dummy form.
+            # This ensures the dialog appears on top of the browser window.
+            ps_script = """
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = "Select Base Path"
+$dialog.ShowNewFolderButton = $true
+$form = New-Object System.Windows.Forms.Form
+$form.TopMost = $true
+$form.TopLevel = $true
+$result = $dialog.ShowDialog($form)
+if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
+    Write-Output $dialog.SelectedPath
+}
 """
-            fd, path = tempfile.mkstemp(suffix='.vbs')
-            try:
-                with os.fdopen(fd, 'w') as f:
-                    f.write(vbs_code)
-                result = subprocess.run(['cscript', '//nologo', path], capture_output=True, text=True)
-                folder_path = result.stdout.strip()
-            finally:
-                os.remove(path)
+            result = subprocess.run(
+                ["powershell", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", ps_script],
+                capture_output=True, text=True
+            )
+            folder_path = result.stdout.strip()
         else:
             # macOS / Linux fallback using tkinter in subprocess
             script = """
