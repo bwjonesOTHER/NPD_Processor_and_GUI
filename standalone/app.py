@@ -146,8 +146,31 @@ def choose_directory():
     try:
         import sys
         import os
+        import subprocess
+        import tempfile
         
-        script = """
+        if sys.platform == 'win32':
+            # Use a tiny native VBScript. It requires zero Python dependencies (no tkinter),
+            # executes flawlessly on all Windows machines via cscript, and has no memory/apartment issues.
+            vbs_code = """
+Set objShell = CreateObject("Shell.Application")
+' 0 = BIF_RETURNONLYFSDIRS
+Set objFolder = objShell.BrowseForFolder(0, "Select Base Path", 0, 0)
+If Not objFolder Is Nothing Then
+    Wscript.Echo objFolder.Self.Path
+End If
+"""
+            fd, path = tempfile.mkstemp(suffix='.vbs')
+            try:
+                with os.fdopen(fd, 'w') as f:
+                    f.write(vbs_code)
+                result = subprocess.run(['cscript', '//nologo', path], capture_output=True, text=True)
+                folder_path = result.stdout.strip()
+            finally:
+                os.remove(path)
+        else:
+            # macOS / Linux fallback using tkinter in subprocess
+            script = """
 import tkinter as tk
 from tkinter import filedialog
 root = tk.Tk()
@@ -157,15 +180,13 @@ folder_path = filedialog.askdirectory(title="Select Base Path")
 root.destroy()
 print(folder_path)
 """
-        env = os.environ.copy()
-        env['PYTHONPATH'] = os.pathsep.join(sys.path)
-        
-        result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
-        
-        if result.returncode != 0:
-            return jsonify({"success": False, "error": result.stderr.strip()})
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
+            result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
+            folder_path = result.stdout.strip()
             
-        folder_path = result.stdout.strip()
+            if result.returncode != 0:
+                return jsonify({"success": False, "error": result.stderr.strip()})
         
         if folder_path:
             return jsonify({"success": True, "path": folder_path})
