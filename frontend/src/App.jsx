@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity } from 'lucide-react';
+import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download } from 'lucide-react';
+import JSZip from 'jszip';
 import './App.css';
 
 const API_BASE = 'http://127.0.0.1:5000/api';
@@ -43,6 +44,24 @@ function App() {
 
 
 
+
+  const handleExportPlots = async () => {
+    if (images.length === 0) return;
+    const zip = new JSZip();
+    
+    images.forEach((img) => {
+      const base64Data = img.data.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+      zip.file(img.filename, base64Data, { base64: true });
+    });
+    
+    const content = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "NPD_Plots.zip";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -437,7 +456,13 @@ function App() {
 
               {images.length > 0 && (
                 <div style={{ marginTop: '2rem' }}>
-                  <h3 style={{ marginBottom: '1rem' }}>Generated Plots ({images.length})</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0 }}>Generated Plots ({images.length})</h3>
+                    <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
+                      <Download size={16} />
+                      Export All Plots (.zip)
+                    </button>
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                     {images.map((img, idx) => (
                       <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
