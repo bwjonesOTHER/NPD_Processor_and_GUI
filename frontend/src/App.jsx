@@ -54,9 +54,20 @@ function App() {
     setPlotParams(prev => ({ ...prev, [name]: value }));
   };
 
-
-
-
+  const handleBrowseDirectory = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/choose_directory`);
+      const data = await res.json();
+      if (data.success && data.path) {
+        setFormData(prev => ({ ...prev, basePath: data.path }));
+      } else if (!data.success && data.error && data.error !== "No directory selected") {
+        alert("Error opening directory picker: " + data.error);
+      }
+    } catch (err) {
+      console.error("Failed to choose directory:", err);
+      alert("Network error opening directory picker: " + err.message);
+    }
+  };
 
   const submitFileInfo = async () => {
     try {
@@ -178,7 +189,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.2.6 Alpaca</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.2.7 Alpaca</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
