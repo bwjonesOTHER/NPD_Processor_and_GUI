@@ -172,7 +172,7 @@ if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
 }
 """
             result = subprocess.run(
-                ["powershell", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", ps_script],
+                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", ps_script],
                 capture_output=True, text=True
             )
             folder_path = result.stdout.strip()
