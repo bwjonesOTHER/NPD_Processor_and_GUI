@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import subprocess
 import base64
@@ -123,15 +124,32 @@ def select_runs():
 @app.route('/api/choose_directory', methods=['GET'])
 def choose_directory():
     try:
-        import tkinter as tk
-        from tkinter import filedialog
-        
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes('-topmost', True) # Bring to front
-        
-        folder_path = filedialog.askdirectory(title="Select Base Path")
-        root.destroy()
+        import sys
+        if sys.platform == 'darwin':
+            # Spawn a separate Python process to run Tkinter on its own main thread
+            # This bypasses the macOS "NSWindow should only be instantiated on the main thread" error
+            script = """
+import tkinter as tk
+from tkinter import filedialog
+root = tk.Tk()
+root.withdraw()
+root.attributes('-topmost', True)
+folder_path = filedialog.askdirectory(title="Select Base Path")
+root.destroy()
+print(folder_path)
+"""
+            result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True)
+            folder_path = result.stdout.strip()
+        else:
+            # On Windows/Linux, Tkinter can safely run in a background thread.
+            # This is crucial for PyInstaller where sys.executable is the app.exe itself, not python.
+            import tkinter as tk
+            from tkinter import filedialog
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            folder_path = filedialog.askdirectory(title="Select Base Path")
+            root.destroy()
         
         if folder_path:
             return jsonify({"success": True, "path": folder_path})
