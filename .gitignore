@@ -38,6 +38,7 @@ backend/venv/
 # Node
 node_modules/
 dist/
+!standalone/dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
