@@ -9,7 +9,8 @@ function App() {
   const [testType, setTestType] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [terminalOutput, setTerminalOutput] = useState([]);
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -23,6 +24,18 @@ function App() {
     serialNumber: '',
     pmaArea: '',
     runEntry: '',
+  });
+
+  const [plotParams, setPlotParams] = useState({
+    freq_min: 2.7,
+    freq_max: 4.1,
+    reqS11Val: -10,
+    reqS21Val: -14,
+    n_avg: 20,
+    u_bound_s21: 2,
+    l_bound_s21: 2,
+    u_bound_npd: 2,
+    l_bound_npd: 2,
   });
 
   const [files, setFiles] = useState([]);
@@ -41,6 +54,23 @@ function App() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePlotParamChange = (e) => {
+    const { name, value } = e.target;
+    setPlotParams(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBrowseDirectory = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/choose_directory`);
+      const data = await res.json();
+      if (data.success && data.path) {
+        setFormData(prev => ({ ...prev, basePath: data.path }));
+      }
+    } catch (err) {
+      console.error("Failed to choose directory:", err);
+    }
   };
 
   const submitCredentials = async () => {
@@ -146,33 +176,30 @@ function App() {
     }
   };
 
-  const startProcessing = () => {
+  const startProcessing = async () => {
     setIsProcessing(true);
-    setTerminalOutput([{ type: 'info', text: 'Starting processing...' }]);
+    setError('');
+    setImages([]);
     
-    const eventSource = new EventSource(`${API_BASE}/process?testType=${testType}`);
-    
-    eventSource.onmessage = (event) => {
-      const data = event.data;
-      if (data === '[PROCESS_COMPLETED]') {
-        eventSource.close();
-        setIsProcessing(false);
-        setTerminalOutput(prev => [...prev, { type: 'success', text: 'Processing completed successfully!' }]);
-      } else if (data === '[PROCESS_ERROR]') {
-        eventSource.close();
-        setIsProcessing(false);
-        setTerminalOutput(prev => [...prev, { type: 'error', text: 'Processing stopped due to error!' }]);
+    try {
+      const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(plotParams)
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setImages(data.images || []);
       } else {
-        setTerminalOutput(prev => [...prev, { type: 'info', text: data }]);
+        setError(data.error || 'Failed to generate plots');
       }
-    };
-
-    eventSource.onerror = (err) => {
-      console.error("EventSource failed:", err);
-      eventSource.close();
+    } catch (err) {
+      console.error(err);
+      setError('Connection to server failed.');
+    } finally {
       setIsProcessing(false);
-      setTerminalOutput(prev => [...prev, { type: 'error', text: 'Connection to server lost.' }]);
-    };
+    }
   };
 
   const steps = [
@@ -245,9 +272,12 @@ function App() {
               <h2>User Credentials & Setup</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Enter your details and the base path for processing.</p>
 
-              <div className="form-group">
-                <label>Base Directory Path for Inputs</label>
-                <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder="e.g. C:\Data\NPD" />
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Base Path (for inputs)</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder="e.g. C:\Data\NPD" style={{ flex: 1 }} />
+                  <button type="button" onClick={handleBrowseDirectory} className="secondary" style={{ whiteSpace: 'nowrap' }}>Browse...</button>
+                </div>
               </div>
 
               <div className="form-group">
@@ -330,7 +360,21 @@ function App() {
 
               <div className="btn-group">
                 <button className="secondary" onClick={() => setCurrentStep(1)}>Back</button>
-                <button onClick={submitFileInfo}>Submit Info</button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => {
+                    submitFileInfo();
+                    if (testType === 2) {
+                      setCurrentStep(5);
+                    } else {
+                      fetchFolders();
+                      setCurrentStep(4);
+                    }
+                  }} className="secondary">Access</button>
+                  <button onClick={() => {
+                    submitFileInfo();
+                    setCurrentStep(3);
+                  }}>Upload</button>
+                </div>
               </div>
             </div>
           )}
@@ -404,27 +448,70 @@ function App() {
 
           {currentStep === 5 && (
             <div className="step-card">
-              <h2>Process Data</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Ready to process data files for Test {testType}.</p>
+              <h2>Plot Configuration</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
 
-              {!isProcessing && terminalOutput.length === 0 && (
-                <button onClick={startProcessing} style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Play size={18} /> Start Processing
-                </button>
-              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                <div className="form-group">
+                  <label>Min Frequency (GHz)</label>
+                  <input type="number" step="0.1" name="freq_min" value={plotParams.freq_min} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>Max Frequency (GHz)</label>
+                  <input type="number" step="0.1" name="freq_max" value={plotParams.freq_max} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>reqS11Val</label>
+                  <input type="number" step="1" name="reqS11Val" value={plotParams.reqS11Val} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>reqS21Val</label>
+                  <input type="number" step="1" name="reqS21Val" value={plotParams.reqS21Val} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>Averaging (n_avg)</label>
+                  <input type="number" step="2" name="n_avg" value={plotParams.n_avg} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>S21 Upper Bound Offset</label>
+                  <input type="number" step="0.1" name="u_bound_s21" value={plotParams.u_bound_s21} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>S21 Lower Bound Offset</label>
+                  <input type="number" step="0.1" name="l_bound_s21" value={plotParams.l_bound_s21} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>NPD Upper Bound Offset</label>
+                  <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
+                </div>
+                <div className="form-group">
+                  <label>NPD Lower Bound Offset</label>
+                  <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
+                </div>
+              </div>
 
-              {isProcessing && (
-                <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent)' }}>
-                  <Activity className="animate-spin" size={18} /> Processing in background...
+              {error && <div style={{ color: 'var(--error)', marginBottom: '1rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{error}</div>}
+
+              <button onClick={startProcessing} disabled={isProcessing} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
+                {isProcessing ? <Activity className="animate-spin" size={18} /> : <Play size={18} />}
+                {isProcessing ? 'Generating Plots...' : 'Generate Plots'}
+              </button>
+
+              {images.length > 0 && (
+                <div style={{ marginTop: '2rem' }}>
+                  <h3 style={{ marginBottom: '1rem' }}>Generated Plots ({images.length})</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                    {images.map((img, idx) => (
+                      <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                        <img src={img.data} alt={img.filename} style={{ width: '100%', height: 'auto', borderRadius: '4px' }} />
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                          {img.filename}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-
-              <div className="terminal-container" ref={terminalRef}>
-                <div style={{ color: '#4ade80', marginBottom: '1rem' }}>$ NPD Processor Terminal initialized...</div>
-                {terminalOutput.map((line, i) => (
-                  <pre key={i} className={`terminal-line ${line.type}`}>{line.text}</pre>
-                ))}
-              </div>
 
               <div className="btn-group">
                 <button className="secondary" onClick={() => setCurrentStep(0)}>Start Over</button>

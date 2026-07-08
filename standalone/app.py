@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import subprocess
+import base64
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
@@ -140,44 +141,79 @@ def select_runs():
         
     return jsonify({"status": "success"})
 
-@app.route('/api/process', methods=['GET'])
-def process_data():
-    test = request.args.get('testType', type=int)
-    
-    script_map = {
-        1: "Macallan_PMA_NPDxoverTemp_GT_MPedits_V3.py",
-        2: "Macallan_PMA_BenchtopNPD_PlotData_v2.py",
-        3: "Macallan_PMA_Array_BenchtopNPD_PlotData_v2.py"
-    }
-    
-    script = script_map.get(test)
-    if not script:
-        return jsonify({"error": "Invalid test type"}), 400
+@app.route('/api/choose_directory', methods=['GET'])
+def choose_directory():
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
         
-    script_path = os.path.join(BASE_DIR, script)
-    
-    def generate():
-        process = subprocess.Popen(
-            [sys.executable, script_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            cwd=BASE_DIR,
-            text=True,
-            bufsize=1
-        )
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True) # Bring to front
         
-        for line in iter(process.stdout.readline, ''):
-            yield f"data: {line}\n\n"
-            
-        process.stdout.close()
-        process.wait()
+        folder_path = filedialog.askdirectory(title="Select Base Path")
+        root.destroy()
         
-        if process.returncode == 0:
-            yield f"data: [PROCESS_COMPLETED]\n\n"
+        if folder_path:
+            return jsonify({"success": True, "path": folder_path})
         else:
-            yield f"data: [PROCESS_ERROR]\n\n"
+            return jsonify({"success": False, "error": "No directory selected"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/generate_plots', methods=['POST'])
+def api_generate_plots():
+    test = request.args.get('testType', type=int)
+    params = request.json or {}
+    
+    # We need to set folder_path and runs for Test 1
+    if test == 1:
+        import plot_generator
+        folder_path = read_txt("path.txt")
+        run_a = read_txt("RunA_Path.txt")
+        run_b = read_txt("RunB_Path.txt")
+        params['folder_path'] = folder_path
+        params['runs'] = [run for run in [run_a, run_b] if run]
+        
+        try:
+            png_files = plot_generator.generate_plots(params)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({"success": False, "error": str(e)}), 500
             
-    return Response(generate(), mimetype='text/event-stream')
+    elif test == 2:
+        import Macallan_PMA_BenchtopNPD_PlotData_v2
+        try:
+            png_files = Macallan_PMA_BenchtopNPD_PlotData_v2.generate_plots(params)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({"success": False, "error": str(e)}), 500
+            
+    elif test == 3:
+        import Macallan_PMA_Array_BenchtopNPD_PlotData_v2
+        try:
+            png_files = Macallan_PMA_Array_BenchtopNPD_PlotData_v2.generate_plots(params)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({"success": False, "error": str(e)}), 500
+    else:
+        return jsonify({"success": False, "error": "Invalid test type"}), 400
+
+    results = []
+    if png_files:
+        for file_path in png_files:
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                    results.append({
+                        "filename": os.path.basename(file_path),
+                        "data": f"data:image/png;base64,{encoded_string}"
+                    })
+    
+    return jsonify({"success": True, "images": results})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
