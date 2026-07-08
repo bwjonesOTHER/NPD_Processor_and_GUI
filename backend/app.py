@@ -157,7 +157,8 @@ if sys.platform == 'win32':
     bi = BROWSEINFO()
     bi.hwndOwner = None
     bi.pidlRoot = None
-    bi.pszDisplayName = ctypes.create_unicode_buffer(260)
+    display_name_buffer = ctypes.create_unicode_buffer(260)
+    bi.pszDisplayName = ctypes.cast(display_name_buffer, wintypes.LPWSTR)
     bi.lpszTitle = "Select Base Path"
     bi.ulFlags = 0x00000041  # BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE
     bi.lpfn = None
