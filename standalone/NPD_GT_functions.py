@@ -115,7 +115,7 @@ def plotNPD_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperature, freq_
             
             if n_avg > 1:
                 noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
-                freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
+                freq_ghz = freq_ghz[int(n_avg/2):-int(n_avg/2)]
                 if isinstance(UUT_cable_s21, np.ndarray):
                     UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
                 if isinstance(specA_s21, np.ndarray):
@@ -158,8 +158,8 @@ def plotNPD_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperature, freq_
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Lower bound')
-    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Upper bound')
+    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//15), label='Lower bound')
+    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//15), label='Upper bound')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
@@ -217,7 +217,7 @@ def plotNPD_density_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperatur
             
             if n_avg > 1:
                 noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
-                freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
+                freq_ghz = freq_ghz[int(n_avg/2):-int(n_avg/2)]
                 if isinstance(UUT_cable_s21, np.ndarray):
                     UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
                 if isinstance(specA_s21, np.ndarray):
@@ -261,8 +261,8 @@ def plotNPD_density_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperatur
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Lower bound')
-    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Upper bound')
+    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//15), label='Lower bound')
+    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//15), label='Upper bound')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
@@ -330,8 +330,8 @@ def plotS21_multi(runs_data, u_bound_s21, l_bound_s21, temperature, freq_min, fr
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Lower bound')
-    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Upper bound')
+    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//15), label='Lower bound')
+    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//15), label='Upper bound')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     

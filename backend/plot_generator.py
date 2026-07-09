@@ -30,11 +30,13 @@ def generate_plots(params):
         try: os.remove(old_png)
         except: pass
 
-    def _collect_files(runs_list, suffix):
+    def _collect_files(runs_list, suffix, ext=None):
         runs_data = []
         for run in runs_list:
             lmo = os.path.join(folder_path, run)
             files = NPD_GT_functions.search_files(lmo, suffix)
+            if ext:
+                files = [f for f in files if f.lower().endswith(ext.lower())]
             gains = NPD_GT_functions.search_files(lmo, 'Gain')
             if files:
                 runs_data.append({'name': run, 'folder': lmo, 'files': files, 'gains': gains})
@@ -43,16 +45,16 @@ def generate_plots(params):
     # === Collect Data ===
     
     # NPD Density
-    npdd_all = _collect_files(runs, 'NPDOverTempNPD')
-    npdd_25C = _collect_files(runs, 'NPDOverTempNPD_ambient')
-    npdd_64C = _collect_files(runs, 'NPDOverTempNPD_hot')
-    npdd_n38C = _collect_files(runs, 'NPDOverTempNPD_cold')
+    npdd_all = _collect_files(runs, 'NPDOverTempNPD', '.csv')
+    npdd_25C = _collect_files(runs, 'NPDOverTempNPD_ambient', '.csv')
+    npdd_64C = _collect_files(runs, 'NPDOverTempNPD_hot', '.csv')
+    npdd_n38C = _collect_files(runs, 'NPDOverTempNPD_cold', '.csv')
 
     # SPars
-    spar_all = _collect_files(runs, 'VSWR')
-    spar_25C = _collect_files(runs, 'VSWR_ambient')
-    spar_64C = _collect_files(runs, 'VSWR_hot')
-    spar_n38C = _collect_files(runs, 'VSWR_cold')
+    spar_all = _collect_files(runs, 'VSWR', '.s2p')
+    spar_25C = _collect_files(runs, 'VSWR_ambient', '.s2p')
+    spar_64C = _collect_files(runs, 'VSWR_hot', '.s2p')
+    spar_n38C = _collect_files(runs, 'VSWR_cold', '.s2p')
     
 
     # === Generate plots ===
