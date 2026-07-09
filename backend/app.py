@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
 dist_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend', 'dist')
-app = Flask(__name__, static_folder=dist_folder, static_url_path='/')
+app = Flask(__name__, static_folder=dist_folder)
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
 if hasattr(app.request_class, 'max_form_parts'):
