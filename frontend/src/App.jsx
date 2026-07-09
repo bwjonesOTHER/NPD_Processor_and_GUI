@@ -656,10 +656,6 @@ function App() {
                   <input type="number" step="0.1" name="freq_max" value={plotParams.freq_max} onChange={handlePlotParamChange} />
                 </div>
                 <div className="input-group">
-                  <label>reqS11Val</label>
-                  <input type="number" step="1" name="reqS11Val" value={plotParams.reqS11Val} onChange={handlePlotParamChange} />
-                </div>
-                <div className="input-group">
                   <label>reqS21Val</label>
                   <input type="number" step="1" name="reqS21Val" value={plotParams.reqS21Val} onChange={handlePlotParamChange} />
                 </div>

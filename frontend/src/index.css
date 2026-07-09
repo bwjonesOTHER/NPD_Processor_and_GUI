@@ -109,7 +109,9 @@ input:focus, select:focus {
 .input-group {
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 0.5rem;
+  height: 100%;
 }
 
 .input-group label {

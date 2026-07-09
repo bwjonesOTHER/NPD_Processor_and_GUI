@@ -133,7 +133,7 @@ def cap_searchB(filename,lmoFolderB):
 
     return loss, loss_bulkhead
 
-def plotNPD_single(filesNPDA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
+def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
     plt.figure(figsize=(8, 4), dpi=150)
     my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
     my_line_styles = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
@@ -467,7 +467,7 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
 
     return freq_ghz,file_avg
 
-def plotNPD_density_single(filesNPDA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
+def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
     plt.figure(figsize=(8, 4), dpi=150)
     my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
     my_line_styles = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
