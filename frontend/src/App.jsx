@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download } from 'lucide-react';
+import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download, UploadCloud, XCircle } from 'lucide-react';
 import JSZip from 'jszip';
 import './App.css';
 
@@ -41,6 +41,8 @@ function App() {
   const [runFiles, setRunFiles] = useState([[], []]);
   const [numRuns, setNumRuns] = useState(2);
   const [numRunsInput, setNumRunsInput] = useState('2');
+  const [uploadingRun, setUploadingRun] = useState(false);
+  const test1RunsInputRef = useRef(null);
 
 
 
@@ -239,7 +241,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.2 Bulldog</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.4 Bulldog</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -408,69 +410,129 @@ function App() {
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select runs to process.</p>
 
               {testType === 1 && (
-                <div className="form-group" style={{ marginBottom: '2rem' }}>
-                  <label>Number of Runs (N)</label>
-                  <input 
-                    type="text" 
-                    value={numRunsInput} 
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
-                      setNumRunsInput(val);
-                    }} 
-                    onBlur={() => {
-                      const n = parseInt(numRunsInput) || 1;
-                      setNumRuns(n);
-                      setNumRunsInput(n.toString());
-                      setRuns(prev => {
-                        const newRuns = [...prev];
-                        while (newRuns.length < n) newRuns.push('');
-                        return newRuns.slice(0, n);
-                      });
-                      setRunFiles(prev => {
-                        const newFiles = [...prev];
-                        while (newFiles.length < n) newFiles.push([]);
-                        return newFiles.slice(0, n);
-                      });
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  <div 
+                    style={{
+                      border: '2px dashed var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '3rem 2rem',
+                      textAlign: 'center',
+                      cursor: uploadingRun ? 'not-allowed' : 'pointer',
+                      background: 'var(--surface)',
+                      transition: 'background 0.2s',
+                      opacity: uploadingRun ? 0.7 : 1
                     }}
-                  />
+                    onClick={() => !uploadingRun && test1RunsInputRef.current?.click()}
+                  >
+                    {uploadingRun ? (
+                      <Activity size={40} className="spinner" color="var(--accent)" style={{marginBottom: '1rem'}} />
+                    ) : (
+                      <UploadCloud size={40} color="var(--accent)" style={{marginBottom: '1rem'}} />
+                    )}
+                    <div>
+                      <strong style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>
+                        {uploadingRun ? "Uploading..." : "Click to select and upload a run folder"}
+                      </strong>
+                      {!uploadingRun && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>(Click multiple times to add more runs!)</p>}
+                    </div>
+                    <input 
+                      type="file" 
+                      webkitdirectory="true" 
+                      directory="true"
+                      multiple={true}
+                      ref={test1RunsInputRef} 
+                      style={{ display: 'none' }} 
+                      onChange={async (e) => {
+                        if (!e.target.files || e.target.files.length === 0) return;
+                        setUploadingRun(true);
+                        const data = new FormData();
+                        Array.from(e.target.files).forEach(f => {
+                          data.append('files', f);
+                          data.append('paths', f.webkitRelativePath || f.name);
+                        });
+                        // Filter out empty strings from the initial state
+                        const validRuns = runs.filter(r => r !== '');
+                        data.append('run_index', validRuns.length);
+                        
+                        try {
+                          const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+                          const json = await res.json();
+                          if (json.status === 'success') {
+                            setRuns([...validRuns, json.upload_path]);
+                          } else {
+                            alert("Upload failed: " + json.error);
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          alert("Network error during upload");
+                        }
+                        if (test1RunsInputRef.current) test1RunsInputRef.current.value = "";
+                        setUploadingRun(false);
+                      }} 
+                    />
+                  </div>
+
+                  {runs.filter(r => r !== '').length > 0 && (
+                    <div style={{ background: 'var(--surface)', padding: '1.5rem', borderRadius: '12px' }}>
+                      <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Added Runs ({runs.filter(r => r !== '').length})</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {runs.filter(r => r !== '').map((runPath, idx) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '0.75rem 1rem', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}><strong>Run {idx + 1}:</strong> {runPath}</span>
+                            <button 
+                              className="icon-btn" 
+                              onClick={() => {
+                                setRuns(prev => prev.filter(r => r !== '').filter((_, i) => i !== idx));
+                              }}
+                              style={{ color: '#ff6b6b', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
+                              title="Remove Run"
+                            >
+                              <XCircle size={20} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {runs.map((runVal, idx) => (
-                  <div key={idx} className="form-group">
-                    <label>Run {idx + 1}</label>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <input 
-                        type="file" 
-                        webkitdirectory="true"
-                        directory="true"
-                        multiple
-                        onChange={e => {
-                          const newFiles = [...runFiles];
-                          newFiles[idx] = Array.from(e.target.files);
-                          setRunFiles(newFiles);
-                          // Reset the run path when new files are selected so they must upload again
-                          const newRuns = [...runs];
-                          newRuns[idx] = '';
-                          setRuns(newRuns);
-                        }}
-                        style={{ flex: 1 }}
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => uploadRun(idx)} 
-                        className="secondary" 
-                        style={{ whiteSpace: 'nowrap' }}
-                        disabled={!runFiles[idx] || runFiles[idx].length === 0}
-                      >
-                        Upload
-                      </button>
+              {testType === 3 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {[0, 1].map((idx) => (
+                    <div key={idx} className="form-group">
+                      <label>Run {idx === 0 ? 'A' : 'B'}</label>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input 
+                          type="file" 
+                          webkitdirectory="true"
+                          directory="true"
+                          multiple
+                          onChange={e => {
+                            const newFiles = [...runFiles];
+                            newFiles[idx] = Array.from(e.target.files);
+                            setRunFiles(newFiles);
+                            const newRuns = [...runs];
+                            newRuns[idx] = '';
+                            setRuns(newRuns);
+                          }}
+                          style={{ flex: 1 }}
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => uploadRun(idx)} 
+                          className="secondary" 
+                          style={{ whiteSpace: 'nowrap' }}
+                          disabled={!runFiles[idx] || runFiles[idx].length === 0}
+                        >
+                          Upload
+                        </button>
+                      </div>
+                      {runs[idx] && <p style={{ color: 'var(--success)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Uploaded to server successfully.</p>}
                     </div>
-                    {runs[idx] && <p style={{ color: 'var(--success)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Uploaded to server successfully.</p>}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               <div className="btn-group" style={{ marginTop: '2rem' }}>
                 <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
