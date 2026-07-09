@@ -38,6 +38,7 @@ function App() {
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
   const [runs, setRuns] = useState(['', '']);
+  const [runFiles, setRunFiles] = useState([[], []]);
   const [numRuns, setNumRuns] = useState(2);
   const [numRunsInput, setNumRunsInput] = useState('2');
 
@@ -66,6 +67,36 @@ function App() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const uploadRun = async (idx) => {
+    const files = runFiles[idx];
+    if (!files || files.length === 0) return;
+    
+    const data = new FormData();
+    files.forEach(f => {
+      data.append('files', f);
+      // Append webkitRelativePath to reconstruct directory structure
+      data.append('paths', f.webkitRelativePath || f.name);
+    });
+    data.append('run_index', idx);
+    
+    try {
+      const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setRuns(prev => {
+          const newRuns = [...prev];
+          newRuns[idx] = json.upload_path;
+          return newRuns;
+        });
+      } else {
+        alert("Upload failed: " + json.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error during upload");
+    }
   };
 
   const handlePlotParamChange = (e) => {
@@ -208,7 +239,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.0 Bulldog</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.2 Bulldog</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -395,6 +426,11 @@ function App() {
                         while (newRuns.length < n) newRuns.push('');
                         return newRuns.slice(0, n);
                       });
+                      setRunFiles(prev => {
+                        const newFiles = [...prev];
+                        while (newFiles.length < n) newFiles.push([]);
+                        return newFiles.slice(0, n);
+                      });
                     }}
                   />
                 </div>
@@ -404,19 +440,34 @@ function App() {
                 {runs.map((runVal, idx) => (
                   <div key={idx} className="form-group">
                     <label>Run {idx + 1}</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <input 
-                        type="text" 
-                        value={runVal} 
+                        type="file" 
+                        webkitdirectory="true"
+                        directory="true"
+                        multiple
                         onChange={e => {
+                          const newFiles = [...runFiles];
+                          newFiles[idx] = Array.from(e.target.files);
+                          setRunFiles(newFiles);
+                          // Reset the run path when new files are selected so they must upload again
                           const newRuns = [...runs];
-                          newRuns[idx] = e.target.value;
+                          newRuns[idx] = '';
                           setRuns(newRuns);
                         }}
                         style={{ flex: 1 }}
                       />
-                      <button type="button" onClick={() => handleBrowseRun(idx)} className="secondary" style={{ whiteSpace: 'nowrap' }}>Browse...</button>
+                      <button 
+                        type="button" 
+                        onClick={() => uploadRun(idx)} 
+                        className="secondary" 
+                        style={{ whiteSpace: 'nowrap' }}
+                        disabled={!runFiles[idx] || runFiles[idx].length === 0}
+                      >
+                        Upload
+                      </button>
                     </div>
+                    {runs[idx] && <p style={{ color: 'var(--success)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Uploaded to server successfully.</p>}
                   </div>
                 ))}
               </div>
