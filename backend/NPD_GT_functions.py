@@ -12,22 +12,15 @@ from pathlib import Path
 import math
 
 
-def search_files(root_dir, filename_part):
-    """
-    Search for files containing 'filename_part' in their name
-    within 'root_dir' and all subdirectories.
-    """
+def search_files(root_dir, filename_part=''):
     if not os.path.exists(root_dir):
         raise FileNotFoundError(f"Directory '{root_dir}' does not exist.")
-    if not os.path.isdir(root_dir):
-        raise NotADirectoryError(f"'{root_dir}' is not a directory.")
-
-    matches = []
-    for dirpath, _, filenames in os.walk(root_dir):
-        for file in filenames:
-            if filename_part.lower() in file.lower():  # Case-insensitive search
-                matches.append(os.path.join(dirpath, file))
-    return matches
+    files = []
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        for filename in filenames:
+            if filename_part.lower() in filename.lower():
+                files.append(os.path.join(dirpath, filename))
+    return files
 
 
 def remove_nan(arr, remove_infinite=False):

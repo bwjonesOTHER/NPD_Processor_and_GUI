@@ -12,8 +12,12 @@ import glob
 import NPD_GT_functions
 
 def generate_plots(params):
-    RunA = params.get('RunA', '')
-    RunB = params.get('RunB', '')
+    runs = params.get('runs', [])
+    lmoFolderA = runs[0] if len(runs) > 0 else ""
+    lmoFolderB = runs[1] if len(runs) > 1 else ""
+
+    RunA = params.get('RunA', os.path.basename(lmoFolderA.rstrip('/\\')) if lmoFolderA else "")
+    RunB = params.get('RunB', os.path.basename(lmoFolderB.rstrip('/\\')) if lmoFolderB else "")
     
     freq_min = float(params.get('freq_min', 2.7))
     freq_max = float(params.get('freq_max', 4.1))
@@ -24,12 +28,14 @@ def generate_plots(params):
     n_avg = int(params.get('n_avg', 20))
     show_plot = 0
     
-    u_bound_s21=2
-    l_bound_s21=2
-    u_bound_npd=2
-    l_bound_npd=2
+    u_bound_s21 = float(params.get('u_bound_s21', 2))
+    l_bound_s21 = float(params.get('l_bound_s21', 2))
+    u_bound_npd = float(params.get('u_bound_npd', 2))
+    l_bound_npd = float(params.get('l_bound_npd', 2))
     
     folder_path = params.get('folder_path', '')
+    if not folder_path and lmoFolderA:
+        folder_path = os.path.dirname(lmoFolderA)
 
     old_pngs = glob.glob(os.path.join(folder_path, '*.png'))
     for png in old_pngs:
@@ -38,29 +44,25 @@ def generate_plots(params):
         except Exception:
             pass
             
-    lmoFolderA = os.path.join(folder_path, RunA) if RunA else ""
+    filesSparA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR') if lmoFolderA else []
+    filesSparA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_ambient') if lmoFolderA else []
+    filesSparA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_hot') if lmoFolderA else []
+    filesSparA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_cold') if lmoFolderA else []
     
-    filesSparA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR') if RunA else []
-    filesSparA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_ambient') if RunA else []
-    filesSparA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_hot') if RunA else []
-    filesSparA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_cold') if RunA else []
+    filesNPDA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD') if lmoFolderA else []
+    filesNPDA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_ambient') if lmoFolderA else []
+    filesNPDA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_hot') if lmoFolderA else []
+    filesNPDA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_cold') if lmoFolderA else []
     
-    filesNPDA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD') if RunA else []
-    filesNPDA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_ambient') if RunA else []
-    filesNPDA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_hot') if RunA else []
-    filesNPDA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_cold') if RunA else []
+    filesSparB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR') if lmoFolderB else []
+    filesSparB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_ambient') if lmoFolderB else []
+    filesSparB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_hot') if lmoFolderB else []
+    filesSparB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_cold') if lmoFolderB else []
     
-    lmoFolderB = os.path.join(folder_path, RunB) if RunB else ""
-    
-    filesSparB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR') if RunB else []
-    filesSparB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_ambient') if RunB else []
-    filesSparB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_hot') if RunB else []
-    filesSparB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_cold') if RunB else []
-    
-    filesNPDB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD') if RunB else []
-    filesNPDB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_ambient') if RunB else []
-    filesNPDB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_hot') if RunB else []
-    filesNPDB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_cold') if RunB else []
+    filesNPDB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD') if lmoFolderB else []
+    filesNPDB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_ambient') if lmoFolderB else []
+    filesNPDB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_hot') if lmoFolderB else []
+    filesNPDB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_cold') if lmoFolderB else []
 
     NPD_density_25 = ([], [])
     NPD_density_64 = ([], [])
@@ -136,7 +138,7 @@ def generate_plots(params):
         l_bound_npd_temp=l_bound_npd
         NPD_density_n38=NPD_GT_functions.plotNPD_density_single(filesNPDA_n38C,lmoFolderA,n_avg, u_bound_npd_temp, l_bound_npd_temp,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot)
 
-    if any([len(NPD_density_25[0]), len(NPD_density_64[0]), len(NPD_density_n38[0])]):
+    if NPD_density_25 and len(NPD_density_25)>0 and any([len(NPD_density_25[0]), len(NPD_density_64[0]), len(NPD_density_n38[0])]):
         NPD_GT_functions.npd_density_temp_diff_plot(NPD_density_25,NPD_density_64,NPD_density_n38,folder_path,show_plot)
 
     if len(filesNPDA)>0 and len(filesNPDB)>0:
@@ -203,7 +205,7 @@ def generate_plots(params):
         l_bound_npd_temp=l_bound_npd
         NPDn38=NPD_GT_functions.plotNPD_single(filesNPDA_n38C,lmoFolderA,n_avg, u_bound_npd_temp, l_bound_npd_temp,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot)
 
-    if any([len(NPD25[0]), len(NPD64[0]), len(NPDn38[0])]):
+    if NPD25 and len(NPD25)>0 and any([len(NPD25[0]), len(NPD64[0]), len(NPDn38[0])]):
         NPD_GT_functions.npd_temp_diff_plot(NPD25,NPD64,NPDn38,folder_path,show_plot)
 
     if len(filesSparA)>0 and len(filesSparB)>0:
@@ -270,7 +272,8 @@ def generate_plots(params):
         l_bound_s21_temp=l_bound_s21
         Spar_n38=NPD_GT_functions.plotS21_single(filesSparA_n38C,u_bound_s21_temp,l_bound_s21_temp,RunA,temperature,freq_min,freq_max,folder_path,show_plot)
 
-    if any([len(Spar_25[0]), len(Spar_64[0]), len(Spar_n38[0])]):
+    if Spar_25 and len(Spar_25)>0 and any([len(Spar_25[0]), len(Spar_64[0]), len(Spar_n38[0])]):
         NPD_GT_functions.s21_temp_diff_plot(Spar_25,Spar_64,Spar_n38, folder_path, show_plot)
 
+    plt.close('all')
     return glob.glob(os.path.join(folder_path, '*.png'))
