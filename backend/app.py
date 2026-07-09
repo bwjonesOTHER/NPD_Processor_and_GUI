@@ -3,6 +3,11 @@ import sys
 import shutil
 import subprocess
 import base64
+
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
