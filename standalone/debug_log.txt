@@ -1,0 +1,72 @@
+
+--- _collect_files called with pattern: *NPDOverTempNPD*.csv ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 24 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 with 24 files.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 30 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 with 30 files.
+
+--- _collect_files called with pattern: *NPDOverTempNPD*ambient*.csv ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 8 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 with 8 files.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 10 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 with 10 files.
+
+--- _collect_files called with pattern: *NPDOverTempNPD*hot*.csv ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 8 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 with 8 files.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 10 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 with 10 files.
+
+--- _collect_files called with pattern: *NPDOverTempNPD*cold*.csv ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 8 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 with 8 files.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 10 files before ext filter.
+Added run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 with 10 files.
+
+--- _collect_files called with pattern: *VSWR*.s2p ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 had 0 files after filtering.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 had 0 files after filtering.
+
+--- _collect_files called with pattern: *VSWR*ambient*.s2p ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 had 0 files after filtering.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 had 0 files after filtering.
+
+--- _collect_files called with pattern: *VSWR*hot*.s2p ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 had 0 files after filtering.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 had 0 files after filtering.
+
+--- _collect_files called with pattern: *VSWR*cold*.s2p ---
+runs_list: ['C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_0', 'C:\\Users\\thomas.moore\\Downloads\\NPD_Processor_and_GUI-Combination_testing (50)\\NPD_Processor_and_GUI-Combination_testing\\standalone\\uploads\\Run_1']
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_0 had 0 files after filtering.
+lmo: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1
+Found 0 files before ext filter.
+Run C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (50)\NPD_Processor_and_GUI-Combination_testing\standalone\uploads\Run_1 had 0 files after filtering.
