@@ -329,7 +329,7 @@ function App() {
               </div>
 
               <div className="btn-group" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', width: '100%' }}>
-                <button onClick={() => handleTestTypeNext('access')} disabled={!testType} className="secondary">
+                <button onClick={() => handleTestTypeNext('access')} disabled={!testType} className="primary">
                   Access
                 </button>
                 <button onClick={() => handleTestTypeNext('upload')} disabled={!testType} className="primary">
@@ -656,12 +656,16 @@ function App() {
                   <input type="number" step="0.1" name="freq_max" value={plotParams.freq_max} onChange={handlePlotParamChange} />
                 </div>
                 <div className="input-group">
+                  <label>reqS11Val</label>
+                  <input type="number" step="1" name="reqS11Val" value={plotParams.reqS11Val} onChange={handlePlotParamChange} />
+                </div>
+                <div className="input-group">
                   <label>reqS21Val</label>
                   <input type="number" step="1" name="reqS21Val" value={plotParams.reqS21Val} onChange={handlePlotParamChange} />
                 </div>
                 <div className="input-group">
                   <label>Averaging (n_avg)</label>
-                  <input type="number" step="2" name="n_avg" value={plotParams.n_avg} onChange={handlePlotParamChange} />
+                  <input type="number" step="1" min="1" name="n_avg" value={plotParams.n_avg} onChange={handlePlotParamChange} />
                 </div>
                 <div className="input-group">
                   <label>S21 Upper Bound Offset</label>
