@@ -38,8 +38,8 @@ function App() {
 
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
-  const [runA, setRunA] = useState('');
-  const [runB, setRunB] = useState('');
+  const [runs, setRuns] = useState(['', '']);
+  const [numRuns, setNumRuns] = useState(2);
 
 
 
@@ -156,10 +156,14 @@ function App() {
 
   const submitRuns = async () => {
     try {
+      const payload = testType === 1 
+        ? { runs } 
+        : { runA: runs[0] || '', runB: runs[1] || '' };
+
       const res = await fetch(`${API_BASE}/select-runs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ runA, runB })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setCurrentStep(4);
@@ -381,25 +385,48 @@ function App() {
           {currentStep === 3 && (testType === 1 || testType === 3) && (
             <div className="step-card">
               <h2>Select Runs</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select Run A and Run B folders to process.</p>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select runs to process.</p>
 
-              <div className="form-group">
-                <label>Run A</label>
-                <select value={runA} onChange={e => setRunA(e.target.value)}>
-                  <option value="">Select a folder...</option>
-                  {folders.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
+              {testType === 1 && (
+                <div className="form-group" style={{ marginBottom: '2rem' }}>
+                  <label>Number of Runs (N)</label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    value={numRuns} 
+                    onChange={(e) => {
+                      const n = parseInt(e.target.value) || 1;
+                      setNumRuns(n);
+                      setRuns(prev => {
+                        const newRuns = [...prev];
+                        while (newRuns.length < n) newRuns.push('');
+                        return newRuns.slice(0, n);
+                      });
+                    }} 
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {runs.map((runVal, idx) => (
+                  <div key={idx} className="form-group">
+                    <label>Run {idx + 1}</label>
+                    <select 
+                      value={runVal} 
+                      onChange={e => {
+                        const newRuns = [...runs];
+                        newRuns[idx] = e.target.value;
+                        setRuns(newRuns);
+                      }}
+                    >
+                      <option value="">Select a folder...</option>
+                      {folders.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                ))}
               </div>
 
-              <div className="form-group">
-                <label>Run B</label>
-                <select value={runB} onChange={e => setRunB(e.target.value)}>
-                  <option value="">Select a folder...</option>
-                  {folders.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-              </div>
-
-              <div className="btn-group">
+              <div className="btn-group" style={{ marginTop: '2rem' }}>
                 <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
                 <button onClick={submitRuns}>Continue</button>
               </div>
@@ -476,7 +503,13 @@ function App() {
                 </div>
               )}
 
-              <div className="btn-group">
+              <div className="btn-group" style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  className="secondary" 
+                  onClick={() => setCurrentStep(testType === 2 ? 2 : 3)}
+                >
+                  Back
+                </button>
                 <button className="secondary" onClick={() => setCurrentStep(0)}>Start Over</button>
               </div>
             </div>

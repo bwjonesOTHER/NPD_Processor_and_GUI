@@ -118,13 +118,21 @@ def get_folders():
 @app.route('/api/select-runs', methods=['POST'])
 def select_runs():
     data = request.json
-    run_a = data.get('runA')
-    run_b = data.get('runB')
     
-    if run_a:
-        write_txt("RunA_Path.txt", run_a)
-    if run_b:
-        write_txt("RunB_Path.txt", run_b)
+    if 'runs' in data:
+        with open("SelectedRuns.txt", "w") as f:
+            for run in data['runs']:
+                if run:
+                    f.write(run + "\n")
+    
+    # Legacy support for Test 3
+    if 'runA' in data or 'runB' in data:
+        run_a = data.get('runA')
+        run_b = data.get('runB')
+        if run_a:
+            write_txt("RunA_Path.txt", run_a)
+        if run_b:
+            write_txt("RunB_Path.txt", run_b)
         
     return jsonify({"status": "success"})
 
@@ -242,10 +250,18 @@ def api_generate_plots():
         folder_path = read_txt("upload_path.txt")
         if not folder_path:
             folder_path = read_txt("path.txt")
-        run_a = read_txt("RunA_Path.txt")
-        run_b = read_txt("RunB_Path.txt")
+            
+        runs = []
+        if os.path.exists("SelectedRuns.txt"):
+            with open("SelectedRuns.txt", "r") as f:
+                runs = [line.strip() for line in f if line.strip()]
+        else:
+            run_a = read_txt("RunA_Path.txt")
+            run_b = read_txt("RunB_Path.txt")
+            runs = [run for run in [run_a, run_b] if run]
+            
         params['folder_path'] = folder_path
-        params['runs'] = [run for run in [run_a, run_b] if run]
+        params['runs'] = runs
         
         try:
             png_files = plot_generator.generate_plots(params)
