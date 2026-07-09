@@ -55,8 +55,8 @@ def generate_plots(params):
 
     # === Collect Data ===
     # V2 Logic: Collect ALL traces across all runs and plot them together
-    npdd_all = _collect_files(runs, '*.csv')
-    spar_all = _collect_files(runs, '*.s2p')
+    npdd_all = _collect_files(runs, '*NPDOverTempNPD*.csv')
+    spar_all = _collect_files(runs, '*VSWR*', '.s2p')
 
     # === Process Math & Render ===
 
