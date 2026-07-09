@@ -2,8 +2,10 @@ import matplotlib
 matplotlib.use('Agg')
 import os
 import glob
+import numpy as np
 from pathlib import Path
 import NPD_GT_functions
+import math_v3
 
 def generate_plots(params):
     runs = params.get('runs', [])
@@ -25,7 +27,6 @@ def generate_plots(params):
     u_bound_npd = float(params.get('u_bound_npd', 1.0))
     l_bound_npd = float(params.get('l_bound_npd', 1.0))
 
-    # Delete old PNGs to avoid returning previous plots
     for old_png in glob.glob(os.path.join(folder_path, '*.png')):
         try: os.remove(old_png)
         except: pass
@@ -34,70 +35,90 @@ def generate_plots(params):
         runs_data = []
         for run in runs_list:
             lmo = os.path.join(folder_path, run)
-            files = NPD_GT_functions.search_files(lmo, suffix)
+            files = math_v3.search_files(lmo, suffix)
             if ext:
                 files = [f for f in files if f.lower().endswith(ext.lower())]
-            gains = NPD_GT_functions.search_files(lmo, 'Gain')
+            gains = math_v3.search_files(lmo, 'Gain')
             if files:
                 runs_data.append({'name': run, 'folder': lmo, 'files': files, 'gains': gains})
         return runs_data
 
     # === Collect Data ===
-    
-    # NPD Density
     npdd_all = _collect_files(runs, 'NPDOverTempNPD', '.csv')
     npdd_25C = _collect_files(runs, 'NPDOverTempNPD_ambient', '.csv')
     npdd_64C = _collect_files(runs, 'NPDOverTempNPD_hot', '.csv')
     npdd_n38C = _collect_files(runs, 'NPDOverTempNPD_cold', '.csv')
 
-    # SPars
     spar_all = _collect_files(runs, 'VSWR', '.s2p')
     spar_25C = _collect_files(runs, 'VSWR_ambient', '.s2p')
     spar_64C = _collect_files(runs, 'VSWR_hot', '.s2p')
     spar_n38C = _collect_files(runs, 'VSWR_cold', '.s2p')
-    
 
-    # === Generate plots ===
+    # === Process Math & Render ===
+
+    def process_and_render_npd(data, temp, is_density, ub_offset, lb_offset):
+        if not data: return None
+        math_data = math_v3.process_NPD(data, n_avg, is_density=is_density)
+        suffix = 'Density' if is_density else 'Power'
+        NPD_GT_functions.render_NPD_plot(math_data, ub_offset, lb_offset, temp, f"Noise {suffix}", freq_min, freq_max, reqS11Val, folder_path, show_plot)
+        return math_data
 
     # NPD Density
-    if npdd_all:
-        NPD_GT_functions.plotNPD_density_multi(npdd_all, n_avg, u_bound_npd+1, l_bound_npd+1, 'All', freq_min, freq_max, reqS11Val, folder_path, show_plot)
+    process_and_render_npd(npdd_all, 'All', True, u_bound_npd+1, l_bound_npd+1)
+    nd25 = process_and_render_npd(npdd_25C, '25C', True, u_bound_npd, l_bound_npd)
+    nd64 = process_and_render_npd(npdd_64C, '64C', True, u_bound_npd, l_bound_npd)
+    ndn38 = process_and_render_npd(npdd_n38C, '-38C', True, u_bound_npd, l_bound_npd)
 
-    nd25 = nd64 = ndn38 = None
-    if npdd_25C: nd25 = NPD_GT_functions.plotNPD_density_multi(npdd_25C, n_avg, u_bound_npd, l_bound_npd, '25C', freq_min, freq_max, reqS11Val, folder_path, show_plot)
-    if npdd_64C: nd64 = NPD_GT_functions.plotNPD_density_multi(npdd_64C, n_avg, u_bound_npd, l_bound_npd, '64C', freq_min, freq_max, reqS11Val, folder_path, show_plot)
-    if npdd_n38C: ndn38 = NPD_GT_functions.plotNPD_density_multi(npdd_n38C, n_avg, u_bound_npd, l_bound_npd, '-38C', freq_min, freq_max, reqS11Val, folder_path, show_plot)
+    # NP Power
+    process_and_render_npd(npdd_all, 'All', False, u_bound_npd+1, l_bound_npd+1)
+    np25 = process_and_render_npd(npdd_25C, '25C', False, u_bound_npd, l_bound_npd)
+    np64 = process_and_render_npd(npdd_64C, '64C', False, u_bound_npd, l_bound_npd)
+    npn38 = process_and_render_npd(npdd_n38C, '-38C', False, u_bound_npd, l_bound_npd)
 
-    if nd25 and nd25[0] is not None and nd64 and nd64[0] is not None and ndn38 and ndn38[0] is not None:
-        try: NPD_GT_functions.npd_density_temp_diff_plot(nd25, nd64, ndn38, len(runs), freq_min, freq_max, folder_path, show_plot)
-        except Exception as e: print("Error in temp diff plot NPD density:", e)
+    def process_and_render_s21(data, temp, ub_offset, lb_offset):
+        if not data: return None
+        math_data = math_v3.process_S21(data)
+        NPD_GT_functions.render_S21_plot(math_data, temp, "Test Hat S21", freq_min, freq_max, folder_path, show_plot)
+        return math_data
 
-    # NP (Noise Power)
-    if npdd_all:
-        NPD_GT_functions.plotNPD_multi(npdd_all, n_avg, u_bound_npd+1, l_bound_npd+1, 'All', freq_min, freq_max, reqS11Val, folder_path, show_plot)
+    # S21
+    process_and_render_s21(spar_all, 'All', u_bound_s21+3, l_bound_s21+3)
+    sp25 = process_and_render_s21(spar_25C, '25C', u_bound_s21, l_bound_s21)
+    sp64 = process_and_render_s21(spar_64C, '64C', u_bound_s21, l_bound_s21)
+    spn38 = process_and_render_s21(spar_n38C, '-38C', u_bound_s21, l_bound_s21)
 
-    np25 = np64 = npn38 = None
-    if npdd_25C: np25 = NPD_GT_functions.plotNPD_multi(npdd_25C, n_avg, u_bound_npd, l_bound_npd, '25C', freq_min, freq_max, reqS11Val, folder_path, show_plot)
-    if npdd_64C: np64 = NPD_GT_functions.plotNPD_multi(npdd_64C, n_avg, u_bound_npd, l_bound_npd, '64C', freq_min, freq_max, reqS11Val, folder_path, show_plot)
-    if npdd_n38C: npn38 = NPD_GT_functions.plotNPD_multi(npdd_n38C, n_avg, u_bound_npd, l_bound_npd, '-38C', freq_min, freq_max, reqS11Val, folder_path, show_plot)
-    
-    if np25 and np25[0] is not None and np64 and np64[0] is not None and npn38 and npn38[0] is not None:
-        try: NPD_GT_functions.npd_temp_diff_plot(np25, np64, npn38, len(runs), freq_min, freq_max, folder_path, show_plot)
-        except Exception as e: print("Error in temp diff plot NP:", e)
-        
+    # Temp Diff function
+    def render_temp_diff(d25, d64, dn38, title):
+        if d25 and d64 and dn38:
+            try:
+                import matplotlib.pyplot as plt
+                freq = d25['freq_ref']
+                diff1 = np.abs(d25['avg_trace'] - d64['avg_trace'])
+                diff2 = np.abs(d25['avg_trace'] - dn38['avg_trace'])
+                diff3 = np.abs(d64['avg_trace'] - dn38['avg_trace'])
 
-    # S21 Plots
-    if spar_all:
-        NPD_GT_functions.plotS21_multi(spar_all, u_bound_s21+3, l_bound_s21+3, 'All', freq_min, freq_max, folder_path, show_plot)
+                plt.figure(figsize=(10, 6), dpi=150)
+                plt.plot(freq, diff1, label='|25C - 64C|')
+                plt.plot(freq, diff2, label='|25C - (-38C)|')
+                plt.plot(freq, diff3, label='|64C - (-38C)|')
+                plt.xlim(freq[0], freq[-1])
+                plt.ylim(0, 5)
+                plt.grid(True)
+                plt.title(title)
+                plt.xlabel('Frequency (GHz)')
+                plt.ylabel('Delta')
+                plt.legend()
+                
+                safe_title = title.replace(" ", "_").replace(":", "") + ".png"
+                plt.savefig(os.path.join(folder_path, safe_title), dpi=300)
+                plt.close()
+            except Exception as e:
+                print(f"Error in {title}:", e)
 
-    sp25 = sp64 = spn38 = None
-    if spar_25C: sp25 = NPD_GT_functions.plotS21_multi(spar_25C, u_bound_s21, l_bound_s21, '25C', freq_min, freq_max, folder_path, show_plot)
-    if spar_64C: sp64 = NPD_GT_functions.plotS21_multi(spar_64C, u_bound_s21, l_bound_s21, '64C', freq_min, freq_max, folder_path, show_plot)
-    if spar_n38C: spn38 = NPD_GT_functions.plotS21_multi(spar_n38C, u_bound_s21, l_bound_s21, '-38C', freq_min, freq_max, folder_path, show_plot)
-
-    if sp25 and sp25[0] is not None and sp64 and sp64[0] is not None and spn38 and spn38[0] is not None:
-        try: NPD_GT_functions.s21_temp_diff_plot(sp25, sp64, spn38, len(runs), freq_min, freq_max, folder_path, show_plot)
-        except Exception as e: print("Error in temp diff plot S21:", e)
+    render_temp_diff(nd25, nd64, ndn38, "NPD Density Temp Delta")
+    render_temp_diff(np25, np64, npn38, "Noise Power Temp Delta")
+    render_temp_diff(sp25, sp64, spn38, "S21 Temp Delta")
 
     png_files = glob.glob(os.path.join(folder_path, '*.png'))
     return png_files
+
