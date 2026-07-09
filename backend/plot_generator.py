@@ -11,10 +11,19 @@ import math
 import glob
 import NPD_GT_functions
 
+def resolve_run_dir(run_dir):
+    if not run_dir or not os.path.isdir(run_dir):
+        return run_dir
+    items = os.listdir(run_dir)
+    dirs = [d for d in items if os.path.isdir(os.path.join(run_dir, d))]
+    if len(dirs) == 1:
+        return os.path.join(run_dir, dirs[0])
+    return run_dir
+
 def generate_plots(params):
     runs = params.get('runs', [])
-    lmoFolderA = runs[0] if len(runs) > 0 else ""
-    lmoFolderB = runs[1] if len(runs) > 1 else ""
+    lmoFolderA = resolve_run_dir(runs[0]) if len(runs) > 0 else ""
+    lmoFolderB = resolve_run_dir(runs[1]) if len(runs) > 1 else ""
 
     RunA = params.get('RunA', os.path.basename(lmoFolderA.rstrip('/\\')) if lmoFolderA else "")
     RunB = params.get('RunB', os.path.basename(lmoFolderB.rstrip('/\\')) if lmoFolderB else "")

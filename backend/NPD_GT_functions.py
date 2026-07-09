@@ -67,31 +67,31 @@ def extract_serial_number(filename):
 
 def cap_searchA(filename,lmoFolderA):
     if "Cap_01" in filename:
-        loss_path=lmoFolderA + '\\' + 'Cap_01'
+        loss_path=os.path.join(lmoFolderA, 'Cap_01')
         loss = search_files(loss_path, 'Base')
         loss=loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_02" in filename:
-        loss_path=lmoFolderA + '\\' + 'Cap_02'
+        loss_path=os.path.join(lmoFolderA, 'Cap_02')
         loss = search_files(loss_path, 'Base')
         loss=loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_03" in filename:
-        loss_path = lmoFolderA + '\\' + 'Cap_03'
+        loss_path = os.path.join(lmoFolderA, 'Cap_03')
         loss = search_files(loss_path, 'Base')
         loss = loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_05" in filename:
-        loss_path = lmoFolderA + '\\' + 'Cap_05'
+        loss_path = os.path.join(lmoFolderA, 'Cap_05')
         loss = search_files(loss_path, 'Base')
         loss = loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_06" in filename:
-        loss_path = lmoFolderA + '\\' + 'Cap_06'
+        loss_path = os.path.join(lmoFolderA, 'Cap_06')
         loss = search_files(loss_path, 'Base')
         loss = loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
@@ -101,31 +101,31 @@ def cap_searchA(filename,lmoFolderA):
 
 def cap_searchB(filename,lmoFolderB):
     if "Cap_01" in filename:
-        loss_path=lmoFolderB + '\\' + 'Cap_01'
+        loss_path=os.path.join(lmoFolderB, 'Cap_01')
         loss = search_files(loss_path, 'Base')
         loss=loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_02" in filename:
-        loss_path=lmoFolderB + '\\' + 'Cap_02'
+        loss_path=os.path.join(lmoFolderB, 'Cap_02')
         loss = search_files(loss_path, 'Base')
         loss=loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_03" in filename:
-        loss_path = lmoFolderB + '\\' + 'Cap_03'
+        loss_path = os.path.join(lmoFolderB, 'Cap_03')
         loss = search_files(loss_path, 'Base')
         loss = loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_04" in filename:
-        loss_path = lmoFolderB + '\\' + 'Cap_04'
+        loss_path = os.path.join(lmoFolderB, 'Cap_04')
         loss = search_files(loss_path, 'Base')
         loss = loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
         loss_bulkhead=loss_bulkhead[0]
     if "Cap_05" in filename:
-        loss_path = lmoFolderB + '\\' + 'Cap_05'
+        loss_path = os.path.join(lmoFolderB, 'Cap_05')
         loss = search_files(loss_path, 'Base')
         loss = loss[0]
         loss_bulkhead=search_files(loss_path,'Bulkhead')
