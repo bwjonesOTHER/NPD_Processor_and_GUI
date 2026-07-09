@@ -54,15 +54,9 @@ def generate_plots(params):
         return runs_data
 
     # === Collect Data ===
-    npdd_all = _collect_files(runs, '*NPDOverTempNPD*.csv')
-    npdd_25C = _collect_files(runs, '*NPDOverTempNPD*ambient*.csv')
-    npdd_64C = _collect_files(runs, '*NPDOverTempNPD*hot*.csv')
-    npdd_n38C = _collect_files(runs, '*NPDOverTempNPD*cold*.csv')
-
-    spar_all = _collect_files(runs, '*VSWR*', '.s2p')
-    spar_25C = _collect_files(runs, '*VSWR*ambient*', '.s2p')
-    spar_64C = _collect_files(runs, '*VSWR*hot*', '.s2p')
-    spar_n38C = _collect_files(runs, '*VSWR*cold*', '.s2p')
+    # V2 Logic: Collect ALL traces across all runs and plot them together
+    npdd_all = _collect_files(runs, '*.csv')
+    spar_all = _collect_files(runs, '*.s2p')
 
     # === Process Math & Render ===
 
@@ -73,11 +67,8 @@ def generate_plots(params):
         NPD_GT_functions.render_NPD_plot(math_data, ub_offset, lb_offset, temp, f"Noise {suffix}", freq_min, freq_max, reqS11Val, folder_path, show_plot)
         return math_data
 
-    # NP Power
-    process_and_render_npd(npdd_all, 'All', False, u_bound_npd+1, l_bound_npd+1)
-    np25 = process_and_render_npd(npdd_25C, '25C', False, u_bound_npd, l_bound_npd)
-    np64 = process_and_render_npd(npdd_64C, '64C', False, u_bound_npd, l_bound_npd)
-    npn38 = process_and_render_npd(npdd_n38C, '-38C', False, u_bound_npd, l_bound_npd)
+    # NP Power (V2 Plotting Logic)
+    process_and_render_npd(npdd_all, 'Before and After', False, u_bound_npd, l_bound_npd)
 
     def process_and_render_s21(data, temp, ub_offset, lb_offset):
         if not data: return None
@@ -85,10 +76,8 @@ def generate_plots(params):
         NPD_GT_functions.render_S21_plot(math_data, temp, "Test Hat S21", freq_min, freq_max, folder_path, show_plot)
         return math_data
 
-    # S21
-    process_and_render_s21(spar_all, 'All', u_bound_s21+3, l_bound_s21+3)
-    sp25 = process_and_render_s21(spar_25C, '25C', u_bound_s21, l_bound_s21)
-    sp64 = process_and_render_s21(spar_64C, '64C', u_bound_s21, l_bound_s21)
+    # S21 (V2 Plotting Logic)
+    process_and_render_s21(spar_all, 'Before and After', u_bound_s21, l_bound_s21)
     png_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if fnmatch.fnmatch(f, '*.png')]
     return png_files
 
