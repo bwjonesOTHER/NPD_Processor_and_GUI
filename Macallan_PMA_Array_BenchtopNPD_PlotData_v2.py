@@ -195,10 +195,16 @@ def main():
 
             return freq, noise
 
-        # ---- load files from both folders ---- #
+        ref_freq = None
         for file in filesA + filesB:
             serial = extract_serial(file)
             freq, noise = load_np_data(file)
+            
+            if ref_freq is None:
+                ref_freq = freq
+            else:
+                noise = np.interp(ref_freq, freq, noise)
+                freq = ref_freq
 
             plt.plot(freq, noise, label=f'{serial[-21:-4:1]}')
 
@@ -333,6 +339,7 @@ def main():
         plt.figure(figsize=(7, 4), dpi=150)
 
         # Process both Run A and Run B
+        ref_freq_s21 = None
         for file in filesA + filesB:
 
             net = rf.Network(file)
@@ -346,6 +353,12 @@ def main():
                 s21_corr = raw_s21 - loss_interp
             else:
                 s21_corr = raw_s21
+                
+            if ref_freq_s21 is None:
+                ref_freq_s21 = freq_ghz
+            else:
+                s21_corr = np.interp(ref_freq_s21, freq_ghz, s21_corr)
+                freq_ghz = ref_freq_s21
 
             # Plot calibrated trace
             plt.plot(freq_ghz, s21_corr, label=f'{serial[-21:-4:1]}')
