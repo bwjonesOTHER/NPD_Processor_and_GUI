@@ -107,23 +107,40 @@ def generate_plots(params):
                 # Interpolate to ensure same shapes
                 trace_64 = np.interp(freq, d64['freq_ref'], d64['avg_trace'])
                 trace_n38 = np.interp(freq, dn38['freq_ref'], dn38['avg_trace'])
+                
                 diff1 = np.abs(d25['avg_trace'] - trace_64)
                 diff2 = np.abs(d25['avg_trace'] - trace_n38)
                 diff3 = np.abs(trace_64 - trace_n38)
 
-                plt.figure(figsize=(10, 6), dpi=150)
-                plt.plot(freq, diff1, label='|25C - 64C|')
-                plt.plot(freq, diff2, label='|25C - (-38C)|')
-                plt.plot(freq, diff3, label='|64C - (-38C)|')
-                plt.xlim(freq[0], freq[-1])
-                plt.grid(True)
+                fig, ax1 = plt.subplots(figsize=(10, 6), dpi=150)
+                
+                # Plot original traces on primary y-axis
+                l1 = ax1.plot(freq, d25['avg_trace'], label='25C Original', color='blue')
+                l2 = ax1.plot(freq, trace_64, label='64C Original', color='red')
+                l3 = ax1.plot(freq, trace_n38, label='-38C Original', color='cyan')
+                
+                ax1.set_xlabel('Frequency (GHz)')
+                ax1.set_ylabel('Original Value')
+                ax1.grid(True)
+                
+                # Plot deltas on secondary y-axis
+                ax2 = ax1.twinx()
+                l4 = ax2.plot(freq, diff1, label='|25C - 64C| Delta', color='orange', linestyle='--')
+                l5 = ax2.plot(freq, diff2, label='|25C - (-38C)| Delta', color='purple', linestyle='--')
+                l6 = ax2.plot(freq, diff3, label='|64C - (-38C)| Delta', color='green', linestyle='--')
+                
+                ax2.set_ylabel('Delta')
+                
+                # Combine legends
+                lines = l1 + l2 + l3 + l4 + l5 + l6
+                labels = [l.get_label() for l in lines]
+                ax1.legend(lines, labels, loc='best', fontsize='small')
+                
                 plt.title(title)
-                plt.xlabel('Frequency (GHz)')
-                plt.ylabel('Delta')
-                plt.legend()
+                plt.xlim(freq[0], freq[-1])
                 
                 safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-                plt.savefig(os.path.join(folder_path, safe_title), dpi=300)
+                plt.savefig(os.path.join(folder_path, safe_title), dpi=300, bbox_inches='tight')
                 plt.close()
             except Exception as e:
                 print(f"Error in {title}:", e)
