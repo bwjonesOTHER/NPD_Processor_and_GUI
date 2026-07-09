@@ -3,7 +3,7 @@ import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Do
 import JSZip from 'jszip';
 import './App.css';
 
-const API_BASE = 'http://127.0.0.1:5001/api';
+const API_BASE = window.location.port === '5173' ? 'http://127.0.0.1:5001/api' : '/api';
 
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -241,7 +241,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.5.7 Bulldog</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.5.8 Bulldog</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
