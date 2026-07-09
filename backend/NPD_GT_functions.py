@@ -292,7 +292,6 @@ def plotS21_multi(runs_data, u_bound_s21, l_bound_s21, temperature, freq_min, fr
             chain_type = extract_pri_red(file)
             net = rf.Network(file)
             freq_ghz = net.f / 1e9
-            freq_ghz_out = freq_ghz
             serial = extract_serial(file)
             
             c = next(color_cycle)
@@ -526,7 +525,6 @@ def plotS11_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_
             chain_type = extract_pri_red(file)
             net = rf.Network(file)
             freq_ghz = net.f / 1e9
-            freq_ghz_out = freq_ghz
             serial = extract_serial(file)
             
             c = next(color_cycle)
@@ -587,7 +585,6 @@ def plotS22_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_
             chain_type = extract_pri_red(file)
             net = rf.Network(file)
             freq_ghz = net.f / 1e9
-            freq_ghz_out = freq_ghz
             serial = extract_serial(file)
             
             c = next(color_cycle)
@@ -648,7 +645,6 @@ def plotGroupDelay_multi(runs_data, temperature, freq_min, freq_max, folder_path
             chain_type = extract_pri_red(file)
             net = rf.Network(file)
             freq_ghz = net.f / 1e9
-            freq_ghz_out = freq_ghz
             serial = extract_serial(file)
             
             group_delay = -np.gradient(np.unwrap(net.s_rad[:, 1, 0])) / np.gradient(net.f)
