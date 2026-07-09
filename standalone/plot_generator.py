@@ -102,10 +102,14 @@ def generate_plots(params):
         if d25 and d64 and dn38:
             try:
                 import matplotlib.pyplot as plt
+                import numpy as np
                 freq = d25['freq_ref']
-                diff1 = np.abs(d25['avg_trace'] - d64['avg_trace'])
-                diff2 = np.abs(d25['avg_trace'] - dn38['avg_trace'])
-                diff3 = np.abs(d64['avg_trace'] - dn38['avg_trace'])
+                # Interpolate to ensure same shapes
+                trace_64 = np.interp(freq, d64['freq_ref'], d64['avg_trace'])
+                trace_n38 = np.interp(freq, dn38['freq_ref'], dn38['avg_trace'])
+                diff1 = np.abs(d25['avg_trace'] - trace_64)
+                diff2 = np.abs(d25['avg_trace'] - trace_n38)
+                diff3 = np.abs(trace_64 - trace_n38)
 
                 plt.figure(figsize=(10, 6), dpi=150)
                 plt.plot(freq, diff1, label='|25C - 64C|')
