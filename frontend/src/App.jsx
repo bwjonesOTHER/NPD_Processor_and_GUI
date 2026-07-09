@@ -38,6 +38,7 @@ function App() {
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
   const [runs, setRuns] = useState(['', '']);
+  const [runNames, setRunNames] = useState([]);
   const [runFiles, setRunFiles] = useState([[], []]);
   const [numRuns, setNumRuns] = useState(2);
   const [numRunsInput, setNumRunsInput] = useState('2');
@@ -512,7 +513,13 @@ function App() {
                             finalUploadPath = json.upload_path;
                           }
                           
+                          const folderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : filesArray[0].name;
                           setRuns([...validRuns, finalUploadPath]);
+                          setRunNames(prev => {
+                            const newNames = [...prev];
+                            newNames[runIndex] = folderName;
+                            return newNames;
+                          });
                         } catch (err) {
                           console.error(err);
                           alert("Upload error: " + err.message);
@@ -529,11 +536,12 @@ function App() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {runs.filter(r => r !== '').map((runPath, idx) => (
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '0.75rem 1rem', borderRadius: '8px' }}>
-                            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}><strong>Run {idx + 1}:</strong> {runPath.split(/[\\\\/]/).pop() || runPath}</span>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}><strong>{runNames[idx] || `Run ${idx + 1}`}:</strong> {runPath.split(/[\\\\/]/).pop() || runPath}</span>
                             <button 
                               className="icon-btn" 
                               onClick={() => {
                                 setRuns(prev => prev.filter(r => r !== '').filter((_, i) => i !== idx));
+                                setRunNames(prev => prev.filter((_, i) => i !== idx));
                               }}
                               style={{ color: '#ff6b6b', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
                               title="Remove Run"
@@ -552,7 +560,7 @@ function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {[0, 1].map((idx) => (
                     <div key={idx} className="form-group">
-                      <label>Run {idx === 0 ? 'A' : 'B'}</label>
+                      <label>{runNames[idx] || `Run ${idx === 0 ? 'A' : 'B'}`}</label>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <input 
                           type="file" 
@@ -563,6 +571,12 @@ function App() {
                             const newFiles = [...runFiles];
                             newFiles[idx] = Array.from(e.target.files);
                             setRunFiles(newFiles);
+                            
+                            const folderName = e.target.files.length > 0 && e.target.files[0].webkitRelativePath ? e.target.files[0].webkitRelativePath.split('/')[0] : '';
+                            const newNames = [...runNames];
+                            newNames[idx] = folderName;
+                            setRunNames(newNames);
+
                             const newRuns = [...runs];
                             newRuns[idx] = '';
                             setRuns(newRuns);
