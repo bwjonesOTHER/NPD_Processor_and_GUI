@@ -97,8 +97,13 @@ def upload_files():
             
     return jsonify({"status": "success", "saved": saved_files})
 
-@app.route('/api/upload_run', methods=['POST'])
+@app.route('/api/upload_run', methods=['GET', 'POST', 'OPTIONS'], strict_slashes=False)
 def upload_run_files():
+    if request.method == 'OPTIONS':
+        return jsonify({}), 200
+    if request.method == 'GET':
+        return jsonify({"error": "Please use POST for uploading runs."}), 400
+        
     if 'files' not in request.files:
         return jsonify({"error": "No files part"}), 400
     
