@@ -75,7 +75,7 @@ function App() {
     let files = runFiles[idx];
     if (!files || files.length === 0) return;
     
-    const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log'];
+    const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log', '.s1p', '.s2p'];
     files = files.filter(f => {
       const name = f.name.toLowerCase();
       return allowedExtensions.some(ext => name.endsWith(ext));
@@ -264,7 +264,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.7.6 Cardinal</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.7.7 Cardinal</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -468,7 +468,7 @@ function App() {
                       onChange={async (e) => {
                         if (!e.target.files || e.target.files.length === 0) return;
                         setUploadingRun(true);
-                        const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log'];
+                        const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log', '.s1p', '.s2p'];
                         const filesArray = Array.from(e.target.files).filter(f => {
                           const name = f.name.toLowerCase();
                           return allowedExtensions.some(ext => name.endsWith(ext));
