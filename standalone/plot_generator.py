@@ -98,7 +98,7 @@ def generate_plots(params):
     spn38 = process_and_render_s21(spar_n38C, '-38C', u_bound_s21, l_bound_s21)
 
     # Temp Diff function
-    def render_temp_diff(d25, d64, dn38, title):
+    def render_temp_diff(d25, d64, dn38, title, fmin, fmax):
         if d25 and d64 and dn38:
             try:
                 import matplotlib.pyplot as plt
@@ -131,24 +131,11 @@ def generate_plots(params):
                 
                 ax2.set_ylabel('Delta')
                 
-                # Separate scales for minimum overlap
-                # Put originals on bottom half, deltas on top half
-                all_orig = np.concatenate([d25['avg_trace'], trace_64, trace_n38])
-                min_orig, max_orig = np.nanmin(all_orig), np.nanmax(all_orig)
-                orig_range = max_orig - min_orig if max_orig != min_orig else 1
-                
-                all_diffs = np.concatenate([diff1, diff2, diff3])
-                max_delta = np.nanmax(all_diffs)
-                if max_delta == 0: max_delta = 1
-                
-                # Ax1 takes bottom half: expand top limit by 150% of range
-                ax1.set_ylim(min_orig - orig_range * 0.1, max_orig + orig_range * 1.5)
-                
-                # Ax2 takes top half: expand bottom limit to 0 minus 150% of max_delta
-                ax2.set_ylim(-max_delta * 1.5, max_delta * 1.2)
+                # Add grey overlay for frequency bounds
+                p1 = ax1.axvspan(fmin, fmax, color='grey', alpha=0.15, label='Freq Bounds')
                 
                 # Combine legends and put outside the plot entirely
-                lines = l1 + l2 + l3 + l4 + l5 + l6
+                lines = l1 + l2 + l3 + l4 + l5 + l6 + [p1]
                 labels = [l.get_label() for l in lines]
                 ax1.legend(lines, labels, loc='upper left', bbox_to_anchor=(1.1, 1), fontsize='small')
                 
@@ -162,9 +149,9 @@ def generate_plots(params):
             except Exception as e:
                 print(f"Error in {title}:", e)
 
-    render_temp_diff(nd25, nd64, ndn38, "NPD Density Temp Delta")
-    render_temp_diff(np25, np64, npn38, "Noise Power Temp Delta")
-    render_temp_diff(sp25, sp64, spn38, "S21 Temp Delta")
+    render_temp_diff(nd25, nd64, ndn38, "NPD Density Temp Delta", freq_min, freq_max)
+    render_temp_diff(np25, np64, npn38, "Noise Power Temp Delta", freq_min, freq_max)
+    render_temp_diff(sp25, sp64, spn38, "S21 Temp Delta", freq_min, freq_max)
 
     png_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if fnmatch.fnmatch(f, '*.png')]
     return png_files
