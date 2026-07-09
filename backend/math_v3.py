@@ -36,12 +36,12 @@ def cap_search(filename, lmoFolder):
     if cap_num is None:
         return None, None
     loss_path = os.path.join(lmoFolder, f"Cap_{cap_num}")
-    base = search_files(loss_path, "Base")
-    bulk = search_files(loss_path, "Bulkhead")
+    base = search_files(loss_path, "*Base*")
+    bulk = search_files(loss_path, "*Bulkhead*")
     return base[0] if base else None, bulk[0] if bulk else None
 
 def load_specA(folder):
-    files = search_files(folder, "SpecA")
+    files = search_files(folder, "*SpecA*")
     if not files:
         return None
     try:

@@ -35,10 +35,10 @@ def generate_plots(params):
         runs_data = []
         for run in runs_list:
             lmo = os.path.join(folder_path, run)
-            files = math_v3.search_files(lmo, suffix)
+            files = math_v3.search_files(lmo, f"*{suffix}*")
             if ext:
                 files = [f for f in files if f.lower().endswith(ext.lower())]
-            gains = math_v3.search_files(lmo, 'Gain')
+            gains = math_v3.search_files(lmo, '*Gain*')
             if files:
                 runs_data.append({'name': run, 'folder': lmo, 'files': files, 'gains': gains})
         return runs_data
