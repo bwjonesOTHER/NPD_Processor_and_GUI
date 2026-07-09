@@ -33,11 +33,11 @@ def generate_plots(params):
             try: os.remove(os.path.join(folder_path, file))
             except: pass
 
-    def _collect_files(runs_list, suffix, ext=None):
+    def _collect_files(runs_list, pattern, ext=None):
         runs_data = []
         for run in runs_list:
             lmo = os.path.join(folder_path, run)
-            files = math_v3.search_files(lmo, f"*{suffix}*")
+            files = math_v3.search_files(lmo, pattern)
             if ext:
                 files = [f for f in files if f.lower().endswith(ext.lower())]
             gains = math_v3.search_files(lmo, '*Gain*')
@@ -46,15 +46,15 @@ def generate_plots(params):
         return runs_data
 
     # === Collect Data ===
-    npdd_all = _collect_files(runs, 'NPDOverTempNPD', '.csv')
-    npdd_25C = _collect_files(runs, 'NPDOverTempNPD_ambient', '.csv')
-    npdd_64C = _collect_files(runs, 'NPDOverTempNPD_hot', '.csv')
-    npdd_n38C = _collect_files(runs, 'NPDOverTempNPD_cold', '.csv')
+    npdd_all = _collect_files(runs, '*NPDOverTempNPD*.csv')
+    npdd_25C = _collect_files(runs, '*NPDOverTempNPD*ambient*.csv')
+    npdd_64C = _collect_files(runs, '*NPDOverTempNPD*hot*.csv')
+    npdd_n38C = _collect_files(runs, '*NPDOverTempNPD*cold*.csv')
 
-    spar_all = _collect_files(runs, 'VSWR', '.s2p')
-    spar_25C = _collect_files(runs, 'VSWR_ambient', '.s2p')
-    spar_64C = _collect_files(runs, 'VSWR_hot', '.s2p')
-    spar_n38C = _collect_files(runs, 'VSWR_cold', '.s2p')
+    spar_all = _collect_files(runs, '*VSWR*.s2p')
+    spar_25C = _collect_files(runs, '*VSWR*ambient*.s2p')
+    spar_64C = _collect_files(runs, '*VSWR*hot*.s2p')
+    spar_n38C = _collect_files(runs, '*VSWR*cold*.s2p')
 
     # === Process Math & Render ===
 
@@ -104,7 +104,6 @@ def generate_plots(params):
                 plt.plot(freq, diff2, label='|25C - (-38C)|')
                 plt.plot(freq, diff3, label='|64C - (-38C)|')
                 plt.xlim(freq[0], freq[-1])
-                plt.ylim(0, 5)
                 plt.grid(True)
                 plt.title(title)
                 plt.xlabel('Frequency (GHz)')
