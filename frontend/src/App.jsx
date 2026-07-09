@@ -241,7 +241,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.5.8 Bulldog</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.5.9 Bulldog</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -445,27 +445,40 @@ function App() {
                       onChange={async (e) => {
                         if (!e.target.files || e.target.files.length === 0) return;
                         setUploadingRun(true);
-                        const data = new FormData();
-                        Array.from(e.target.files).forEach(f => {
-                          data.append('files', f);
-                          data.append('paths', f.webkitRelativePath || f.name);
-                        });
-                        // Filter out empty strings from the initial state
+                        const filesArray = Array.from(e.target.files);
                         const validRuns = runs.filter(r => r !== '');
-                        data.append('run_index', validRuns.length);
+                        const runIndex = validRuns.length;
                         
                         try {
-                          const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
-                          if (!res.ok) {
-                            const errText = await res.text();
-                            throw new Error(`HTTP ${res.status}: ${errText}`);
+                          const CHUNK_SIZE = 50;
+                          let finalUploadPath = '';
+                          
+                          for (let i = 0; i < filesArray.length; i += CHUNK_SIZE) {
+                            const chunk = filesArray.slice(i, i + CHUNK_SIZE);
+                            const data = new FormData();
+                            
+                            chunk.forEach(f => {
+                              data.append('files', f);
+                              data.append('paths', f.webkitRelativePath || f.name);
+                            });
+                            
+                            data.append('run_index', runIndex);
+                            data.append('chunk_index', i === 0 ? '0' : '1');
+                            
+                            const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+                            if (!res.ok) {
+                              const errText = await res.text();
+                              throw new Error(`HTTP ${res.status}: ${errText}`);
+                            }
+                            
+                            const json = await res.json();
+                            if (json.status !== 'success') {
+                              throw new Error(json.error || 'Upload failed');
+                            }
+                            finalUploadPath = json.upload_path;
                           }
-                          const json = await res.json();
-                          if (json.status === 'success') {
-                            setRuns([...validRuns, json.upload_path]);
-                          } else {
-                            alert("Upload failed: " + json.error);
-                          }
+                          
+                          setRuns([...validRuns, finalUploadPath]);
                         } catch (err) {
                           console.error(err);
                           alert("Upload error: " + err.message);

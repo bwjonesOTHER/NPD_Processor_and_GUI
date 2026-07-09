@@ -132,11 +132,12 @@ def upload_run_files():
     files = request.files.getlist('files')
     paths = request.form.getlist('paths')
     run_index = request.form.get('run_index', '0')
+    chunk_index = request.form.get('chunk_index', '0')
     
     dest_folder = os.path.join(os.getcwd(), 'uploads', f'Run_{run_index}')
     
-    # Clean up old files to conserve disk space
-    if os.path.exists(dest_folder):
+    # Clean up old files to conserve disk space ONLY on the first chunk
+    if chunk_index == '0' and os.path.exists(dest_folder):
         shutil.rmtree(dest_folder)
         
     os.makedirs(dest_folder, exist_ok=True)
