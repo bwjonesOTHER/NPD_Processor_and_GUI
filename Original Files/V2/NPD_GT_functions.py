@@ -1,8 +1,6 @@
 import os
 import re
 import skrf as rf
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
