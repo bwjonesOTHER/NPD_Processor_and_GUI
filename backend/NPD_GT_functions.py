@@ -6,23 +6,10 @@ import os
 import itertools
 from datetime import datetime
 
-my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
-my_line_styles = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
-                 'dashed', 'dashed', 'dashed', 'dashed', 'dashed', 'dashed', 'dashed', 'dashed', 'dashed', 'dashed']
-
-def get_title(temperature, suffix):
-    if temperature == 'All':
-        return f"All Temps: {suffix}"
-    return f"{temperature}: {suffix}"
-
-def get_color_and_style():
-    return itertools.cycle(my_colors), itertools.cycle(my_line_styles)
-
 def render_NPD_plot(math_data, u_bound_offset, l_bound_offset, temperature, title_suffix, freq_min, freq_max, req_val, folder_path, show_plot):
     if math_data is None: return None
     
     plt.figure(figsize=(8, 4), dpi=150)
-    color_cycle, line_style_cycle = get_color_and_style()
     
     freq_ref = math_data['freq_ref']
     traces = math_data['traces']
@@ -36,9 +23,7 @@ def render_NPD_plot(math_data, u_bound_offset, l_bound_offset, temperature, titl
     failed_labels = []
     for trace in traces:
         y = trace['y']
-        c = next(color_cycle)
-        line_style = next(line_style_cycle)
-        plt.plot(freq_ref, y, label=trace['label'], color=c, linestyle=line_style)
+        plt.plot(freq_ref, y, label=trace['label'])
         
         # Check fail within window
         if np.any(y[mask] > upper[mask]) or np.any(y[mask] < lower[mask]):
@@ -62,7 +47,7 @@ def render_NPD_plot(math_data, u_bound_offset, l_bound_offset, temperature, titl
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('NP (dBm)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
@@ -83,8 +68,7 @@ def render_NPD_plot(math_data, u_bound_offset, l_bound_offset, temperature, titl
 def render_S21_plot(math_data, temperature, title_suffix, freq_min, freq_max, folder_path, show_plot):
     if math_data is None: return None
     
-    plt.figure(figsize=(8, 4), dpi=150)
-    color_cycle, line_style_cycle = get_color_and_style()
+    plt.figure(figsize=(7, 4), dpi=150)
     
     freq_ref = math_data['freq_ref']
     traces = math_data['traces']
@@ -98,9 +82,7 @@ def render_S21_plot(math_data, temperature, title_suffix, freq_min, freq_max, fo
     failed_labels = []
     for trace in traces:
         y = trace['y']
-        c = next(color_cycle)
-        line_style = next(line_style_cycle)
-        plt.plot(freq_ref, y, label=trace['label'], color=c, linestyle=line_style)
+        plt.plot(freq_ref, y, label=trace['label'])
         
         # Check fail within window
         if np.any(y[mask] > upper[mask]) or np.any(y[mask] < lower[mask]):
@@ -124,7 +106,7 @@ def render_S21_plot(math_data, temperature, title_suffix, freq_min, freq_max, fo
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('S21 (dB)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.axvline(x=freq_min, color='g', label='axvline - full height')
     plt.axvline(x=freq_max, color='g', label='axvline - full height')
     
