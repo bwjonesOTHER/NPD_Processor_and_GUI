@@ -129,6 +129,14 @@ def process_NPD(runs_data, n_avg, is_density=False):
             serial = extract_serial(file)
             chain = extract_pri_red(file)
             label = f"{serial[-16:-8]} {chain}"
+            # Extract temp from filename
+            f_lower = file.lower()
+            if 'ambient' in f_lower or '25c' in f_lower:
+                label += " (25C)"
+            elif 'hot' in f_lower or '64c' in f_lower:
+                label += " (64C)"
+            elif 'cold' in f_lower or '38c' in f_lower:
+                label += " (-38C)"
             if len(runs_data) > 1: label += f" ({run['name']})"
             
             traces.append({'label': label, 'y': noise_mod, 'file': file})
@@ -167,6 +175,14 @@ def process_S21(runs_data):
             serial = extract_serial(file)
             chain = extract_pri_red(file)
             label = f"{serial[-16:-8]} {chain}"
+            # Extract temp from filename
+            f_lower = file.lower()
+            if 'ambient' in f_lower or '25c' in f_lower:
+                label += " (25C)"
+            elif 'hot' in f_lower or '64c' in f_lower:
+                label += " (64C)"
+            elif 'cold' in f_lower or '38c' in f_lower:
+                label += " (-38C)"
             if len(runs_data) > 1: label += f" ({run['name']})"
             
             traces.append({'label': label, 'y': s21, 'file': file})
