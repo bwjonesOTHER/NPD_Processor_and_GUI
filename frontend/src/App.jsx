@@ -15,7 +15,6 @@ function App() {
   
   // Form state
   const [formData, setFormData] = useState({
-    basePath: '',
     lmoNumber: '',
     runNumber: '',
     capNumber: '',
@@ -40,6 +39,7 @@ function App() {
   const [folders, setFolders] = useState([]);
   const [runs, setRuns] = useState(['', '']);
   const [numRuns, setNumRuns] = useState(2);
+  const [numRunsInput, setNumRunsInput] = useState('2');
 
 
 
@@ -73,12 +73,16 @@ function App() {
     setPlotParams(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleBrowseDirectory = async () => {
+  const handleBrowseRun = async (index) => {
     try {
       const res = await fetch(`${API_BASE}/choose_directory`);
       const data = await res.json();
       if (data.success && data.path) {
-        setFormData(prev => ({ ...prev, basePath: data.path }));
+        setRuns(prev => {
+          const newRuns = [...prev];
+          newRuns[index] = data.path;
+          return newRuns;
+        });
       } else if (!data.success && data.error && data.error !== "No directory selected") {
         alert("Error opening directory picker: " + data.error);
       }
@@ -144,15 +148,7 @@ function App() {
     }
   };
 
-  const fetchFolders = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/folders`);
-      const data = await res.json();
-      setFolders(data.folders || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // uploadFiles removed fetchFolders call and submitRuns removed fetchFolders call
 
   const submitRuns = async () => {
     try {
@@ -270,13 +266,7 @@ function App() {
               <h2>Data Source & Info</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
 
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label>Base Path (for inputs)</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder="e.g. C:\Data\NPD" style={{ flex: 1 }} />
-                  <button type="button" onClick={handleBrowseDirectory} className="secondary" style={{ whiteSpace: 'nowrap' }}>Browse...</button>
-                </div>
-              </div>
+
 
               <div className="form-group">
                 <label>LMO Number (####-##)</label>
@@ -330,7 +320,6 @@ function App() {
                     if (testType === 2) {
                       setCurrentStep(4);
                     } else {
-                      await fetchFolders();
                       setCurrentStep(3);
                     }
                   }} className="primary">Access</button>
@@ -391,18 +380,22 @@ function App() {
                 <div className="form-group" style={{ marginBottom: '2rem' }}>
                   <label>Number of Runs (N)</label>
                   <input 
-                    type="number" 
-                    min="1" 
-                    value={numRuns} 
+                    type="text" 
+                    value={numRunsInput} 
                     onChange={(e) => {
-                      const n = parseInt(e.target.value) || 1;
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setNumRunsInput(val);
+                    }} 
+                    onBlur={() => {
+                      const n = parseInt(numRunsInput) || 1;
                       setNumRuns(n);
+                      setNumRunsInput(n.toString());
                       setRuns(prev => {
                         const newRuns = [...prev];
                         while (newRuns.length < n) newRuns.push('');
                         return newRuns.slice(0, n);
                       });
-                    }} 
+                    }}
                   />
                 </div>
               )}
@@ -411,17 +404,19 @@ function App() {
                 {runs.map((runVal, idx) => (
                   <div key={idx} className="form-group">
                     <label>Run {idx + 1}</label>
-                    <select 
-                      value={runVal} 
-                      onChange={e => {
-                        const newRuns = [...runs];
-                        newRuns[idx] = e.target.value;
-                        setRuns(newRuns);
-                      }}
-                    >
-                      <option value="">Select a folder...</option>
-                      {folders.map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input 
+                        type="text" 
+                        value={runVal} 
+                        onChange={e => {
+                          const newRuns = [...runs];
+                          newRuns[idx] = e.target.value;
+                          setRuns(newRuns);
+                        }}
+                        style={{ flex: 1 }}
+                      />
+                      <button type="button" onClick={() => handleBrowseRun(idx)} className="secondary" style={{ whiteSpace: 'nowrap' }}>Browse...</button>
+                    </div>
                   </div>
                 ))}
               </div>

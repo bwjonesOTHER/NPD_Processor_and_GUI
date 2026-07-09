@@ -247,10 +247,6 @@ def api_generate_plots():
     # We need to set folder_path and runs for Test 1
     if test == 1:
         import plot_generator
-        folder_path = read_txt("upload_path.txt")
-        if not folder_path:
-            folder_path = read_txt("path.txt")
-            
         runs = []
         if os.path.exists("SelectedRuns.txt"):
             with open("SelectedRuns.txt", "r") as f:
@@ -259,6 +255,13 @@ def api_generate_plots():
             run_a = read_txt("RunA_Path.txt")
             run_b = read_txt("RunB_Path.txt")
             runs = [run for run in [run_a, run_b] if run]
+            
+        if runs:
+            folder_path = runs[0]
+        else:
+            folder_path = read_txt("upload_path.txt")
+            if not folder_path:
+                folder_path = read_txt("path.txt")
             
         params['folder_path'] = folder_path
         params['runs'] = runs
