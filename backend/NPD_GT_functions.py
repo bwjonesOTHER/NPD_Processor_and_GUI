@@ -154,13 +154,13 @@ def plotNPD_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperature, freq_
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('NP (dBm)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.plot([freq_min, freq_max], [reqS11Val, reqS11Val], color='r')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100, label='Lower bound')
-    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100, label='Upper bound')
+    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Lower bound')
+    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
     current_date = datetime.now()
@@ -257,13 +257,13 @@ def plotNPD_density_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperatur
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('NPD (dBm/Hz)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.plot([freq_min, freq_max], [reqS11Val, reqS11Val], color='r')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100, label='Lower bound')
-    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100, label='Upper bound')
+    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Lower bound')
+    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
     current_date = datetime.now()
@@ -327,12 +327,12 @@ def plotS21_multi(runs_data, u_bound_s21, l_bound_s21, temperature, freq_min, fr
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('S21 (dB)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100, label='Lower bound')
-    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100, label='Upper bound')
+    plt.plot(freq_ghz_out, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Lower bound')
+    plt.plot(freq_ghz_out, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz_out)//10), label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
     current_date = datetime.now()
@@ -553,10 +553,10 @@ def plotS11_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('S11 (dB)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
     current_date = datetime.now()
@@ -613,10 +613,10 @@ def plotS22_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('S22 (dB)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
     current_date = datetime.now()
@@ -669,10 +669,10 @@ def plotGroupDelay_multi(runs_data, temperature, freq_min, freq_max, folder_path
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('Group Delay (ns)')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     
     current_date = datetime.now()
