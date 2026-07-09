@@ -112,7 +112,7 @@ def generate_plots(params):
                 diff2 = np.abs(d25['avg_trace'] - trace_n38)
                 diff3 = np.abs(trace_64 - trace_n38)
 
-                fig, ax1 = plt.subplots(figsize=(10, 6), dpi=150)
+                fig, ax1 = plt.subplots(figsize=(12, 6), dpi=150)
                 
                 # Plot original traces on primary y-axis
                 l1 = ax1.plot(freq, d25['avg_trace'], label='25C Original', color='blue')
@@ -131,15 +131,32 @@ def generate_plots(params):
                 
                 ax2.set_ylabel('Delta')
                 
-                # Combine legends
+                # Separate scales for minimum overlap
+                # Put originals on bottom half, deltas on top half
+                all_orig = np.concatenate([d25['avg_trace'], trace_64, trace_n38])
+                min_orig, max_orig = np.nanmin(all_orig), np.nanmax(all_orig)
+                orig_range = max_orig - min_orig if max_orig != min_orig else 1
+                
+                all_diffs = np.concatenate([diff1, diff2, diff3])
+                max_delta = np.nanmax(all_diffs)
+                if max_delta == 0: max_delta = 1
+                
+                # Ax1 takes bottom half: expand top limit by 150% of range
+                ax1.set_ylim(min_orig - orig_range * 0.1, max_orig + orig_range * 1.5)
+                
+                # Ax2 takes top half: expand bottom limit to 0 minus 150% of max_delta
+                ax2.set_ylim(-max_delta * 1.5, max_delta * 1.2)
+                
+                # Combine legends and put outside the plot entirely
                 lines = l1 + l2 + l3 + l4 + l5 + l6
                 labels = [l.get_label() for l in lines]
-                ax1.legend(lines, labels, loc='best', fontsize='small')
+                ax1.legend(lines, labels, loc='upper left', bbox_to_anchor=(1.1, 1), fontsize='small')
                 
                 plt.title(title)
                 plt.xlim(freq[0], freq[-1])
                 
                 safe_title = title.replace(" ", "_").replace(":", "") + ".png"
+                # bbox_inches='tight' ensures the outside legend isn't cut off
                 plt.savefig(os.path.join(folder_path, safe_title), dpi=300, bbox_inches='tight')
                 plt.close()
             except Exception as e:
