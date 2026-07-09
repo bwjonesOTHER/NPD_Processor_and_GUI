@@ -8,7 +8,9 @@ import pandas as pd
 from colorama import init, Fore, Back, Style
 
 
-def main():
+import glob
+
+def generate_plots(params):
     """Input Params"""
 
     # Edge:L110172, Center:L110173
@@ -52,14 +54,14 @@ def main():
 
 
 
-    freq_min = 2.7  # operational freq range
-    freq_max = 4.1  # operational freq range
+    freq_min = float(params.get('freq_min', 2.7))
+    freq_max = float(params.get('freq_max', 4.1))
     reqS11Ns = [700, 2100]
-    reqS11Val = -10
-    reqS21Val = -14
+    reqS11Val = float(params.get('reqS11Val', -10))
+    reqS21Val = float(params.get('reqS21Val', -14))
 
-    n_avg = 20  # use even numbers
-    show_plot = 1
+    n_avg = int(params.get('n_avg', 20))
+    show_plot = 0
 
     def search_files(root_dir, filename_part, SN_value):
         matches = []
@@ -463,21 +465,6 @@ def main():
 
     if filesSparA and filesSparB:
         plotS21(filesSparA, filesSparB)
-    """
-    if filesS11:
-        plotS22(filesS11)
 
-    if filesSpar:
-        #plotS21(filesSpar)
-        plotS21smooth(filesSpar)
-
-    if filesSpar:
-        plotMagRat(filesSpar)
-
-    if filesSpar:
-        plotPD(filesSpar)
-    """
-
-
-if __name__ == "__main__":
-    main()
+    png_files = glob.glob(os.path.join(full_sn_path, folderA, '*.png')) + glob.glob(os.path.join(full_sn_path, folderB, '*.png'))
+    return png_files

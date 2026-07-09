@@ -16,15 +16,14 @@ def generate_plots(params):
     freq_max = float(params.get('freq_max', 4.1))
     reqS11Val = float(params.get('reqS11Val', -10))
     reqS21Val = float(params.get('reqS21Val', 10))
+    
     n_avg = int(params.get('n_avg', 51))
+    show_plot = 0
     
     u_bound_s21 = float(params.get('u_bound_s21', 1.0))
     l_bound_s21 = float(params.get('l_bound_s21', 1.0))
-    
     u_bound_npd = float(params.get('u_bound_npd', 1.0))
     l_bound_npd = float(params.get('l_bound_npd', 1.0))
-
-    show_plot = 0
 
     # Delete old PNGs to avoid returning previous plots
     for old_png in glob.glob(os.path.join(folder_path, '*.png')):
@@ -50,10 +49,10 @@ def generate_plots(params):
     npdd_n38C = _collect_files(runs, 'NPDOverTempNPD_cold')
 
     # SPars
-    spar_all = _collect_files(runs, 'NPDOverTempVSWR')
-    spar_25C = _collect_files(runs, 'NPDOverTempVSWR_ambient')
-    spar_64C = _collect_files(runs, 'NPDOverTempVSWR_hot')
-    spar_n38C = _collect_files(runs, 'NPDOverTempVSWR_cold')
+    spar_all = _collect_files(runs, 'VSWR')
+    spar_25C = _collect_files(runs, 'VSWR_ambient')
+    spar_64C = _collect_files(runs, 'VSWR_hot')
+    spar_n38C = _collect_files(runs, 'VSWR_cold')
     
 
     # === Generate plots ===
