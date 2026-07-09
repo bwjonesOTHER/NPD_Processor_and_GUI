@@ -59,10 +59,10 @@ def generate_plots(params):
     npdd_64C = _collect_files(runs, '*NPDOverTempNPD*hot*.csv')
     npdd_n38C = _collect_files(runs, '*NPDOverTempNPD*cold*.csv')
 
-    spar_all = _collect_files(runs, '*VSWR*.s2p')
-    spar_25C = _collect_files(runs, '*VSWR*ambient*.s2p')
-    spar_64C = _collect_files(runs, '*VSWR*hot*.s2p')
-    spar_n38C = _collect_files(runs, '*VSWR*cold*.s2p')
+    spar_all = _collect_files(runs, '*VSWR*', '.s2p')
+    spar_25C = _collect_files(runs, '*VSWR*ambient*', '.s2p')
+    spar_64C = _collect_files(runs, '*VSWR*hot*', '.s2p')
+    spar_n38C = _collect_files(runs, '*VSWR*cold*', '.s2p')
 
     # === Process Math & Render ===
 
