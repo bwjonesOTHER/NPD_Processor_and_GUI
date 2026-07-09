@@ -24,6 +24,20 @@ def read_txt(filename):
             return f.read().strip()
     return ""
 
+def hydrate_directory(directory_path):
+    if not directory_path or not os.path.exists(directory_path):
+        return
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            try:
+                # Reading 1 byte forces Windows OneDrive to download the file on-demand
+                with open(file_path, "rb") as f:
+                    f.read(1)
+            except Exception:
+                pass
+
+
 @app.route('/api/connect', methods=['POST'])
 def connect_sharepoint():
     data = request.json
@@ -303,6 +317,12 @@ def api_generate_plots():
         params['folder_path'] = folder_path
         params['runs'] = runs
         
+        if folder_path:
+            hydrate_directory(folder_path)
+        if runs:
+            for r in runs:
+                if r: hydrate_directory(r)
+        
         try:
             png_files = plot_generator.generate_plots(params)
         except Exception as e:
@@ -312,6 +332,9 @@ def api_generate_plots():
             
     elif test == 2:
         import Macallan_PMA_BenchtopNPD_PlotData_v2
+        path = read_txt("path.txt")
+        if path:
+            hydrate_directory(path)
         try:
             png_files = Macallan_PMA_BenchtopNPD_PlotData_v2.generate_plots(params)
         except Exception as e:
@@ -321,6 +344,10 @@ def api_generate_plots():
             
     elif test == 3:
         import Macallan_PMA_Array_BenchtopNPD_PlotData_v2
+        path1 = read_txt("path.txt")
+        path2 = read_txt("upload_path.txt")
+        if path1: hydrate_directory(path1)
+        if path2: hydrate_directory(path2)
         try:
             png_files = Macallan_PMA_Array_BenchtopNPD_PlotData_v2.generate_plots(params)
         except Exception as e:
