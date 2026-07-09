@@ -68,11 +68,14 @@ def submit_file_info():
     
     lmo = data.get('lmoNumber', '').strip()
     
+    # Store base path based on input
     write_txt("path.txt", base_path)
     
     upload_path = ""
     
     if test == 1:
+        # For Test 1, the Tkinter app had a hardcoded path and didn't write it to upload_path explicitly before upload_data
+        # But wait, in upload_data it did: upload_path = os.path.join(r"File Path for Inputs")
         upload_path = base_path
         write_txt("upload_path.txt", upload_path)
         
@@ -90,7 +93,7 @@ def submit_file_info():
         upload_path = os.path.join(base_path, sn_folder)
         os.makedirs(upload_path, exist_ok=True)
         write_txt("SN.txt", sn)
-        write_txt("path.txt", upload_path)
+        write_txt("path.txt", upload_path) # Overwrites path.txt with upload_path as in original code
         write_txt("upload_path.txt", upload_path)
         
     return jsonify({"status": "success", "upload_path": upload_path})
@@ -117,6 +120,43 @@ def upload_files():
             
     return jsonify({"status": "success", "saved": saved_files})
 
+@app.route('/api/upload_run', methods=['GET', 'POST', 'OPTIONS'], strict_slashes=False)
+def upload_run_files():
+    if request.method == 'OPTIONS':
+        return jsonify({}), 200
+    if request.method == 'GET':
+        return jsonify({"error": "Please use POST for uploading runs."}), 400
+        
+    if 'files' not in request.files:
+        return jsonify({"error": "No files part"}), 400
+    
+    files = request.files.getlist('files')
+    paths = request.form.getlist('paths')
+    run_index = request.form.get('run_index', '0')
+    
+    dest_folder = os.path.join(os.getcwd(), 'uploads', f'Run_{run_index}')
+    
+    # Clean up old files to conserve disk space
+    if os.path.exists(dest_folder):
+        shutil.rmtree(dest_folder)
+        
+    os.makedirs(dest_folder, exist_ok=True)
+    
+    saved_files = []
+    for idx, file in enumerate(files):
+        if file.filename:
+            # Reconstruct relative path if provided, otherwise just base filename
+            relative_path = paths[idx] if idx < len(paths) else os.path.basename(file.filename)
+            filepath = os.path.join(dest_folder, relative_path)
+            
+            # Ensure subdirectories exist
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            
+            file.save(filepath)
+            saved_files.append(relative_path)
+            
+    return jsonify({"status": "success", "upload_path": dest_folder, "saved": saved_files})
+
 @app.route('/api/folders', methods=['GET'])
 def get_folders():
     path = read_txt("upload_path.txt") # Use upload_path so Test 3 looks inside the SN folder
@@ -138,13 +178,21 @@ def get_folders():
 @app.route('/api/select-runs', methods=['POST'])
 def select_runs():
     data = request.json
-    run_a = data.get('runA')
-    run_b = data.get('runB')
     
-    if run_a:
-        write_txt("RunA_Path.txt", run_a)
-    if run_b:
-        write_txt("RunB_Path.txt", run_b)
+    if 'runs' in data:
+        with open("SelectedRuns.txt", "w") as f:
+            for run in data['runs']:
+                if run:
+                    f.write(run + "\n")
+    
+    # Legacy support for Test 3
+    if 'runA' in data or 'runB' in data:
+        run_a = data.get('runA')
+        run_b = data.get('runB')
+        if run_a:
+            write_txt("RunA_Path.txt", run_a)
+        if run_b:
+            write_txt("RunB_Path.txt", run_b)
         
     return jsonify({"status": "success"})
 
@@ -259,13 +307,24 @@ def api_generate_plots():
     # We need to set folder_path and runs for Test 1
     if test == 1:
         import plot_generator
-        folder_path = read_txt("upload_path.txt")
-        if not folder_path:
-            folder_path = read_txt("path.txt")
-        run_a = read_txt("RunA_Path.txt")
-        run_b = read_txt("RunB_Path.txt")
+        runs = []
+        if os.path.exists("SelectedRuns.txt"):
+            with open("SelectedRuns.txt", "r") as f:
+                runs = [line.strip() for line in f if line.strip()]
+        else:
+            run_a = read_txt("RunA_Path.txt")
+            run_b = read_txt("RunB_Path.txt")
+            runs = [run for run in [run_a, run_b] if run]
+            
+        if runs:
+            folder_path = runs[0]
+        else:
+            folder_path = read_txt("upload_path.txt")
+            if not folder_path:
+                folder_path = read_txt("path.txt")
+            
         params['folder_path'] = folder_path
-        params['runs'] = [run for run in [run_a, run_b] if run]
+        params['runs'] = runs
         
         try:
             png_files = plot_generator.generate_plots(params)
@@ -307,5 +366,6 @@ def api_generate_plots():
     
     return jsonify({"success": True, "images": results})
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5001, debug=False)

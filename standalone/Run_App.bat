@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
 echo Starting NPD Processor GUI...
-start "" "http://localhost:5000"
+start "" "http://localhost:5001"
 if exist ".\python\python.exe" (
     echo Found portable Python environment.
     .\python\python.exe app.py
