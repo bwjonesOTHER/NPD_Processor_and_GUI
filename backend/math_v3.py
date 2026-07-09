@@ -71,37 +71,46 @@ def process_file_math(file, folder, specA_s21, n_avg, is_density=False):
     noise_pow = noise_pow[:min_len]
 
     base_loss, bulk_loss = cap_search(file, folder)
-    cable_s21 = rf.Network(base_loss).s_db[:, 1, 0] if base_loss else 0
-    bulk_s21 = rf.Network(bulk_loss).s_db[:, 1, 0] if bulk_loss else 0
-    spec_s21 = specA_s21 if isinstance(specA_s21, np.ndarray) else 0
+    
+    if base_loss:
+        nw = rf.Network(base_loss)
+        cable_s21 = np.interp(freq_ghz, nw.f / 1e9, nw.s_db[:, 1, 0])
+    else:
+        cable_s21 = 0
 
-    # Fallback to safely interpolate cable/bulk/spec if their sizes don't match noise_pow exactly before smoothing
-    if isinstance(cable_s21, np.ndarray) and len(cable_s21) != len(noise_pow):
-        cable_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(cable_s21)), cable_s21)
-    if isinstance(bulk_s21, np.ndarray) and len(bulk_s21) != len(noise_pow):
-        bulk_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(bulk_s21)), bulk_s21)
-    if isinstance(spec_s21, np.ndarray) and len(spec_s21) != len(noise_pow):
-        spec_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(spec_s21)), spec_s21)
+    if bulk_loss:
+        nw = rf.Network(bulk_loss)
+        bulk_s21 = np.interp(freq_ghz, nw.f / 1e9, nw.s_db[:, 1, 0])
+    else:
+        bulk_s21 = 0
+
+    # Assume specA_s21 is an array corresponding to freq_ghz, or interpolate if we had its freq
+    if isinstance(specA_s21, np.ndarray):
+        if len(specA_s21) != len(noise_pow):
+            # Fallback if no freq grid was provided for specA
+            spec_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(specA_s21)), specA_s21)
+        else:
+            spec_s21 = specA_s21
+    else:
+        spec_s21 = 0
 
     # Smoothing (exactly as in V3)
     if n_avg > 1:
         noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode="valid")
-        freq_ghz = freq_ghz[int(n_avg / 2):int(1 - n_avg / 2)]
+        
+        start_idx = int(n_avg / 2)
+        end_idx = start_idx + len(noise_pow)
+        freq_ghz = freq_ghz[start_idx:end_idx]
 
         if isinstance(cable_s21, np.ndarray):
             cable_s21 = np.convolve(cable_s21, np.ones(n_avg) / n_avg, mode="valid")
+            cable_s21 = cable_s21[:len(noise_pow)] # Ensure exact length
         if isinstance(bulk_s21, np.ndarray):
             bulk_s21 = np.convolve(bulk_s21, np.ones(n_avg) / n_avg, mode="valid")
+            bulk_s21 = bulk_s21[:len(noise_pow)]
         if isinstance(spec_s21, np.ndarray):
             spec_s21 = np.convolve(spec_s21, np.ones(n_avg) / n_avg, mode="valid")
-            
-        # Re-ensure lengths match in case n_avg was even, which causes mode="valid" length mismatches
-        min_len = min(len(freq_ghz), len(noise_pow))
-        freq_ghz = freq_ghz[:min_len]
-        noise_pow = noise_pow[:min_len]
-        if isinstance(cable_s21, np.ndarray): cable_s21 = cable_s21[:min_len]
-        if isinstance(bulk_s21, np.ndarray): bulk_s21 = bulk_s21[:min_len]
-        if isinstance(spec_s21, np.ndarray): spec_s21 = spec_s21[:min_len]
+            spec_s21 = spec_s21[:len(noise_pow)]
 
     noise_mod = noise_pow - cable_s21 - bulk_s21 - spec_s21
     return freq_ghz, noise_mod

@@ -19,7 +19,7 @@ def generate_plots(params):
     reqS11Val = float(params.get('reqS11Val', -10))
     reqS21Val = float(params.get('reqS21Val', 10))
     
-    n_avg = int(params.get('n_avg', 51))
+    n_avg = int(params.get('n_avg', 20))
     show_plot = 0
     
     u_bound_s21 = float(params.get('u_bound_s21', 1.0))
@@ -130,6 +130,16 @@ def generate_plots(params):
                 l6 = ax2.plot(freq, diff3, label='|64C - (-38C)| Delta', color='green', linestyle='--')
                 
                 ax2.set_ylabel('Delta')
+                
+                if "S21" in title:
+                    ax1.set_ylim(-40, 40)
+                    ax2.set_ylim(-10, 10)
+                elif "Density" in title:
+                    ax1.set_ylim(-170, -110)
+                    ax2.set_ylim(-10, 10)
+                else:
+                    ax1.set_ylim(-130, -90)
+                    ax2.set_ylim(-10, 10)
                 
                 # Add grey overlay for frequency bounds
                 p1 = ax1.axvspan(fmin, fmax, color='grey', alpha=0.15, label='Freq Bounds')
