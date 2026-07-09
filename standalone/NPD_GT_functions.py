@@ -112,16 +112,42 @@ def plotNPD_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperature, freq_
             num_df = df_all.apply(pd.to_numeric, errors='coerce')
             freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
             noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)
+            min_len = min(len(freq_ghz), len(noise_pow))
+            freq_ghz = freq_ghz[:min_len]
+            noise_pow = noise_pow[:min_len]
             
+            # Interpolate S21 references to match the noise_pow frequency grid before any smoothing
+            if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) != len(noise_pow):
+                UUT_cable_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(UUT_cable_s21)), UUT_cable_s21)
+            if isinstance(specA_s21, np.ndarray) and len(specA_s21) != len(noise_pow):
+                specA_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(specA_s21)), specA_s21)
+            if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) != len(noise_pow):
+                UUT_bulkhead_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(UUT_bulkhead_s21)), UUT_bulkhead_s21)
+
             if n_avg > 1:
+                original_len = len(noise_pow)
                 noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
-                freq_ghz = freq_ghz[int(n_avg/2):-int(n_avg/2)]
-                if isinstance(UUT_cable_s21, np.ndarray):
+                diff = len(freq_ghz) - len(noise_pow)
+                if diff > 0:
+                    start = diff // 2
+                    end = diff - start
+                    freq_ghz = freq_ghz[start:-end] if end > 0 else freq_ghz[start:]
+                
+                if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) == original_len:
                     UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-                if isinstance(specA_s21, np.ndarray):
+                elif isinstance(UUT_cable_s21, np.ndarray):
+                    UUT_cable_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(UUT_cable_s21)), UUT_cable_s21)
+                    
+                if isinstance(specA_s21, np.ndarray) and len(specA_s21) == original_len:
                     specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-                if isinstance(UUT_bulkhead_s21, np.ndarray):
+                elif isinstance(specA_s21, np.ndarray):
+                    specA_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(specA_s21)), specA_s21)
+                    
+                if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) == original_len:
                     UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+                elif isinstance(UUT_bulkhead_s21, np.ndarray):
+                    UUT_bulkhead_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(UUT_bulkhead_s21)), UUT_bulkhead_s21)
+
                 
             noise_pow_mod = noise_pow - specA_s21 - UUT_cable_s21 - UUT_bulkhead_s21
             if freq_ghz_out is None:
@@ -216,14 +242,29 @@ def plotNPD_density_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperatur
             noise_pow = remove_nan(num_df.values[:, 2], remove_infinite=True) # Density is index 2
             
             if n_avg > 1:
+                original_len = len(noise_pow)
                 noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
-                freq_ghz = freq_ghz[int(n_avg/2):-int(n_avg/2)]
-                if isinstance(UUT_cable_s21, np.ndarray):
+                diff = len(freq_ghz) - len(noise_pow)
+                if diff > 0:
+                    start = diff // 2
+                    end = diff - start
+                    freq_ghz = freq_ghz[start:-end] if end > 0 else freq_ghz[start:]
+                
+                if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) == original_len:
                     UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-                if isinstance(specA_s21, np.ndarray):
+                elif isinstance(UUT_cable_s21, np.ndarray):
+                    UUT_cable_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(UUT_cable_s21)), UUT_cable_s21)
+                    
+                if isinstance(specA_s21, np.ndarray) and len(specA_s21) == original_len:
                     specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-                if isinstance(UUT_bulkhead_s21, np.ndarray):
+                elif isinstance(specA_s21, np.ndarray):
+                    specA_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(specA_s21)), specA_s21)
+                    
+                if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) == original_len:
                     UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+                elif isinstance(UUT_bulkhead_s21, np.ndarray):
+                    UUT_bulkhead_s21 = np.interp(freq_ghz, np.linspace(freq_ghz[0], freq_ghz[-1], len(UUT_bulkhead_s21)), UUT_bulkhead_s21)
+
                 
             noise_pow_mod = noise_pow - specA_s21 - UUT_cable_s21 - UUT_bulkhead_s21
             if freq_ghz_out is None:
