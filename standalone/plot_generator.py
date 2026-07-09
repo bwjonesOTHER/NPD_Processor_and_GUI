@@ -27,18 +27,20 @@ def generate_plots(params):
     u_bound_npd = float(params.get('u_bound_npd', 1.0))
     l_bound_npd = float(params.get('l_bound_npd', 1.0))
 
-    for old_png in glob.glob(os.path.join(folder_path, '*.png')):
-        try: os.remove(old_png)
-        except: pass
+    import fnmatch
+    for file in os.listdir(folder_path):
+        if fnmatch.fnmatch(file, '*.png'):
+            try: os.remove(os.path.join(folder_path, file))
+            except: pass
 
     def _collect_files(runs_list, suffix, ext=None):
         runs_data = []
         for run in runs_list:
             lmo = os.path.join(folder_path, run)
-            files = math_v3.search_files(lmo, suffix)
+            files = math_v3.search_files(lmo, f"*{suffix}*")
             if ext:
                 files = [f for f in files if f.lower().endswith(ext.lower())]
-            gains = math_v3.search_files(lmo, 'Gain')
+            gains = math_v3.search_files(lmo, '*Gain*')
             if files:
                 runs_data.append({'name': run, 'folder': lmo, 'files': files, 'gains': gains})
         return runs_data
@@ -119,6 +121,6 @@ def generate_plots(params):
     render_temp_diff(np25, np64, npn38, "Noise Power Temp Delta")
     render_temp_diff(sp25, sp64, spn38, "S21 Temp Delta")
 
-    png_files = glob.glob(os.path.join(folder_path, '*.png'))
+    png_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if fnmatch.fnmatch(f, '*.png')]
     return png_files
 

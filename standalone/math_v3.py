@@ -3,10 +3,18 @@ import re
 import numpy as np
 import pandas as pd
 import skrf as rf
-from glob import glob
+import fnmatch
+import os
+
+import fnmatch
 
 def search_files(root_dir, pattern):
-    return glob(os.path.join(root_dir, "**", pattern), recursive=True)
+    matched_files = []
+    for dirpath, _, filenames in os.walk(root_dir):
+        for file in filenames:
+            if fnmatch.fnmatch(file, pattern):
+                matched_files.append(os.path.join(dirpath, file))
+    return matched_files
 
 def remove_nan(arr, remove_infinite=False):
     if not isinstance(arr, np.ndarray):
@@ -36,12 +44,12 @@ def cap_search(filename, lmoFolder):
     if cap_num is None:
         return None, None
     loss_path = os.path.join(lmoFolder, f"Cap_{cap_num}")
-    base = search_files(loss_path, "Base")
-    bulk = search_files(loss_path, "Bulkhead")
+    base = search_files(loss_path, "*Base*")
+    bulk = search_files(loss_path, "*Bulkhead*")
     return base[0] if base else None, bulk[0] if bulk else None
 
 def load_specA(folder):
-    files = search_files(folder, "SpecA")
+    files = search_files(folder, "*SpecA*")
     if not files:
         return None
     try:
