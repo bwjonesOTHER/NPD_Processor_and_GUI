@@ -50,8 +50,15 @@ def cap_search(filename, lmoFolder):
     if match:
         loss_path = os.path.join(lmoFolder, match.group(0))
         try:
-            res_loss = search_files(loss_path, 'Base')
+            last_filename = extract_pri_red(filename)
+            res_loss = search_files(loss_path, f'Base_{last_filename}')
+            if not res_loss:
+                res_loss = search_files(loss_path, 'Base')
+                
             res_bulk = search_files(loss_path, 'Bulkhead')
+            if not res_bulk:
+                res_bulk = search_files(loss_path, 'fixture')
+                
             if res_loss: loss = res_loss[0]
             if res_bulk: loss_bulkhead = res_bulk[0]
         except Exception:
@@ -117,6 +124,11 @@ def plotNPD_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperature, freq_
                     UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
                 
             noise_pow_mod = noise_pow - specA_s21 - UUT_cable_s21 - UUT_bulkhead_s21
+            if freq_ghz_out is None:
+                freq_ghz_out = freq_ghz
+            else:
+                noise_pow_mod = np.interp(freq_ghz_out, freq_ghz, noise_pow_mod)
+                freq_ghz = freq_ghz_out
             all_files_avg.append(noise_pow_mod)
             freq_ghz_out = freq_ghz
             
@@ -214,6 +226,11 @@ def plotNPD_density_multi(runs_data, n_avg, u_bound_npd, l_bound_npd, temperatur
                     UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
                 
             noise_pow_mod = noise_pow - specA_s21 - UUT_cable_s21 - UUT_bulkhead_s21
+            if freq_ghz_out is None:
+                freq_ghz_out = freq_ghz
+            else:
+                noise_pow_mod = np.interp(freq_ghz_out, freq_ghz, noise_pow_mod)
+                freq_ghz = freq_ghz_out
             all_files_avg.append(noise_pow_mod)
             freq_ghz_out = freq_ghz
             
@@ -283,6 +300,11 @@ def plotS21_multi(runs_data, u_bound_s21, l_bound_s21, temperature, freq_min, fr
             if len(runs_data) > 1: label += f" ({run['name']})"
             
             s21_data = net.s_db[:, 1, 0]
+            if freq_ghz_out is None:
+                freq_ghz_out = freq_ghz
+            else:
+                s21_data = np.interp(freq_ghz_out, freq_ghz, s21_data)
+                freq_ghz = freq_ghz_out
             plt.plot(freq_ghz, s21_data, label=label, color=c, linestyle=line_style)
             all_files_avg.append(s21_data)
             
@@ -512,6 +534,11 @@ def plotS11_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_
             if len(runs_data) > 1: label += f" ({run['name']})"
             
             s11_data = net.s_db[:, 0, 0]
+            if freq_ghz_out is None:
+                freq_ghz_out = freq_ghz
+            else:
+                s11_data = np.interp(freq_ghz_out, freq_ghz, s11_data)
+                freq_ghz = freq_ghz_out
             plt.plot(freq_ghz, s11_data, label=label, color=c, linestyle=line_style)
             all_files_avg.append(s11_data)
             
@@ -568,6 +595,11 @@ def plotS22_multi(runs_data, temperature, freq_min, freq_max, folder_path, show_
             if len(runs_data) > 1: label += f" ({run['name']})"
             
             s22_data = net.s_db[:, 1, 1]
+            if freq_ghz_out is None:
+                freq_ghz_out = freq_ghz
+            else:
+                s22_data = np.interp(freq_ghz_out, freq_ghz, s22_data)
+                freq_ghz = freq_ghz_out
             plt.plot(freq_ghz, s22_data, label=label, color=c, linestyle=line_style)
             all_files_avg.append(s22_data)
             
