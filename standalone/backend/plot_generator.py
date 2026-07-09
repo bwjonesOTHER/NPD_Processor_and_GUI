@@ -19,7 +19,7 @@ def generate_plots(params):
     reqS11Val = float(params.get('reqS11Val', -10))
     reqS21Val = float(params.get('reqS21Val', 10))
     
-    n_avg = int(params.get('n_avg', 51))
+    n_avg = int(params.get('n_avg', 20))
     show_plot = 0
     
     u_bound_s21 = float(params.get('u_bound_s21', 1.0))
@@ -73,12 +73,6 @@ def generate_plots(params):
         NPD_GT_functions.render_NPD_plot(math_data, ub_offset, lb_offset, temp, f"Noise {suffix}", freq_min, freq_max, reqS11Val, folder_path, show_plot)
         return math_data
 
-    # NPD Density
-    process_and_render_npd(npdd_all, 'All', True, u_bound_npd+1, l_bound_npd+1)
-    nd25 = process_and_render_npd(npdd_25C, '25C', True, u_bound_npd, l_bound_npd)
-    nd64 = process_and_render_npd(npdd_64C, '64C', True, u_bound_npd, l_bound_npd)
-    ndn38 = process_and_render_npd(npdd_n38C, '-38C', True, u_bound_npd, l_bound_npd)
-
     # NP Power
     process_and_render_npd(npdd_all, 'All', False, u_bound_npd+1, l_bound_npd+1)
     np25 = process_and_render_npd(npdd_25C, '25C', False, u_bound_npd, l_bound_npd)
@@ -95,64 +89,6 @@ def generate_plots(params):
     process_and_render_s21(spar_all, 'All', u_bound_s21+3, l_bound_s21+3)
     sp25 = process_and_render_s21(spar_25C, '25C', u_bound_s21, l_bound_s21)
     sp64 = process_and_render_s21(spar_64C, '64C', u_bound_s21, l_bound_s21)
-    spn38 = process_and_render_s21(spar_n38C, '-38C', u_bound_s21, l_bound_s21)
-
-    # Temp Diff function
-    def render_temp_diff(d25, d64, dn38, title, fmin, fmax):
-        if d25 and d64 and dn38:
-            try:
-                import matplotlib.pyplot as plt
-                import numpy as np
-                freq = d25['freq_ref']
-                # Interpolate to ensure same shapes
-                trace_64 = np.interp(freq, d64['freq_ref'], d64['avg_trace'])
-                trace_n38 = np.interp(freq, dn38['freq_ref'], dn38['avg_trace'])
-                
-                diff1 = np.abs(d25['avg_trace'] - trace_64)
-                diff2 = np.abs(d25['avg_trace'] - trace_n38)
-                diff3 = np.abs(trace_64 - trace_n38)
-
-                fig, ax1 = plt.subplots(figsize=(12, 6), dpi=150)
-                
-                # Plot original traces on primary y-axis
-                l1 = ax1.plot(freq, d25['avg_trace'], label='25C Original', color='blue')
-                l2 = ax1.plot(freq, trace_64, label='64C Original', color='red')
-                l3 = ax1.plot(freq, trace_n38, label='-38C Original', color='cyan')
-                
-                ax1.set_xlabel('Frequency (GHz)')
-                ax1.set_ylabel('Original Value')
-                ax1.grid(True)
-                
-                # Plot deltas on secondary y-axis
-                ax2 = ax1.twinx()
-                l4 = ax2.plot(freq, diff1, label='|25C - 64C| Delta', color='orange', linestyle='--')
-                l5 = ax2.plot(freq, diff2, label='|25C - (-38C)| Delta', color='purple', linestyle='--')
-                l6 = ax2.plot(freq, diff3, label='|64C - (-38C)| Delta', color='green', linestyle='--')
-                
-                ax2.set_ylabel('Delta')
-                
-                # Add grey overlay for frequency bounds
-                p1 = ax1.axvspan(fmin, fmax, color='grey', alpha=0.15, label='Freq Bounds')
-                
-                # Combine legends and put outside the plot entirely
-                lines = l1 + l2 + l3 + l4 + l5 + l6 + [p1]
-                labels = [l.get_label() for l in lines]
-                ax1.legend(lines, labels, loc='upper left', bbox_to_anchor=(1.1, 1), fontsize='small')
-                
-                plt.title(title)
-                plt.xlim(freq[0], freq[-1])
-                
-                safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-                # bbox_inches='tight' ensures the outside legend isn't cut off
-                plt.savefig(os.path.join(folder_path, safe_title), dpi=300, bbox_inches='tight')
-                plt.close()
-            except Exception as e:
-                print(f"Error in {title}:", e)
-
-    render_temp_diff(nd25, nd64, ndn38, "NPD Density Temp Delta", freq_min, freq_max)
-    render_temp_diff(np25, np64, npn38, "Noise Power Temp Delta", freq_min, freq_max)
-    render_temp_diff(sp25, sp64, spn38, "S21 Temp Delta", freq_min, freq_max)
-
     png_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if fnmatch.fnmatch(f, '*.png')]
     return png_files
 

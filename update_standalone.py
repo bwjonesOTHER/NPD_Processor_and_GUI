@@ -1,65 +1,54 @@
 import os
-with open('backend/app.py', 'r') as f:
-    backend_code = f.read()
-
-standalone_imports = """import os
-import sys
 import shutil
-import subprocess
-import base64
-from flask import Flask, request, jsonify, Response, send_from_directory
-from flask_cors import CORS
+
+# Copy the entire backend directory into standalone/backend
+backend_dest = 'standalone/backend'
+if os.path.exists(backend_dest):
+    shutil.rmtree(backend_dest)
+
+def ignore_patterns(path, names):
+    return [n for n in names if n in ['__pycache__', 'venv', '.env']]
+
+shutil.copytree('backend', backend_dest, ignore=ignore_patterns)
+
+standalone_app_code = """import os
+import sys
+from flask import send_from_directory
 
 # Inject local packages folder into Python path so portable python can find them
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 sys.path.insert(0, os.path.join(current_dir, 'packages'))
 sys.path.insert(0, os.path.join(current_dir, 'python', 'Lib', 'site-packages'))
+# Add the copied backend to the path
+sys.path.insert(0, os.path.join(current_dir, 'backend'))
 
-# Find the absolute path to the directory this script is in
 if getattr(sys, 'frozen', False):
     application_path = sys._MEIPASS
 else:
     application_path = os.path.dirname(os.path.abspath(__file__))
 
 dist_folder = os.path.join(application_path, 'dist')
-app = Flask(__name__, static_folder=dist_folder, static_url_path='/')
 
-# Allow massive uploads (e.g., thousands of files in a directory)
+# Import the backend app robustly to avoid circular import (since this file is also app.py)
+import importlib.util
+backend_app_path = os.path.join(current_dir, 'backend', 'app.py')
+spec = importlib.util.spec_from_file_location('backend_app', backend_app_path)
+backend_module = importlib.util.module_from_spec(spec)
+sys.modules['backend_app'] = backend_module
+spec.loader.exec_module(backend_module)
+
+app = backend_module.app
+
+# Apply standalone configuration overrides
+app.static_folder = dist_folder
+app.static_url_path = '/'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
+
 if hasattr(app.request_class, 'max_form_parts'):
-    # Increase from default 1000 to a large number to support uploading large directories
     class CustomRequest(app.request_class):
         max_form_parts = 1000000
     app.request_class = CustomRequest
-
-CORS(app)
-
-BASE_DIR = application_path
-
-def write_txt(filename, content):
-    with open(os.path.join(BASE_DIR, filename), "w") as f:
-        f.write(content)
-
-def read_txt(filename):
-    path = os.path.join(BASE_DIR, filename)
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            return f.read().strip()
-    return ""
-
-def hydrate_directory(directory_path):
-    if not directory_path or not os.path.exists(directory_path):
-        return
-    for root, dirs, files in os.walk(directory_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                # Reading 1 byte forces Windows OneDrive to download the file on-demand
-                with open(file_path, "rb") as f:
-                    f.read(1)
-            except Exception:
-                pass
 
 @app.route('/')
 def index():
@@ -72,20 +61,12 @@ def static_proxy(path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
-"""
 
-# Find where @app.route('/api/connect' starts in backend/app.py
-idx = backend_code.find("@app.route('/api/connect'")
-backend_routes = backend_code[idx:]
-
-# Remove the __main__ block from backend_routes and replace it with standalone run
-main_idx = backend_routes.find("if __name__ == '__main__':")
-backend_routes = backend_routes[:main_idx]
-
-standalone_end = """if __name__ == '__main__':
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=False)
 """
 
 with open('standalone/app.py', 'w') as f:
-    f.write(standalone_imports + "\n" + backend_routes + "\n" + standalone_end)
+    f.write(standalone_app_code)
 
+print("Standalone app updated successfully. Backend files copied to standalone/backend/")

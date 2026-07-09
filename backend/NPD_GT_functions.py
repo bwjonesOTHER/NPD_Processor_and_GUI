@@ -21,47 +21,60 @@ def get_color_and_style():
 def render_NPD_plot(math_data, u_bound_offset, l_bound_offset, temperature, title_suffix, freq_min, freq_max, req_val, folder_path, show_plot):
     if math_data is None: return None
     
-    plt.figure(figsize=(10, 6), dpi=150)
+    plt.figure(figsize=(8, 4), dpi=150)
     color_cycle, line_style_cycle = get_color_and_style()
     
     freq_ref = math_data['freq_ref']
-    for trace in math_data['traces']:
-        c = next(color_cycle)
-        line_style = next(line_style_cycle)
-        plt.plot(freq_ref, trace['y'], label=trace['label'], color=c, linestyle=line_style)
-        
+    traces = math_data['traces']
     avg = math_data['avg_trace']
     upper = avg + u_bound_offset
     lower = avg - l_bound_offset
     
-    plt.plot(freq_ref, avg, color='red', linestyle='--', label='Average')
-    markevery_val = max(1, len(freq_ref) // 15)
-    plt.plot(freq_ref, upper, color='red', alpha=1, marker='o', markersize=5, markevery=markevery_val, label='Upper bound')
-    plt.plot(freq_ref, lower, color='red', alpha=1, marker='x', markersize=5, markevery=markevery_val, label='Lower bound')
+    # Calculate pass/fail inside the freq_min, freq_max window
+    mask = (freq_ref >= freq_min) & (freq_ref <= freq_max)
+    
+    failed_labels = []
+    for trace in traces:
+        y = trace['y']
+        c = next(color_cycle)
+        line_style = next(line_style_cycle)
+        plt.plot(freq_ref, y, label=trace['label'], color=c, linestyle=line_style)
+        
+        # Check fail within window
+        if np.any(y[mask] > upper[mask]) or np.any(y[mask] < lower[mask]):
+            failed_labels.append(trace['label'])
+            
+    if failed_labels:
+        status = "Failed"
+        print(f"[{temperature}] Failed units ({title_suffix}):", failed_labels)
+    else:
+        status = "Passed"
+        
+    plt.plot(freq_ref[mask], lower[mask], color='red', alpha=1, marker='o', markersize=5, markevery=100, label='Lower bound')
+    plt.plot(freq_ref[mask], upper[mask], color='red', alpha=1, marker='x', markersize=5, markevery=100, label='Upper bound')
     
     plt.xlim(freq_ref[0], freq_ref[-1])
-    plt.ylim(-170, -110) if 'Density' in title_suffix else plt.ylim(-130, -90)
+    plt.ylim(-130, -90)
     plt.grid(True)
     
-    title = get_title(temperature, title_suffix)
+    title = f"{temperature}: {title_suffix}, {status}"
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
-    plt.ylabel('NPD (dBm/Hz)' if 'Density' in title_suffix else 'NP (dBm)')
+    plt.ylabel('NP (dBm)')
     
-    if req_val is not None:
-        plt.plot([freq_min, freq_max], [req_val, req_val], color='r', label='Req')
-        
-    plt.axvline(x=freq_min, color='grey', label='Band Edge')
-    plt.axvline(x=freq_max, color='grey')
-    plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=0.15)
-    
-    # Legend is rendered last
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
+    
+    plt.axvline(x=freq_min, color='g')
+    plt.axvline(x=freq_max, color='g')
+    if req_val is not None:
+        plt.plot([freq_min, freq_max], [req_val, req_val], 'r', label='Req')
+        
     plt.subplots_adjust(right=0.7)
     
     date = datetime.now().strftime("%Y%m%d")
-    safe_title = title.replace(" ", "_").replace(":", "") + ".png"
+    safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"
     save_path = os.path.join(folder_path, f"{date}_{safe_title}")
+    plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     if show_plot: plt.show()
     plt.close()
@@ -70,44 +83,57 @@ def render_NPD_plot(math_data, u_bound_offset, l_bound_offset, temperature, titl
 def render_S21_plot(math_data, temperature, title_suffix, freq_min, freq_max, folder_path, show_plot):
     if math_data is None: return None
     
-    plt.figure(figsize=(10, 6), dpi=150)
+    plt.figure(figsize=(8, 4), dpi=150)
     color_cycle, line_style_cycle = get_color_and_style()
     
     freq_ref = math_data['freq_ref']
-    for trace in math_data['traces']:
+    traces = math_data['traces']
+    avg = math_data['avg_trace']
+    upper = avg + 2
+    lower = avg - 2
+    
+    # Calculate pass/fail inside the freq_min, freq_max window
+    mask = (freq_ref >= freq_min) & (freq_ref <= freq_max)
+    
+    failed_labels = []
+    for trace in traces:
+        y = trace['y']
         c = next(color_cycle)
         line_style = next(line_style_cycle)
-        plt.plot(freq_ref, trace['y'], label=trace['label'], color=c, linestyle=line_style)
+        plt.plot(freq_ref, y, label=trace['label'], color=c, linestyle=line_style)
         
-    avg = math_data['avg_trace']
-    upper = avg + 4
-    lower = avg - 4
-    
-    plt.plot(freq_ref, avg, color='red', linestyle='--', label='Average')
-    markevery_val = max(1, len(freq_ref) // 15)
-    plt.plot(freq_ref, upper, color='red', alpha=1, marker='o', markersize=5, markevery=markevery_val, label='Upper bound')
-    plt.plot(freq_ref, lower, color='red', alpha=1, marker='x', markersize=5, markevery=markevery_val, label='Lower bound')
+        # Check fail within window
+        if np.any(y[mask] > upper[mask]) or np.any(y[mask] < lower[mask]):
+            failed_labels.append(trace['label'])
+            
+    if failed_labels:
+        status = "Failed"
+        print(f"[{temperature}] Failed units ({title_suffix}):", failed_labels)
+    else:
+        status = "Passed"
+        
+    plt.plot(freq_ref[mask], lower[mask], color='red', alpha=1, marker='o', markersize=5, markevery=100, label='Lower bound')
+    plt.plot(freq_ref[mask], upper[mask], color='red', alpha=1, marker='x', markersize=5, markevery=100, label='Upper bound')
     
     plt.xlim(freq_ref[0], freq_ref[-1])
     plt.ylim(-40, 40)
     plt.grid(True)
     
-    title = get_title(temperature, title_suffix)
+    title = f"{temperature}: {title_suffix}, {status}"
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('S21 (dB)')
     
-    plt.axvline(x=freq_min, color='grey', label='Band Edge')
-    plt.axvline(x=freq_max, color='grey')
-    plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=0.15)
-    
-    # Legend is rendered last
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small')
-    plt.subplots_adjust(right=0.7)
+    plt.axvline(x=freq_min, color='g', label='axvline - full height')
+    plt.axvline(x=freq_max, color='g', label='axvline - full height')
+    
+    plt.subplots_adjust(right=0.8)
     
     date = datetime.now().strftime("%Y%m%d")
-    safe_title = title.replace(" ", "_").replace(":", "") + ".png"
+    safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"
     save_path = os.path.join(folder_path, f"{date}_{safe_title}")
+    plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     if show_plot: plt.show()
     plt.close()
