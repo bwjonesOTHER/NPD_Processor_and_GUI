@@ -72,32 +72,55 @@ function App() {
   };
 
   const uploadRun = async (idx) => {
-    const files = runFiles[idx];
+    let files = runFiles[idx];
     if (!files || files.length === 0) return;
     
-    const data = new FormData();
-    files.forEach(f => {
-      data.append('files', f);
-      // Append webkitRelativePath to reconstruct directory structure
-      data.append('paths', f.webkitRelativePath || f.name);
+    const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log'];
+    files = files.filter(f => {
+      const name = f.name.toLowerCase();
+      return allowedExtensions.some(ext => name.endsWith(ext));
     });
-    data.append('run_index', idx);
+    
+    if (files.length === 0) {
+      alert("No valid data files found for this run.");
+      return;
+    }
     
     try {
-      const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
-      const json = await res.json();
-      if (json.status === 'success') {
-        setRuns(prev => {
-          const newRuns = [...prev];
-          newRuns[idx] = json.upload_path;
-          return newRuns;
+      const CHUNK_SIZE = 50;
+      let finalUploadPath = '';
+      
+      for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+        const chunk = files.slice(i, i + CHUNK_SIZE);
+        const data = new FormData();
+        chunk.forEach(f => {
+          data.append('files', f);
+          data.append('paths', f.webkitRelativePath || f.name);
         });
-      } else {
-        alert("Upload failed: " + json.error);
+        data.append('run_index', idx);
+        data.append('chunk_index', i === 0 ? '0' : '1');
+        
+        const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+        
+        const json = await res.json();
+        if (json.status !== 'success') {
+          throw new Error(json.error || 'Upload failed');
+        }
+        finalUploadPath = json.upload_path;
       }
+      
+      setRuns(prev => {
+        const newRuns = [...prev];
+        newRuns[idx] = finalUploadPath;
+        return newRuns;
+      });
     } catch (err) {
       console.error(err);
-      alert("Network error during upload");
+      alert("Upload error: " + err.message);
     }
   };
 
@@ -241,7 +264,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.5.9 Bulldog</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.6.0 Bulldog</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -445,7 +468,18 @@ function App() {
                       onChange={async (e) => {
                         if (!e.target.files || e.target.files.length === 0) return;
                         setUploadingRun(true);
-                        const filesArray = Array.from(e.target.files);
+                        const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log'];
+                        const filesArray = Array.from(e.target.files).filter(f => {
+                          const name = f.name.toLowerCase();
+                          return allowedExtensions.some(ext => name.endsWith(ext));
+                        });
+                        
+                        if (filesArray.length === 0) {
+                          setUploadingRun(false);
+                          alert("No valid data files (.csv, .xlsx, etc.) found in the selected folder.");
+                          return;
+                        }
+                        
                         const validRuns = runs.filter(r => r !== '');
                         const runIndex = validRuns.length;
                         
