@@ -13,8 +13,11 @@ function App() {
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   
+  const [uploadMode, setUploadMode] = useState(null); // 'access' or 'upload'
+  
   // Form state
   const [formData, setFormData] = useState({
+    basePath: '',
     lmoNumber: '',
     runNumber: '',
     capNumber: '',
@@ -253,6 +256,21 @@ function App() {
     }
   };
 
+  const handleTestTypeNext = (mode) => {
+    setUploadMode(mode);
+    if (mode === 'access') {
+      // If access, go to Select Runs (Step 3) for Test 1/3, or Process (Step 4) for Test 2
+      if (testType === 2) {
+        setCurrentStep(4);
+      } else {
+        setCurrentStep(3);
+      }
+    } else {
+      // If upload, go to Data Source & Info (Step 1)
+      setCurrentStep(1);
+    }
+  };
+
   const steps = [
     { id: 0, title: 'Test Type' },
     { id: 1, title: 'Data Source & Info' },
@@ -310,9 +328,12 @@ function App() {
                 </div>
               </div>
 
-              <div className="btn-group">
-                <button onClick={() => setCurrentStep(1)} disabled={!testType}>
-                  Continue <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
+              <div className="btn-group" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', width: '100%' }}>
+                <button onClick={() => handleTestTypeNext('access')} disabled={!testType} className="secondary">
+                  Access
+                </button>
+                <button onClick={() => handleTestTypeNext('upload')} disabled={!testType} className="primary">
+                  Upload <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
                 </button>
               </div>
             </div>
@@ -323,7 +344,23 @@ function App() {
               <h2>Data Source & Info</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
 
-
+              <div className="form-group">
+                <label>Base Upload Path</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder="Select a directory to upload files into..." style={{ flex: 1 }} />
+                  <button onClick={async () => {
+                    try {
+                      const res = await fetch(`${API_BASE}/choose_directory`);
+                      const data = await res.json();
+                      if (data.success && data.path) {
+                        setFormData(prev => ({...prev, basePath: data.path}));
+                      }
+                    } catch (err) {
+                      console.error("Failed to choose directory:", err);
+                    }
+                  }} className="secondary">Browse</button>
+                </div>
+              </div>
 
               <div className="form-group">
                 <label>LMO Number (####-##)</label>
@@ -369,22 +406,20 @@ function App() {
                 </>
               )}
 
-              <div className="btn-group" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              <div className="btn-group">
                 <button className="secondary" onClick={() => setCurrentStep(0)}>Back</button>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={async () => {
-                    await submitFileInfo();
-                    if (testType === 2) {
-                      setCurrentStep(4);
-                    } else {
-                      setCurrentStep(3);
-                    }
-                  }} className="primary">Access</button>
-                  <button onClick={async () => {
-                    await submitFileInfo();
+                <button onClick={async () => {
+                  if (!formData.basePath) {
+                    alert("Please select a Base Upload Path before continuing.");
+                    return;
+                  }
+                  await submitFileInfo();
+                  if (testType === 2) {
                     setCurrentStep(2);
-                  }} className="primary">Upload</button>
-                </div>
+                  } else {
+                    setCurrentStep(3);
+                  }
+                }} className="primary">Continue <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
               </div>
             </div>
           )}
