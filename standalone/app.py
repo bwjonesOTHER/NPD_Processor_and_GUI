@@ -3,24 +3,10 @@ import sys
 import shutil
 import subprocess
 import base64
-from flask import Flask, request, jsonify, Response, send_from_directory
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 
-# Inject local packages folder into Python path so portable python can find them
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
-sys.path.insert(0, os.path.join(current_dir, 'packages'))
-sys.path.insert(0, os.path.join(current_dir, 'python', 'Lib', 'site-packages'))
-
-# Find the absolute path to the directory this script is in
-if getattr(sys, 'frozen', False):
-    application_path = sys._MEIPASS
-else:
-    application_path = os.path.dirname(os.path.abspath(__file__))
-
-dist_folder = os.path.join(application_path, 'dist')
-app = Flask(__name__, static_folder=dist_folder, static_url_path='/')
-
+app = Flask(__name__)
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
 if hasattr(app.request_class, 'max_form_parts'):
@@ -31,7 +17,9 @@ if hasattr(app.request_class, 'max_form_parts'):
 
 CORS(app)
 
-BASE_DIR = application_path
+# We will run this server from the root of the project
+# or from the backend folder. Let's assume root of the project.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def write_txt(filename, content):
     with open(os.path.join(BASE_DIR, filename), "w") as f:
@@ -57,17 +45,6 @@ def hydrate_directory(directory_path):
             except Exception:
                 pass
 
-@app.route('/')
-def index():
-    return send_from_directory(app.static_folder, 'index.html')
-
-@app.route('/<path:path>')
-def static_proxy(path):
-    full_path = os.path.join(app.static_folder, path)
-    if os.path.exists(full_path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/api/connect', methods=['POST'])
 def connect_sharepoint():
@@ -360,6 +337,9 @@ def api_generate_plots():
         except Exception as e:
             import traceback
             traceback.print_exc()
+            with open("debug_log.txt", "a") as f_dbg:
+                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
+                f_dbg.write(traceback.format_exc() + "\n")
             return jsonify({"success": False, "error": str(e)}), 500
             
     elif test == 2:
@@ -372,6 +352,9 @@ def api_generate_plots():
         except Exception as e:
             import traceback
             traceback.print_exc()
+            with open("debug_log.txt", "a") as f_dbg:
+                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
+                f_dbg.write(traceback.format_exc() + "\n")
             return jsonify({"success": False, "error": str(e)}), 500
             
     elif test == 3:
@@ -385,6 +368,9 @@ def api_generate_plots():
         except Exception as e:
             import traceback
             traceback.print_exc()
+            with open("debug_log.txt", "a") as f_dbg:
+                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
+                f_dbg.write(traceback.format_exc() + "\n")
             return jsonify({"success": False, "error": str(e)}), 500
     else:
         return jsonify({"success": False, "error": "Invalid test type"}), 400
@@ -402,6 +388,5 @@ def api_generate_plots():
     
     return jsonify({"success": True, "images": results})
 
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    app.run(debug=True, port=5001)

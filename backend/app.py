@@ -337,6 +337,9 @@ def api_generate_plots():
         except Exception as e:
             import traceback
             traceback.print_exc()
+            with open("debug_log.txt", "a") as f_dbg:
+                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
+                f_dbg.write(traceback.format_exc() + "\n")
             return jsonify({"success": False, "error": str(e)}), 500
             
     elif test == 2:
@@ -349,6 +352,9 @@ def api_generate_plots():
         except Exception as e:
             import traceback
             traceback.print_exc()
+            with open("debug_log.txt", "a") as f_dbg:
+                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
+                f_dbg.write(traceback.format_exc() + "\n")
             return jsonify({"success": False, "error": str(e)}), 500
             
     elif test == 3:
@@ -362,6 +368,9 @@ def api_generate_plots():
         except Exception as e:
             import traceback
             traceback.print_exc()
+            with open("debug_log.txt", "a") as f_dbg:
+                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
+                f_dbg.write(traceback.format_exc() + "\n")
             return jsonify({"success": False, "error": str(e)}), 500
     else:
         return jsonify({"success": False, "error": "Invalid test type"}), 400
