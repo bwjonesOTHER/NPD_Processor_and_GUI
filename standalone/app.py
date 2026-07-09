@@ -20,6 +20,15 @@ else:
 
 dist_folder = os.path.join(application_path, 'dist')
 app = Flask(__name__, static_folder=dist_folder, static_url_path='/')
+
+# Allow massive uploads (e.g., thousands of files in a directory)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
+if hasattr(request.__class__, 'max_form_parts'):
+    # Increase from default 1000 to a large number to support uploading large directories
+    class CustomRequest(request.__class__):
+        max_form_parts = 1000000
+    app.request_class = CustomRequest
+
 CORS(app)
 
 BASE_DIR = application_path

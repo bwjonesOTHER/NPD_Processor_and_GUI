@@ -7,6 +7,14 @@ from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 
 app = Flask(__name__)
+# Allow massive uploads (e.g., thousands of files in a directory)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
+if hasattr(request.__class__, 'max_form_parts'):
+    # Increase from default 1000 to a large number to support uploading large directories
+    class CustomRequest(request.__class__):
+        max_form_parts = 1000000
+    app.request_class = CustomRequest
+
 CORS(app)
 
 # We will run this server from the root of the project

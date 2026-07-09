@@ -241,7 +241,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.5.5 Bulldog</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.5.6 Bulldog</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -456,6 +456,10 @@ function App() {
                         
                         try {
                           const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+                          if (!res.ok) {
+                            const errText = await res.text();
+                            throw new Error(`HTTP ${res.status}: ${errText}`);
+                          }
                           const json = await res.json();
                           if (json.status === 'success') {
                             setRuns([...validRuns, json.upload_path]);
@@ -464,7 +468,7 @@ function App() {
                           }
                         } catch (err) {
                           console.error(err);
-                          alert("Network error during upload");
+                          alert("Upload error: " + err.message);
                         }
                         if (test1RunsInputRef.current) test1RunsInputRef.current.value = "";
                         setUploadingRun(false);
