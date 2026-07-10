@@ -185,6 +185,20 @@ def generate_plots(params):
         return match.group(0) if match else filename
 
     #Determine if primary or redundant info
+    def safe_s21_interp(file_path, target_freq):
+        import skrf as rf
+        import numpy as np
+        if not file_path: return 0
+        try:
+            net = rf.Network(file_path)
+            if len(net.s_db) == 0: return 0
+            s21 = net.s_db[:, 1, 0]
+            if len(s21) != len(target_freq) and len(s21) > 1:
+                return np.interp(target_freq, net.f / 1e9, s21)
+            return s21
+        except:
+            return 0
+
     def extract_pri_red(filename):
         string1='Pri'
         string2='Red'
@@ -243,9 +257,9 @@ def generate_plots(params):
 
             # Cable + bulkhead selection
             base_loss, bulk_loss = cap_searchA(file, lmoFolderA)
-            cable_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(base_loss)) if base_loss else 0
-            bulk_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(bulk_loss)) if bulk_loss else 0
-            spec_s21 = specA_s21 if isinstance(specA_s21, np.ndarray) else 0
+            cable_s21 = safe_s21_interp(base_loss, freq_ghz)
+            bulk_s21 = safe_s21_interp(bulk_loss, freq_ghz)
+            spec_s21 = safe_s21_interp(specA_s21, freq_ghz)
 
             # Smoothing
             if n_avg > 1:
@@ -369,9 +383,9 @@ def generate_plots(params):
             noise_pow = remove_nan(num.values[:, 1], remove_infinite=True)
 
             base_loss, bulk_loss = cap_search_func(file, folder)
-            cable_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(base_loss)) if base_loss else 0
-            bulk_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(bulk_loss)) if bulk_loss else 0
-            spec_s21 = specA_s21 if isinstance(specA_s21, np.ndarray) else 0
+            cable_s21 = safe_s21_interp(base_loss, freq_ghz)
+            bulk_s21 = safe_s21_interp(bulk_loss, freq_ghz)
+            spec_s21 = safe_s21_interp(specA_s21, freq_ghz)
 
             # Smoothing
             if n_avg > 1:

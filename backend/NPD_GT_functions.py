@@ -178,6 +178,12 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
 
         c=next(color_cycle)
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -269,6 +275,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg = np.zeros([len(noise_pow_mod)])
@@ -315,6 +327,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -408,6 +426,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg = np.zeros([len(noise_pow_mod)])
@@ -454,6 +478,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -553,6 +583,12 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
 
         c=next(color_cycle)
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -655,6 +691,12 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
 
@@ -721,6 +763,12 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         idx_low=np.argwhere(freq_ghz==2.6)
         idx_high=np.argwhere(freq_ghz==4.1)
@@ -837,6 +885,12 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
 
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
 
