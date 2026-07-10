@@ -324,6 +324,10 @@ def api_generate_plots():
     test = request.args.get('testType', type=int)
     params = request.json or {}
     
+    import tempfile
+    import shutil
+    temp_out_dir = tempfile.mkdtemp(prefix="npd_plots_")
+    
     # We need to set folder_path and runs for Test 1
     if test == 1:
         import plot_generator
@@ -343,10 +347,7 @@ def api_generate_plots():
             if not folder_path:
                 folder_path = read_txt("path.txt")
             
-        if params.get('outputFolder'):
-            params['folder_path'] = params.get('outputFolder')
-        else:
-            params['folder_path'] = folder_path
+        params['folder_path'] = temp_out_dir
         params['runs'] = runs
         
         if folder_path:
@@ -370,6 +371,7 @@ def api_generate_plots():
         path = read_txt("path.txt")
         if path:
             hydrate_directory(path)
+        params['outputFolder'] = temp_out_dir
         try:
             png_files = Macallan_PMA_BenchtopNPD_PlotData_v2.generate_plots(params)
         except Exception as e:
@@ -386,6 +388,7 @@ def api_generate_plots():
         path2 = read_txt("upload_path.txt")
         if path1: hydrate_directory(path1)
         if path2: hydrate_directory(path2)
+        params['outputFolder'] = temp_out_dir
         try:
             png_files = Macallan_PMA_Array_BenchtopNPD_PlotData_v2.generate_plots(params)
         except Exception as e:
@@ -408,8 +411,35 @@ def api_generate_plots():
                         "filename": os.path.basename(file_path),
                         "data": f"data:image/png;base64,{encoded_string}"
                     })
+                    
+    shutil.rmtree(temp_out_dir, ignore_errors=True)
     
     return jsonify({"success": True, "images": results})
+
+@app.route('/api/save_plots', methods=['POST'])
+def save_plots():
+    data = request.json or {}
+    output_folder = data.get('outputFolder')
+    plots = data.get('plots', [])
+    if not output_folder:
+        return jsonify({"success": False, "error": "No output folder specified"})
+    
+    try:
+        os.makedirs(output_folder, exist_ok=True)
+        saved_files = []
+        for plot in plots:
+            base64_data = plot['data'].split(',')[1] if ',' in plot['data'] else plot['data']
+            file_path = os.path.join(output_folder, plot['filename'])
+            with open(file_path, "wb") as fh:
+                fh.write(base64.b64decode(base64_data))
+            saved_files.append(file_path)
+        return jsonify({"success": True, "saved": saved_files})
+    except Exception as e:
+        import traceback
+        with open("debug_log.txt", "a") as f_dbg:
+            f_dbg.write(f"EXCEPTION in save_plots: {e}\n")
+            f_dbg.write(traceback.format_exc() + "\n")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/')
 def index():

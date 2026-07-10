@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download, UploadCloud, XCircle } from 'lucide-react';
+import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download, UploadCloud, XCircle, Save } from 'lucide-react';
 import JSZip from 'jszip';
 import './App.css';
 
@@ -64,11 +64,35 @@ function App() {
     
     const content = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(content);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "NPD_Plots.zip";
-    a.click();
-    URL.revokeObjectURL(url);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "NPD_Plots.zip";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleSavePlots = async () => {
+    if (!outputFolder) {
+      alert("Please select a Plot Output Destination folder on the previous page.");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/save_plots`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputFolder, plots: images })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Successfully saved ${data.saved.length} plots to ${outputFolder}`);
+      } else {
+        alert(`Error saving plots: ${data.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save plots: " + err.message);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -252,7 +276,7 @@ function App() {
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...plotParams, outputFolder })
+        body: JSON.stringify({ ...plotParams, outputFolder: "" })
       });
       
       const data = await res.json();
@@ -296,7 +320,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.3 Dingo</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.4 Dingo</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -427,11 +451,7 @@ function App() {
                     return;
                   }
                   await submitFileInfo();
-                  if (testType === 2) {
-                    setCurrentStep(2);
-                  } else {
-                    setCurrentStep(3);
-                  }
+                  setCurrentStep(2);
                 }} className="primary">Continue <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
               </div>
             </div>
@@ -647,6 +667,18 @@ function App() {
                 </div>
               )}
 
+              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                    Select Output Folder
+                  </button>
+                  <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
+                  </span>
+                </div>
+              </div>
+
               <div className="btn-group" style={{ marginTop: '2rem' }}>
                 <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
                 <button onClick={submitRuns}>Continue</button>
@@ -658,6 +690,20 @@ function App() {
             <div className="step-card glass" style={{ border: 'none', padding: '2rem' }}>
               <h2>Plot Configuration</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
+
+              {testType === 2 && (
+                <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                      Select Output Folder
+                    </button>
+                    <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <div className="form-grid">
                 <div className="input-group">
@@ -695,17 +741,7 @@ function App() {
                 </div>
               </div>
 
-              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
-                    Select Output Folder
-                  </button>
-                  <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {outputFolder || 'Plots will be saved to the run folder by default'}
-                  </span>
-                </div>
-              </div>
+
 
               {error && <div style={{ color: 'var(--error)', marginBottom: '1rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{error}</div>}
 
@@ -718,10 +754,16 @@ function App() {
                 <div style={{ marginTop: '2rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <h3 style={{ margin: 0 }}>Generated Plots ({images.length})</h3>
-                    <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
-                      <Download size={16} />
-                      Export All Plots (.zip)
-                    </button>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <button onClick={handleSavePlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--success)' }}>
+                        <Save size={16} />
+                        Save Plots to Destination
+                      </button>
+                      <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
+                        <Download size={16} />
+                        Export All Plots (.zip)
+                      </button>
+                    </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                     {images.map((img, idx) => (
