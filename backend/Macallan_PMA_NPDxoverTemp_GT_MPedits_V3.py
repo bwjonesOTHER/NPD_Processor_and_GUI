@@ -108,23 +108,48 @@ def generate_plots(params):
     cable_lossB=search_files(lmoFolderB, 'Base')
     gainB=search_files(lmoFolderB,'Gain')
 
+    def find_cal_file(folder, cap_num, cal_type):
+        cal_type_lower = cal_type.lower()
+        try:
+            cap_num_int = int(cap_num)
+        except (ValueError, TypeError):
+            return None
+            
+        for root, dirs, files in os.walk(folder):
+            for file in files:
+                if not file.lower().endswith('.s2p'):
+                    continue
+                if cal_type_lower in file.lower():
+                    import re
+                    match = re.search(r'sn0*(\d+)', file.lower())
+                    sn_match = False
+                    if match:
+                        if int(match.group(1)) == cap_num_int:
+                            sn_match = True
+                            
+                    path_lower = os.path.join(root, file).lower()
+                    folder_match = False
+                    if f"cap_0{cap_num_int}" in path_lower or f"cap_{cap_num_int}" in path_lower:
+                        folder_match = True
+                        
+                    if sn_match or folder_match:
+                        return os.path.join(root, file)
+                        
+        return None
+
     def cap_searchA(filename, lmoFolderA):
         cap_num = None
         for n in ["01", "02", "03", "04", "05", "06"]:
             if f"Cap_{n}" in filename:
                 cap_num = n
                 break
-
+                
         if cap_num is None:
             return None, None
-
-        loss_path = os.path.join(lmoFolderA, f"Cap_{cap_num}")
-        base = search_files(loss_path, "Base")
-        bulk = search_files(loss_path, "Bulkhead")
-
-        base = base[0] if base else None
-        bulk = bulk[0] if bulk else None
-        return base, bulk
+            
+        loss = find_cal_file(lmoFolderA, cap_num, "Base")
+        loss_bulkhead = find_cal_file(lmoFolderA, cap_num, "Bulkhead")
+        return loss, loss_bulkhead
 
     def cap_searchB(filename, lmoFolderB):
         cap_num = None
@@ -132,17 +157,13 @@ def generate_plots(params):
             if f"Cap_{n}" in filename:
                 cap_num = n
                 break
-
+                
         if cap_num is None:
             return None, None
-
-        loss_path = os.path.join(lmoFolderB, f"Cap_{cap_num}")
-        base = search_files(loss_path, "Base")
-        bulk = search_files(loss_path, "Bulkhead")
-
-        base = base[0] if base else None
-        bulk = bulk[0] if bulk else None
-        return base, bulk
+            
+        loss = find_cal_file(lmoFolderB, cap_num, "Base")
+        loss_bulkhead = find_cal_file(lmoFolderB, cap_num, "Bulkhead")
+        return loss, loss_bulkhead
 
     def load_specA_loss(folder):
         spec_files = search_files(folder, "SpecA")
@@ -151,6 +172,8 @@ def generate_plots(params):
             return None
 
         try:
+            if not spec_files:
+                return 0
             net = rf.Network(spec_files[0])
             return net.s_db[:, 1, 0]
         except:
@@ -190,6 +213,8 @@ def generate_plots(params):
             if not files:
                 return None
             try:
+                if not files:
+                    return 0
                 return rf.Network(files[0]).s_db[:, 1, 0]
             except:
                 return None
@@ -322,6 +347,8 @@ def generate_plots(params):
             if not files:
                 return None
             try:
+                if not files:
+                    return 0
                 return rf.Network(files[0]).s_db[:, 1, 0]
             except:
                 return None
@@ -456,21 +483,23 @@ def generate_plots(params):
             last_filename=file[-16:-13]
             last_filename=last_filename
             loss=[s for s in cable_lossA if last_filename in s]
-            loss=loss[0]
+            loss = loss[0] if loss else None
 
 
 
             tile_serial=file[-16:-13]
             gain=[s for s in gainA if tile_serial in s]
-            gain=gain[0]
-            gain_values=np.array(pd.read_csv(gain))
-            gain_values=gain_values[:,1]
-
-
-
-
-            UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            gain = gain[0] if gain else None
+            if gain:
+                gain_values=np.array(pd.read_csv(gain))
+                gain_values=gain_values[:,1]
+            else:
+                gain_values = 0
+            if loss:
+                UUT_cable=rf.Network(loss)
+                UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            else:
+                UUT_cable_s21 = 0
 
 
             df_all = pd.read_csv(file)# Read CSV with headers automatically detected
@@ -521,17 +550,19 @@ def generate_plots(params):
             last_filename = last_filename
 
             loss = [s for s in cable_lossB if last_filename in s]
-            loss = loss[0]
+            loss = loss[0] if loss else None
 
 
             tile_serial = file[-16:-13]
             gain = [s for s in gainB if tile_serial in s]
-            gain = gain[0]
+            gain = gain[0] if gain else None
             gain_values = np.array(pd.read_csv(gain))
             gain_values = gain_values[:, 1]
-
-            UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            if loss:
+                UUT_cable=rf.Network(loss)
+                UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            else:
+                UUT_cable_s21 = 0
 
             freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
             noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)

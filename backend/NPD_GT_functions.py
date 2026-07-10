@@ -65,72 +65,62 @@ def extract_serial_number(filename):
     return exact_matches.group(0)
 
 
-def cap_searchA(filename,lmoFolderA):
-    if "Cap_01" in filename:
-        loss_path=os.path.join(lmoFolderA, 'Cap_01')
-        loss = search_files(loss_path, 'Base')
-        loss=loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_02" in filename:
-        loss_path=os.path.join(lmoFolderA, 'Cap_02')
-        loss = search_files(loss_path, 'Base')
-        loss=loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_03" in filename:
-        loss_path = os.path.join(lmoFolderA, 'Cap_03')
-        loss = search_files(loss_path, 'Base')
-        loss = loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_05" in filename:
-        loss_path = os.path.join(lmoFolderA, 'Cap_05')
-        loss = search_files(loss_path, 'Base')
-        loss = loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_06" in filename:
-        loss_path = os.path.join(lmoFolderA, 'Cap_06')
-        loss = search_files(loss_path, 'Base')
-        loss = loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
+def find_cal_file(folder, cap_num, cal_type):
+    cal_type_lower = cal_type.lower()
+    try:
+        cap_num_int = int(cap_num)
+    except (ValueError, TypeError):
+        return None
+        
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            if not file.lower().endswith('.s2p'):
+                continue
+            if cal_type_lower in file.lower():
+                # Extract number after SN
+                match = re.search(r'sn0*(\d+)', file.lower())
+                sn_match = False
+                if match:
+                    if int(match.group(1)) == cap_num_int:
+                        sn_match = True
+                        
+                # Check path for cap folder
+                path_lower = os.path.join(root, file).lower()
+                folder_match = False
+                if f"cap_0{cap_num_int}" in path_lower or f"cap_{cap_num_int}" in path_lower:
+                    folder_match = True
+                    
+                if sn_match or folder_match:
+                    return os.path.join(root, file)
+                    
+    return None
 
+def cap_searchA(filename, lmoFolderA):
+    cap_num = None
+    for n in ["01", "02", "03", "04", "05", "06"]:
+        if f"Cap_{n}" in filename:
+            cap_num = n
+            break
+            
+    if cap_num is None:
+        return None, None
+        
+    loss = find_cal_file(lmoFolderA, cap_num, "Base")
+    loss_bulkhead = find_cal_file(lmoFolderA, cap_num, "Bulkhead")
     return loss, loss_bulkhead
 
-def cap_searchB(filename,lmoFolderB):
-    if "Cap_01" in filename:
-        loss_path=os.path.join(lmoFolderB, 'Cap_01')
-        loss = search_files(loss_path, 'Base')
-        loss=loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_02" in filename:
-        loss_path=os.path.join(lmoFolderB, 'Cap_02')
-        loss = search_files(loss_path, 'Base')
-        loss=loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_03" in filename:
-        loss_path = os.path.join(lmoFolderB, 'Cap_03')
-        loss = search_files(loss_path, 'Base')
-        loss = loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_04" in filename:
-        loss_path = os.path.join(lmoFolderB, 'Cap_04')
-        loss = search_files(loss_path, 'Base')
-        loss = loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-    if "Cap_05" in filename:
-        loss_path = os.path.join(lmoFolderB, 'Cap_05')
-        loss = search_files(loss_path, 'Base')
-        loss = loss[0]
-        loss_bulkhead=search_files(loss_path,'Bulkhead')
-        loss_bulkhead=loss_bulkhead[0]
-
+def cap_searchB(filename, lmoFolderB):
+    cap_num = None
+    for n in ["01", "02", "03", "04", "05", "06"]:
+        if f"Cap_{n}" in filename:
+            cap_num = n
+            break
+            
+    if cap_num is None:
+        return None, None
+        
+    loss = find_cal_file(lmoFolderB, cap_num, "Base")
+    loss_bulkhead = find_cal_file(lmoFolderB, cap_num, "Bulkhead")
     return loss, loss_bulkhead
 
 def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
@@ -151,16 +141,24 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
 
         df_all = pd.read_csv(file)# Read CSV with headers automatically detected
@@ -171,9 +169,12 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         c=next(color_cycle)
 
@@ -236,17 +237,24 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
-
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
         df_all = pd.read_csv(file)# Read CSV with headers automatically detected
         num_df = df_all.apply(pd.to_numeric, errors='coerce')#'raise' 'coerce' 'ignore'
@@ -274,16 +282,24 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchB(file,lmoFolderB)
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderB, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
         serial = extract_serial(file)
         df_all = pd.read_csv(file)# Read CSV with headers automatically detected
@@ -360,17 +376,24 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
-
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
         df_all = pd.read_csv(file)# Read CSV with headers automatically detected
         num_df = df_all.apply(pd.to_numeric, errors='coerce')#'raise' 'coerce' 'ignore'
@@ -398,16 +421,24 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchB(file,lmoFolderB)
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderB, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
         serial = extract_serial(file)
         df_all = pd.read_csv(file)# Read CSV with headers automatically detected
@@ -485,16 +516,24 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
 
         df_all = pd.read_csv(file)# Read CSV with headers automatically detected
@@ -505,9 +544,12 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         c=next(color_cycle)
 
@@ -568,16 +610,24 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
 
 
@@ -646,8 +696,11 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
 
         tile_serial = file[-16:-13]
@@ -739,16 +792,24 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
 
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
-        UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
-
-        UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        if loss:
+            UUT_cable=rf.Network(loss)
+            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        else:
+            UUT_cable_s21 = 0
+        if loss_bulkhead:
+            UUT_bulkhead=rf.Network(loss_bulkhead)
+            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        else:
+            UUT_bulkhead_s21 = 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
-        specA_cable_loss = rf.Network(specA_cable_loss[0])
-        specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        if specA_cable_loss:
+            specA_cable_loss = rf.Network(specA_cable_loss[0])
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+        else:
+            specA_s21 = 0
 
 
 

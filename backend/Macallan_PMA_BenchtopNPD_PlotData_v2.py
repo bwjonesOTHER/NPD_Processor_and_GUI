@@ -87,7 +87,11 @@ def generate_plots(params):
     #folder_path = r'C:\Users\colton.dunlap.CORP\Downloads'#\L110475\SN0001\Pre-TSS
     lmoFolderA = folder_path+'\\'+RunA
     filesSparA = search_files(lmoFolderA, 'NPDoverTempVSWR_ambient',f"{serial_number}")
+    if not filesSparA:
+        filesSparA = search_files(lmoFolderA, 'NPDoverTempVSWR',f"{serial_number}")
     filesNPDA = search_files(lmoFolderA, 'NPDoverTempNPD_ambient',f"{serial_number}")
+    if not filesNPDA:
+        filesNPDA = search_files(lmoFolderA, 'NPDoverTempNPD',f"{serial_number}")
     lmoFolderB = folder_path+'\\'+RunB
     filesSparB = search_files(lmoFolderB, '.s2p', f"{serial_number}")#'BenchtopNPDS'
     filesNPDB = search_files(lmoFolderB, '.csv', f"{serial_number}")#'BenchtopNPDN'
@@ -135,6 +139,8 @@ def generate_plots(params):
 
         # ---- Convert to arrays for math ---- #
         all_noise_win = np.array(all_noise_win)
+        if not all_freqs:
+            return
         ref_freq_full = all_freqs[0]
         ref_freq_win = ref_freq_full[700:2100]
 
