@@ -175,7 +175,7 @@ def generate_plots(params):
             if not spec_files:
                 return 0
             net = rf.Network(spec_files[0])
-            return net.s_db[:, 1, 0]
+            return net.s_db[:, 1, 0] if len(net.s_db) > 0 else None
         except:
             print(f"Problem loading SpecA file: {spec_files[0]}")
             return None
@@ -215,7 +215,7 @@ def generate_plots(params):
             try:
                 if not files:
                     return 0
-                return rf.Network(files[0]).s_db[:, 1, 0]
+                return (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else None)(rf.Network(files[0]))
             except:
                 return None
 
@@ -243,8 +243,8 @@ def generate_plots(params):
 
             # Cable + bulkhead selection
             base_loss, bulk_loss = cap_searchA(file, lmoFolderA)
-            cable_s21 = rf.Network(base_loss).s_db[:, 1, 0] if base_loss else 0
-            bulk_s21 = rf.Network(bulk_loss).s_db[:, 1, 0] if bulk_loss else 0
+            cable_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(base_loss)) if base_loss else 0
+            bulk_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(bulk_loss)) if bulk_loss else 0
             spec_s21 = specA_s21 if isinstance(specA_s21, np.ndarray) else 0
 
             # Smoothing
@@ -349,7 +349,7 @@ def generate_plots(params):
             try:
                 if not files:
                     return 0
-                return rf.Network(files[0]).s_db[:, 1, 0]
+                return (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else None)(rf.Network(files[0]))
             except:
                 return None
 
@@ -369,8 +369,8 @@ def generate_plots(params):
             noise_pow = remove_nan(num.values[:, 1], remove_infinite=True)
 
             base_loss, bulk_loss = cap_search_func(file, folder)
-            cable_s21 = rf.Network(base_loss).s_db[:, 1, 0] if base_loss else 0
-            bulk_s21 = rf.Network(bulk_loss).s_db[:, 1, 0] if bulk_loss else 0
+            cable_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(base_loss)) if base_loss else 0
+            bulk_s21 = (lambda n: n.s_db[:, 1, 0] if len(n.s_db) > 0 else 0)(rf.Network(bulk_loss)) if bulk_loss else 0
             spec_s21 = specA_s21 if isinstance(specA_s21, np.ndarray) else 0
 
             # Smoothing

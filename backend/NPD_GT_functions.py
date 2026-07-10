@@ -143,12 +143,12 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -156,7 +156,7 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -239,12 +239,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -252,7 +252,7 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -284,12 +284,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
         loss,loss_bulkhead=cap_searchB(file,lmoFolderB)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -297,7 +297,7 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
         specA_cable_loss = search_files(lmoFolderB, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -378,12 +378,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -391,7 +391,7 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -423,12 +423,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
         loss,loss_bulkhead=cap_searchB(file,lmoFolderB)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -436,7 +436,7 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
         specA_cable_loss = search_files(lmoFolderB, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -518,12 +518,12 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -531,7 +531,7 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -612,12 +612,12 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -625,7 +625,7 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -635,7 +635,7 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
         gain=[s for s in gainA if tile_serial in s]
         gain=gain[0]
         gain_values=np.array(pd.read_csv(gain))
-        gain_values=gain_values[:,1]
+        gain_values=gain_values[:,1] if len(gain_values) > 0 else 0
 
 
 
@@ -689,16 +689,16 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
         'New search for correct cable'
         loss,loss_bulkhead=cap_searchA(file,lmoFolderB)
         UUT_cable=rf.Network(loss)
-        UUT_cable_s21=UUT_cable.s_db[:,1,0]
+        UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
 
         UUT_bulkhead=rf.Network(loss_bulkhead)
-        UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+        UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
 
         'SpecA cable loss'
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -706,8 +706,8 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
         tile_serial = file[-16:-13]
         gain = [s for s in gainB if tile_serial in s]
         gain = gain[0]
-        gain_values = np.array(pd.read_csv(gain))
-        gain_values = gain_values[:, 1]
+        gain_values=np.array(pd.read_csv(gain))
+        gain_values=gain_values[:,1] if len(gain_values) > 0 else 0
 
 
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
@@ -794,12 +794,12 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
         loss,loss_bulkhead=cap_searchA(file,lmoFolderA)
         if loss:
             UUT_cable=rf.Network(loss)
-            UUT_cable_s21=UUT_cable.s_db[:,1,0]
+            UUT_cable_s21 = UUT_cable.s_db[:, 1, 0] if len(UUT_cable.s_db) > 0 else 0
         else:
             UUT_cable_s21 = 0
         if loss_bulkhead:
             UUT_bulkhead=rf.Network(loss_bulkhead)
-            UUT_bulkhead_s21=UUT_bulkhead.s_db[:,1,0]
+            UUT_bulkhead_s21 = UUT_bulkhead.s_db[:, 1, 0] if len(UUT_bulkhead.s_db) > 0 else 0
         else:
             UUT_bulkhead_s21 = 0
 
@@ -807,7 +807,7 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
         specA_cable_loss = search_files(lmoFolderA, 'SpecA')
         if specA_cable_loss:
             specA_cable_loss = rf.Network(specA_cable_loss[0])
-            specA_s21 = specA_cable_loss.s_db[:, 1, 0]
+            specA_s21 = specA_cable_loss.s_db[:, 1, 0] if len(specA_cable_loss.s_db) > 0 else 0
         else:
             specA_s21 = 0
 
@@ -817,7 +817,7 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
         gain=[s for s in gainA if tile_serial in s]
         gain=gain[0]
         gain_values=np.array(pd.read_csv(gain))
-        gain_values=gain_values[:,1]
+        gain_values=gain_values[:,1] if len(gain_values) > 0 else 0
 
 
 
