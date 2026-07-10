@@ -233,11 +233,8 @@ function App() {
         body: data
       });
       if (res.ok) {
-        if (testType === 1 || testType === 3) {
-          setCurrentStep(3);
-        } else {
-          setCurrentStep(4);
-        }
+        setFiles([]);
+        setCurrentStep(1);
       }
     } catch (err) {
       console.error(err);
@@ -320,7 +317,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.4 Dingo</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.5 Dingo</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -445,14 +442,19 @@ function App() {
 
               <div className="btn-group">
                 <button className="secondary" onClick={() => setCurrentStep(0)}>Back</button>
-                <button onClick={async () => {
-                  if (!formData.basePath) {
-                    alert("Please select a Base Upload Path before continuing.");
-                    return;
-                  }
-                  await submitFileInfo();
-                  setCurrentStep(2);
-                }} className="primary">Continue <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button onClick={async () => {
+                    if (!formData.basePath) {
+                      alert("Please select a Base Upload Path before continuing.");
+                      return;
+                    }
+                    await submitFileInfo();
+                    setCurrentStep(2);
+                  }} className="primary">Upload Files <Upload size={18} style={{ verticalAlign: 'middle' }} /></button>
+                  <button onClick={() => {
+                    setCurrentStep(testType === 2 ? 4 : 3);
+                  }} className="primary" style={{ background: 'var(--success)' }}>Process <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
+                </div>
               </div>
             </div>
           )}
