@@ -423,6 +423,8 @@ def save_plots():
     plots = data.get('plots', [])
     if not output_folder:
         return jsonify({"success": False, "error": "No output folder specified"})
+        
+    output_folder = os.path.join(output_folder, "Eng_review")
     
     try:
         os.makedirs(output_folder, exist_ok=True)
