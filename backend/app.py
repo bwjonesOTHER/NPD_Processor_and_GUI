@@ -79,9 +79,17 @@ def submit_file_info():
     upload_path = ""
     
     if test == 1:
-        # For Test 1, the Tkinter app had a hardcoded path and didn't write it to upload_path explicitly before upload_data
-        # But wait, in upload_data it did: upload_path = os.path.join(r"File Path for Inputs")
-        upload_path = base_path
+        run_num = data.get('runNumber', '').strip()
+        cap_num = data.get('capNumber', '').strip()
+        lmo_num = data.get('lmoNumber', '').strip()
+        
+        # Construct the requested folder structure: Run_[runNumber] [LMONumber]/Cap_[capNumber]
+        # Using .strip() inside the f-string just in case any field was left blank, though it shouldn't be.
+        run_folder = f"Run_{run_num} {lmo_num}".strip()
+        cap_folder = f"Cap_{cap_num}".strip()
+        
+        upload_path = os.path.join(base_path, run_folder, cap_folder)
+        os.makedirs(upload_path, exist_ok=True)
         write_txt("upload_path.txt", upload_path)
         
     elif test == 2:
