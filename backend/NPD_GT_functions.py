@@ -226,7 +226,7 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
 
     return freq_ghz,file_avg
 
-def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
+def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,RunA,RunB,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
     plt.figure(figsize=(8, 4), dpi=150)
     my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
     my_line_styles = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
@@ -356,7 +356,7 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
     plt.ylim(-130, -90)
     plt.grid(True)  # Enable grid lines
 
-    title = f'{RunA} {temperature}: Noise Power'
+    title = f'{RunA} and {RunB} {temperature}: Noise Power'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')  # , fontsize='x-small'
     plt.ylabel('NP (dBm)')  # , fontsize='x-small'
@@ -383,7 +383,7 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
 
     return freq_ghz,file_avg
 
-def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
+def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,RunA,RunB,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot):
     plt.figure(figsize=(8, 4), dpi=150)
     my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
     my_line_styles = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
@@ -513,7 +513,7 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
     plt.ylim(-170, -110)
     plt.grid(True)  # Enable grid lines
 
-    title = f'{RunA} {temperature}: Noise Power Density'
+    title = f'{RunA} and {RunB} {temperature}: Noise Power Density'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')  # , fontsize='x-small'
     plt.ylabel('NPD (dBm/Hz)')  # , fontsize='x-small'
@@ -969,7 +969,7 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
     return freq_ghz,file_avg
 
 
-def plotS21(filesA,filesB,u_bound_s21, l_bound_s21,RunA,temperature,freq_min,freq_max,folder_path,show_plot):
+def plotS21(filesA,filesB,u_bound_s21, l_bound_s21,RunA,RunB,temperature,freq_min,freq_max,folder_path,show_plot):
     plt.figure(figsize=(7, 4), dpi=150)
     my_colors = ['black', 'blue', 'orange', 'green', 'purple', 'pink', 'brown', 'cyan', 'gold', 'violet']
     my_line_styles = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',
@@ -1014,7 +1014,7 @@ def plotS21(filesA,filesB,u_bound_s21, l_bound_s21,RunA,temperature,freq_min,fre
 
 
 
-    title = f'{RunA} {temperature}: Test Hat S21'
+    title = f'{RunA} and {RunB} {temperature}: Test Hat S21'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')#, fontsize='x-small'
     plt.ylabel('S21 (dB)')#, fontsize='x-small'
