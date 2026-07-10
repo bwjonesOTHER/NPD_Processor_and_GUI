@@ -312,11 +312,11 @@ def generate_plots(params):
                  color='red', linestyle='--', label="Average")
 
         plt.plot(freq_ref[mask], upper_trace[mask],
-                 color='red', alpha=1, marker='o', markersize=5, markevery=100,
+                 color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),
                  label='Upper bound')
 
         plt.plot(freq_ref[mask], lower_trace[mask],
-                 color='red', alpha=1, marker='x', markersize=5, markevery=100,
+                 color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),
                  label='Lower bound')
 
                  # ---------- Final Plot Formatting ----------
@@ -712,9 +712,9 @@ def generate_plots(params):
 
         # ---------- Plot bounds only in band ----------
         plt.plot(freq_ref[mask], avg_trace[mask], color='red', linestyle='--', label="Average")
-        plt.plot(freq_ref[mask], upper_trace[mask], color='red', marker='o', markersize=5, markevery=100,
+        plt.plot(freq_ref[mask], upper_trace[mask], color='red', marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),
                  label="Upper bound")
-        plt.plot(freq_ref[mask], lower_trace[mask], color='red', marker='x', markersize=5, markevery=100,
+        plt.plot(freq_ref[mask], lower_trace[mask], color='red', marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),
                  label="Lower bound")
 
         # ---------- Formatting ----------

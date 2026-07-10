@@ -209,8 +209,8 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100,  label='Lower bound')
-    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100,  label='Upper bound')
+    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
+    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
     plt.subplots_adjust(right=0.7)
     # Save the figure
     current_date = datetime.now()  # Get the current date
@@ -277,9 +277,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
@@ -329,9 +332,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
@@ -359,8 +365,8 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
     plt.plot([freq_min, freq_max], [reqS11Val, reqS11Val], color='r')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
-    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100,  label='Lower bound')
-    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100,  label='Upper bound')
+    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
+    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
     plt.subplots_adjust(right=0.7)
     # Save the figure
@@ -428,9 +434,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
@@ -480,9 +489,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
@@ -511,8 +523,8 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100,  label='Lower bound')
-    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100,  label='Upper bound')
+    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
+    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
     plt.subplots_adjust(right=0.7)
     # Save the figure
     current_date = datetime.now()  # Get the current date
@@ -614,8 +626,8 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100,  label='Lower bound')
-    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100,  label='Upper bound')
+    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
+    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
     plt.subplots_adjust(right=0.7)
     # Save the figure
     current_date = datetime.now()  # Get the current date
@@ -692,9 +704,12 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             noise_pow_den = np.convolve(noise_pow_den, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
 
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
@@ -765,9 +780,12 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
             noise_pow_den = np.convolve(noise_pow_den, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         idx_low=np.argwhere(freq_ghz==2.6)
@@ -886,9 +904,12 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             noise_pow_den = np.convolve(noise_pow_den, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
-            UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
-            specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
-            UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_cable_s21, np.ndarray):
+                UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(specA_s21, np.ndarray):
+                specA_s21 = np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
+            if isinstance(UUT_bulkhead_s21, np.ndarray):
+                UUT_bulkhead_s21 = np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
 
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
@@ -1002,8 +1023,8 @@ def plotS21(filesA,filesB,u_bound_s21, l_bound_s21,RunA,temperature,freq_min,fre
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100,  label='Lower bound')
-    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100,  label='Upper bound')
+    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
+    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
     #plt.tight_layout()
     plt.subplots_adjust(right=0.8)
     # Save the figure
@@ -1058,8 +1079,8 @@ def plotS21_single(filesA,u_bound_s21, l_bound_s21,RunA,temperature,freq_min,fre
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
-    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=100,  label='Lower bound')
-    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=100,  label='Upper bound')
+    plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
+    plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
     #plt.tight_layout()
     plt.subplots_adjust(right=0.8)
     # Save the figure
