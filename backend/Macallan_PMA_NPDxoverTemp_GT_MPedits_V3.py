@@ -273,11 +273,8 @@ def generate_plots(params):
                 if isinstance(spec_s21, np.ndarray):
                     spec_s21 = np.convolve(spec_s21, np.ones(n_avg) / n_avg, mode='valid')
 
-            # Apply corrections            try:
-                            noise_mod = noise_pow - cable_s21 - bulk_s21 - spec_s21
-                        except Exception as e:
-                            print(f"DEBUG NOISE MOD V3! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, cable_s21={getattr(cable_s21, 'shape', cable_s21)}, bulk_s21={getattr(bulk_s21, 'shape', bulk_s21)}, spec_s21={getattr(spec_s21, 'shape', spec_s21)}")
-                            raise Exception(f'DEBUG V3: noise={getattr(noise_pow, "shape", noise_pow)}, cable={getattr(cable_s21, "shape", cable_s21)}, bulk={getattr(bulk_s21, "shape", bulk_s21)}, spec={getattr(spec_s21, "shape", spec_s21)} | Error: {e}')
+            # Apply corrections
+            noise_mod = noise_pow - cable_s21 - bulk_s21 - spec_s21
 
             # Use first frequency grid as reference
             if freq_ref is None:
@@ -401,15 +398,8 @@ def generate_plots(params):
                     bulk_s21 = np.convolve(bulk_s21, np.ones(n_avg) / n_avg, mode="valid")
                 if isinstance(spec_s22, np.ndarray):
                     spec_s21 = np.convolve(spec_s21, np.ones(n_avg) / n_avg, mode="valid")
-            try:
 
-                            noise_mod = noise_pow - cable_s21 - bulk_s21 - spec_s21
-
-                        except Exception as e:
-
-                            print(f"DEBUG NOISE MOD V3! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, cable_s21={getattr(cable_s21, 'shape', cable_s21)}, bulk_s21={getattr(bulk_s21, 'shape', bulk_s21)}, spec_s21={getattr(spec_s21, 'shape', spec_s21)}")
-
-                            raise Exception(f'DEBUG V3: noise={getattr(noise_pow, "shape", noise_pow)}, cable={getattr(cable_s21, "shape", cable_s21)}, bulk={getattr(bulk_s21, "shape", bulk_s21)}, spec={getattr(spec_s21, "shape", spec_s21)} | Error: {e}')
+            noise_mod = noise_pow - cable_s21 - bulk_s21 - spec_s21
             return freq_ghz, noise_mod
 
         # ---------- Process Run A ----------

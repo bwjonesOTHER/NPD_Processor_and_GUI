@@ -183,15 +183,8 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
                 specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         c=next(color_cycle)
-        try:
 
-                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
-
-                except Exception as e:
-
-                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
-
-                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
+        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
@@ -287,15 +280,8 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
-        try:
 
-                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
-
-                except Exception as e:
-
-                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
-
-                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
+        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -346,15 +332,8 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
-        try:
 
-                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
-
-                except Exception as e:
-
-                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
-
-                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
+        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
@@ -452,15 +431,8 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
-        try:
 
-                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
-
-                except Exception as e:
-
-                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
-
-                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
+        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -511,15 +483,8 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
-        try:
 
-                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
-
-                except Exception as e:
-
-                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
-
-                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
+        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
@@ -623,15 +588,8 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
                 specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         c=next(color_cycle)
-        try:
 
-                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
-
-                except Exception as e:
-
-                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
-
-                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
+        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
@@ -1127,9 +1085,10 @@ def npd_temp_diff_plot(NPD25,NPD64,NPDn38,folder_path,show_plot):
     color_cycle = itertools.cycle(my_colors)
     line_styles_cycle = itertools.cycle(my_line_styles)
 
-    diff_npd25_npd64 = np.abs(NPD25[1] - NPD64[1])
-    diff_npd25_npdn38 = np.abs(NPD25[1] - NPDn38[1])
-    diff_npd64_npdn38 = np.abs(NPD64[1] - NPDn38[1])
+    # Safely compute differences only if arrays are not empty
+    diff_npd25_npd64 = np.abs(NPD25[1] - NPD64[1]) if (len(NPD25) > 1 and len(NPD64) > 1 and len(NPD25[1]) > 0 and len(NPD64[1]) > 0) else []
+    diff_npd25_npdn38 = np.abs(NPD25[1] - NPDn38[1]) if (len(NPD25) > 1 and len(NPDn38) > 1 and len(NPD25[1]) > 0 and len(NPDn38[1]) > 0) else []
+    diff_npd64_npdn38 = np.abs(NPD64[1] - NPDn38[1]) if (len(NPD64) > 1 and len(NPDn38) > 1 and len(NPD64[1]) > 0 and len(NPDn38[1]) > 0) else []
 
     fig,ax1=plt.subplots(figsize=(8,6))
     plt.ylim(-120, -90)
@@ -1141,13 +1100,18 @@ def npd_temp_diff_plot(NPD25,NPD64,NPDn38,folder_path,show_plot):
     line_styles_cycle=itertools.cycle(my_line_styles)
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD25[0],NPD25[1],label="NP 25",color=c,linestyle=line)
+    if len(NPD25) > 1 and len(NPD25[0]) > 0:
+        plt.plot(NPD25[0],NPD25[1],label="NP 25",color=c,linestyle=line)
+    
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD64[0], NPD64[1], label="NP 64",color=c,linestyle=line)
+    if len(NPD64) > 1 and len(NPD64[0]) > 0:
+        plt.plot(NPD64[0], NPD64[1], label="NP 64",color=c,linestyle=line)
+    
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPDn38[0], NPDn38[1], label="NP n38",color=c,linestyle=line)
+    if len(NPDn38) > 1 and len(NPDn38[0]) > 0:
+        plt.plot(NPDn38[0], NPDn38[1], label="NP n38",color=c,linestyle=line)
     plt.legend(loc='upper left', fontsize='10' )
 
     ax2=ax1.twinx()
@@ -1155,13 +1119,20 @@ def npd_temp_diff_plot(NPD25,NPD64,NPDn38,folder_path,show_plot):
     plt.ylabel('Diff NP (dB)')  # , fontsize='x-small'
     color_cycle = itertools.cycle(my_colors)
     line_styles_cycle=itertools.cycle(my_line_styles)
-    plt.plot(NPD25[0], diff_npd25_npd64, label="Delta 25/64",color=c,linestyle='--')
-    c = next(color_cycle)
-    line = next(line_styles_cycle)
-    plt.plot(NPD25[0], diff_npd25_npdn38, label="Delta 25/n38",color=c,linestyle='--')
-    c = next(color_cycle)
-    line = next(line_styles_cycle)
-    plt.plot(NPD25[0], diff_npd64_npdn38, label="Delta 64/n38",color=c,linestyle='--')
+    
+    if len(diff_npd25_npd64) > 0 and len(NPD25[0]) > 0:
+        if len(diff_npd25_npd64) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+            plt.plot(NPD25[0], diff_npd25_npd64, label="Delta 25/64",color=c,linestyle='--')
+        c = next(color_cycle)
+        line = next(line_styles_cycle)
+    if len(diff_npd25_npdn38) > 0 and len(NPD25[0]) > 0:
+        if len(diff_npd25_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+            plt.plot(NPD25[0], diff_npd25_npdn38, label="Delta 25/n38",color=c,linestyle='--')
+        c = next(color_cycle)
+        line = next(line_styles_cycle)
+    if len(diff_npd64_npdn38) > 0 and len(NPD64[0]) > 0:
+        if len(diff_npd64_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+            plt.plot(NPD64[0], diff_npd64_npdn38, label="Delta 64/n38",color=c,linestyle='--')
     plt.xlim(min(NPD25[0]), max(NPD25[0]))
 
     plt.axvline(x=2.7, color='grey')
@@ -1193,9 +1164,10 @@ def npd_density_temp_diff_plot(NPD25,NPD64,NPDn38,folder_path,show_plot):
     color_cycle = itertools.cycle(my_colors)
     line_styles_cycle = itertools.cycle(my_line_styles)
 
-    diff_npd25_npd64 = np.abs(NPD25[1] - NPD64[1])
-    diff_npd25_npdn38 = np.abs(NPD25[1] - NPDn38[1])
-    diff_npd64_npdn38 = np.abs(NPD64[1] - NPDn38[1])
+    # Safely compute differences only if arrays are not empty
+    diff_npd25_npd64 = np.abs(NPD25[1] - NPD64[1]) if (len(NPD25) > 1 and len(NPD64) > 1 and len(NPD25[1]) > 0 and len(NPD64[1]) > 0) else []
+    diff_npd25_npdn38 = np.abs(NPD25[1] - NPDn38[1]) if (len(NPD25) > 1 and len(NPDn38) > 1 and len(NPD25[1]) > 0 and len(NPDn38[1]) > 0) else []
+    diff_npd64_npdn38 = np.abs(NPD64[1] - NPDn38[1]) if (len(NPD64) > 1 and len(NPDn38) > 1 and len(NPD64[1]) > 0 and len(NPDn38[1]) > 0) else []
 
     fig,ax1=plt.subplots(figsize=(8,6))
     plt.ylim(-170, -110)
@@ -1221,13 +1193,16 @@ def npd_density_temp_diff_plot(NPD25,NPD64,NPDn38,folder_path,show_plot):
     plt.ylabel('Diff NPD (dB)')  # , fontsize='x-small'
     color_cycle = itertools.cycle(my_colors)
     line_styles_cycle=itertools.cycle(my_line_styles)
-    plt.plot(NPD25[0], diff_npd25_npd64, label="Delta 25/64",color=c,linestyle='--')
+    if len(diff_npd25_npd64) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+        plt.plot(NPD25[0], diff_npd25_npd64, label="Delta 25/64",color=c,linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD25[0], diff_npd25_npdn38, label="Delta 25/n38",color=c,linestyle='--')
+    if len(diff_npd25_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+        plt.plot(NPD25[0], diff_npd25_npdn38, label="Delta 25/n38",color=c,linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD25[0], diff_npd64_npdn38, label="Delta 64/n38",color=c,linestyle='--')
+    if len(diff_npd64_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+        plt.plot(NPD25[0], diff_npd64_npdn38, label="Delta 64/n38",color=c,linestyle='--')
     plt.xlim(min(NPD25[0]), max(NPD25[0]))
 
     plt.axvline(x=2.7, color='grey')
@@ -1261,9 +1236,9 @@ def GT_temp_diff_plot(GT25, GT64, GTn38,folder_path,show_plot):
 
 
 
-    diff_GT25_GT64 = np.abs(GT25[1] - GT64[1])
-    diff_GT25_GTn38 = np.abs(GT25[1] - GTn38[1])
-    diff_GT64_GTn38 = np.abs(GT64[1] - GTn38[1])
+    diff_GT25_GT64 = np.abs(GT25[1] - GT64[1]) if (len(GT25) > 1 and len(GT64) > 1 and len(GT25[1]) > 0 and len(GT64[1]) > 0) else []
+    diff_GT25_GTn38 = np.abs(GT25[1] - GTn38[1]) if (len(GT25) > 1 and len(GTn38) > 1 and len(GT25[1]) > 0 and len(GTn38[1]) > 0) else []
+    diff_GT64_GTn38 = np.abs(GT64[1] - GTn38[1]) if (len(GT64) > 1 and len(GTn38) > 1 and len(GT64[1]) > 0 and len(GTn38[1]) > 0) else []
 
     fig, ax1 = plt.subplots(figsize=(8, 6))
     plt.ylim(-120, -90)
@@ -1289,13 +1264,16 @@ def GT_temp_diff_plot(GT25, GT64, GTn38,folder_path,show_plot):
     plt.ylabel('Diff GT')  # , fontsize='x-small'
     color_cycle = itertools.cycle(my_colors)
     line_styles_cycle = itertools.cycle(my_line_styles)
-    plt.plot(NPD25[0], diff_npd25_npd64, label="Delta 25/64", color=c, linestyle='--')
+    if len(diff_npd25_npd64) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+        plt.plot(NPD25[0], diff_npd25_npd64, label="Delta 25/64", color=c, linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD25[0], diff_npd25_npdn38, label="Delta 25/n38", color=c, linestyle='--')
+    if len(diff_npd25_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+        plt.plot(NPD25[0], diff_npd25_npdn38, label="Delta 25/n38", color=c, linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD25[0], diff_npd64_npdn38, label="Delta 64/n38", color=c, linestyle='--')
+    if len(diff_npd64_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
+        plt.plot(NPD25[0], diff_npd64_npdn38, label="Delta 64/n38", color=c, linestyle='--')
     plt.xlim(min(NPD25[0]), max(NPD25[0]))
 
     plt.axvline(x=2.7, color='grey')
