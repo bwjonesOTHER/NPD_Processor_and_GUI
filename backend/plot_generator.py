@@ -58,20 +58,20 @@ def generate_plots(params):
     filesSparA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_hot') if lmoFolderA else []
     filesSparA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_cold') if lmoFolderA else []
     
-    filesNPDA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD') if lmoFolderA else []
-    filesNPDA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_ambient') if lmoFolderA else []
-    filesNPDA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_hot') if lmoFolderA else []
-    filesNPDA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_cold') if lmoFolderA else []
+    filesNPDA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD') if lmoFolderA else []
+    filesNPDA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_ambient') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD_ambient') if lmoFolderA else []
+    filesNPDA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_hot') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD_hot') if lmoFolderA else []
+    filesNPDA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_cold') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD_cold') if lmoFolderA else []
     
     filesSparB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR') if lmoFolderB else []
     filesSparB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_ambient') if lmoFolderB else []
     filesSparB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_hot') if lmoFolderB else []
     filesSparB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_cold') if lmoFolderB else []
     
-    filesNPDB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD') if lmoFolderB else []
-    filesNPDB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_ambient') if lmoFolderB else []
-    filesNPDB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_hot') if lmoFolderB else []
-    filesNPDB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_cold') if lmoFolderB else []
+    filesNPDB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD') if lmoFolderB else []
+    filesNPDB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_ambient') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD_ambient') if lmoFolderB else []
+    filesNPDB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_hot') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD_hot') if lmoFolderB else []
+    filesNPDB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_cold') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD_cold') if lmoFolderB else []
 
     NPD_density_25 = ([], [])
     NPD_density_64 = ([], [])
