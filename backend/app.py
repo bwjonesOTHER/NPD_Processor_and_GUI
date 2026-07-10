@@ -335,7 +335,10 @@ def api_generate_plots():
             if not folder_path:
                 folder_path = read_txt("path.txt")
             
-        params['folder_path'] = folder_path
+        if params.get('outputFolder'):
+            params['folder_path'] = params.get('outputFolder')
+        else:
+            params['folder_path'] = folder_path
         params['runs'] = runs
         
         if folder_path:

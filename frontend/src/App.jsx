@@ -43,6 +43,7 @@ function App() {
   const [runs, setRuns] = useState(['', '']);
   const [runNames, setRunNames] = useState([]);
   const [runFiles, setRunFiles] = useState([[], []]);
+  const [outputFolder, setOutputFolder] = useState('');
   const [numRuns, setNumRuns] = useState(2);
   const [numRunsInput, setNumRunsInput] = useState('2');
   const [uploadingRun, setUploadingRun] = useState(false);
@@ -133,6 +134,19 @@ function App() {
     setPlotParams(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectOutputFolder = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/choose_directory`);
+      const data = await res.json();
+      if (data.success && data.path) {
+        setOutputFolder(data.path);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error selecting output directory: " + err.message);
+    }
+  };
+
   const handleBrowseRun = async (index) => {
     try {
       const res = await fetch(`${API_BASE}/choose_directory`);
@@ -196,7 +210,6 @@ function App() {
       });
       if (res.ok) {
         if (testType === 1 || testType === 3) {
-          fetchFolders();
           setCurrentStep(3);
         } else {
           setCurrentStep(4);
@@ -239,7 +252,7 @@ function App() {
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(plotParams)
+        body: JSON.stringify({ ...plotParams, outputFolder })
       });
       
       const data = await res.json();
@@ -679,6 +692,18 @@ function App() {
                   <label>NPD Lower Bound Offset</label>
                   <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
 
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                    Select Output Folder
+                  </button>
+                  <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {outputFolder || 'Plots will be saved to the run folder by default'}
+                  </span>
                 </div>
               </div>
 

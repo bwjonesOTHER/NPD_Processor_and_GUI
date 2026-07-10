@@ -1319,9 +1319,9 @@ def GT_temp_diff_plot(GT25, GT64, GTn38,folder_path,show_plot):
 
 def s21_temp_diff_plot(Spar_25, Spar_64, Spar_n38,folder_path,show_plot):
     "Plot average S21 and delta values"
-    diff_s25_s64 = np.abs(Spar_25[1] - Spar_64[1])
-    diff_s25_sn38 = np.abs(Spar_25[1] - Spar_n38[1])
-    diff_s64_sn38 = np.abs(Spar_64[1] - Spar_n38[1])
+    diff_s25_s64 = np.abs(Spar_25[1] - Spar_64[1]) if (len(Spar_25) > 1 and len(Spar_64) > 1 and len(Spar_25[1]) > 0 and len(Spar_64[1]) > 0) else []
+    diff_s25_sn38 = np.abs(Spar_25[1] - Spar_n38[1]) if (len(Spar_25) > 1 and len(Spar_n38) > 1 and len(Spar_25[1]) > 0 and len(Spar_n38[1]) > 0) else []
+    diff_s64_sn38 = np.abs(Spar_64[1] - Spar_n38[1]) if (len(Spar_64) > 1 and len(Spar_n38) > 1 and len(Spar_64[1]) > 0 and len(Spar_n38[1]) > 0) else []
 
     fig, ax1 = plt.subplots(figsize=(8, 6))
     plt.grid(True)

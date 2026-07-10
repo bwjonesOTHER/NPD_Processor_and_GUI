@@ -84,6 +84,7 @@ def generate_plots(params):
     """Collect and categorize files"""
     folder_path = get_saved_path() #\L110475\SN0001\Pre-TSS\PRI
     serial_number = get_SN_path()
+    output_folder = params.get('outputFolder') or folder_path
     #folder_path = r'C:\Users\colton.dunlap.CORP\Downloads'#\L110475\SN0001\Pre-TSS
     lmoFolderA = folder_path+'\\'+RunA
     filesSparA = search_files(lmoFolderA, 'NPDoverTempVSWR_ambient',f"{serial_number}")
@@ -366,7 +367,7 @@ def generate_plots(params):
         formatted_date = current_date.strftime("%Y%m%d")  # Format the date as Year-Month-Day
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
         file_name_full = f"{formatted_date}_{filename_safe_title}"  # Specify output file name
-        save_path = os.path.join(folder_path, file_name_full)
+        save_path = os.path.join(output_folder, file_name_full)
         plt.savefig(save_path, dpi=300)
         print(f"Plot saved to {save_path}")
 
@@ -381,5 +382,5 @@ def generate_plots(params):
     if filesSparA and filesSparB:
         plotS21(filesSparA,filesSparB)
 
-    png_files = glob.glob(os.path.join(folder_path, '*.png'))
+    png_files = glob.glob(os.path.join(output_folder, '*.png'))
     return png_files

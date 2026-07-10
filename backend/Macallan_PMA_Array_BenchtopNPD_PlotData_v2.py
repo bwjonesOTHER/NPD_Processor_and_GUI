@@ -259,7 +259,7 @@ def generate_plots(params):
         current_date = datetime.now()
         formatted_date = current_date.strftime("%Y%m%d")
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-        output_dir = os.path.dirname(file)
+        output_dir = params.get('outputFolder') or os.path.dirname(file)
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
 
         plt.tight_layout()
@@ -319,7 +319,7 @@ def generate_plots(params):
         current_date = datetime.now()  # Get the current date
         formatted_date = current_date.strftime("%Y%m%d")  # Format the date as Year-Month-Day
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-        output_dir = os.path.dirname(file)
+        output_dir = params.get('outputFolder') or os.path.dirname(file)
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
         plt.savefig(save_path, dpi=300)
         print(f"Plot saved to {save_path}")
@@ -408,7 +408,7 @@ def generate_plots(params):
                 + ".png"
         )
 
-        output_dir = os.path.dirname(file)
+        output_dir = params.get('outputFolder') or os.path.dirname(file)
         save_path = os.path.join(output_dir, f"{current_date}_{filename_safe_title}")
 
         plt.tight_layout()
@@ -451,7 +451,7 @@ def generate_plots(params):
         formatted_date = current_date.strftime("%Y%m%d")  # Format the date as Year-Month-Day
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
         file_name_full = f"{formatted_date}_{filename_safe_title}"  # Specify output file name
-        save_path = os.path.join(folder_path, file_name_full)
+        save_path = os.path.join(params.get('outputFolder') or folder_path, file_name_full)
         plt.savefig(save_path, dpi=300)
         print(f"Plot saved to {save_path}")
 
@@ -467,4 +467,6 @@ def generate_plots(params):
         plotS21(filesSparA, filesSparB)
 
     png_files = glob.glob(os.path.join(full_sn_path, folderA, '*.png')) + glob.glob(os.path.join(full_sn_path, folderB, '*.png'))
+    if params.get('outputFolder'):
+        png_files = list(set(png_files + glob.glob(os.path.join(params.get('outputFolder'), '*.png'))))
     return png_files
