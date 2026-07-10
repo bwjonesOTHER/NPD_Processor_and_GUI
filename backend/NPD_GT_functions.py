@@ -1271,13 +1271,16 @@ def GT_temp_diff_plot(GT25, GT64, GTn38,folder_path,show_plot):
     line_styles_cycle = itertools.cycle(my_line_styles)
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD25[0], NPD25[1], label="GT 25", color=c, linestyle=line)
+    if len(GT25) > 1 and len(GT25[0]) > 0:
+        plt.plot(GT25[0], GT25[1], label="GT 25", color=c, linestyle=line)
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPD64[0], NPD64[1], label="GT 64", color=c, linestyle=line)
+    if len(GT64) > 1 and len(GT64[0]) > 0:
+        plt.plot(GT64[0], GT64[1], label="GT 64", color=c, linestyle=line)
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(NPDn38[0], NPDn38[1], label="GT n38", color=c, linestyle=line)
+    if len(GTn38) > 1 and len(GTn38[0]) > 0:
+        plt.plot(GTn38[0], GTn38[1], label="GT n38", color=c, linestyle=line)
     plt.legend(loc='upper left', fontsize='10')
 
     ax2 = ax1.twinx()
@@ -1285,17 +1288,21 @@ def GT_temp_diff_plot(GT25, GT64, GTn38,folder_path,show_plot):
     plt.ylabel('Diff GT')  # , fontsize='x-small'
     color_cycle = itertools.cycle(my_colors)
     line_styles_cycle = itertools.cycle(my_line_styles)
-    if len(diff_npd25_npd64) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
-        plt.plot(NPD25[0], diff_npd25_npd64, label="Delta 25/64", color=c, linestyle='--')
+    if len(diff_GT25_GT64) > 0 and len(GT25) > 0 and len(GT25[0]) > 0:
+        plt.plot(GT25[0], diff_GT25_GT64, label="Delta 25/64", color=c, linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    if len(diff_npd25_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
-        plt.plot(NPD25[0], diff_npd25_npdn38, label="Delta 25/n38", color=c, linestyle='--')
+    if len(diff_GT25_GTn38) > 0 and len(GT25) > 0 and len(GT25[0]) > 0:
+        plt.plot(GT25[0], diff_GT25_GTn38, label="Delta 25/n38", color=c, linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    if len(diff_npd64_npdn38) > 0 and len(NPD25) > 0 and len(NPD25[0]) > 0:
-        plt.plot(NPD25[0], diff_npd64_npdn38, label="Delta 64/n38", color=c, linestyle='--')
-    plt.xlim(min(NPD25[0]), max(NPD25[0]))
+    if len(diff_GT64_GTn38) > 0 and len(GT64) > 0 and len(GT64[0]) > 0:
+        plt.plot(GT64[0], diff_GT64_GTn38, label="Delta 64/n38", color=c, linestyle='--')
+        
+    if len(GT25) > 0 and len(GT25[0]) > 0:
+        plt.xlim(min(GT25[0]), max(GT25[0]))
+    elif len(GT64) > 0 and len(GT64[0]) > 0:
+        plt.xlim(min(GT64[0]), max(GT64[0]))
 
     plt.axvline(x=2.7, color='grey')
     plt.axvline(x=4.1, color='grey')
@@ -1335,23 +1342,35 @@ def s21_temp_diff_plot(Spar_25, Spar_64, Spar_n38,folder_path,show_plot):
     line_styles_cycle = itertools.cycle(my_line_styles)
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(Spar_25[0], Spar_25[1], label="S21 25", color=c, linestyle=line)
+    if len(Spar_25) > 1 and len(Spar_25[0]) > 0:
+        plt.plot(Spar_25[0], Spar_25[1], label="S21 25", color=c, linestyle=line)
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(Spar_64[0], Spar_64[1], label="S21 64", color=c, linestyle=line)
+    if len(Spar_64) > 1 and len(Spar_64[0]) > 0:
+        plt.plot(Spar_64[0], Spar_64[1], label="S21 64", color=c, linestyle=line)
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(Spar_n38[0], Spar_n38[1], label="S21 n38", color=c, linestyle=line)
+    if len(Spar_n38) > 1 and len(Spar_n38[0]) > 0:
+        plt.plot(Spar_n38[0], Spar_n38[1], label="S21 n38", color=c, linestyle=line)
+        
     color_cycle = itertools.cycle(my_colors)
     line_styles_cycle = itertools.cycle(my_line_styles)
-    plt.plot(Spar_n38[0], diff_s25_s64, label="Delta 25/64", color=c, linestyle='--')
+    
+    if len(diff_s25_s64) > 0 and len(Spar_25) > 0 and len(Spar_25[0]) > 0:
+        plt.plot(Spar_25[0], diff_s25_s64, label="Delta 25/64", color=c, linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(Spar_n38[0], diff_s25_sn38, label="Delta 25/n38", color=c, linestyle='--')
+    if len(diff_s25_sn38) > 0 and len(Spar_25) > 0 and len(Spar_25[0]) > 0:
+        plt.plot(Spar_25[0], diff_s25_sn38, label="Delta 25/n38", color=c, linestyle='--')
     c = next(color_cycle)
     line = next(line_styles_cycle)
-    plt.plot(Spar_n38[0], diff_s64_sn38, label="Delta 64/n38", color=c, linestyle='--')
-    plt.xlim(min(Spar_n38[0]), max(Spar_n38[0]))
+    if len(diff_s64_sn38) > 0 and len(Spar_64) > 0 and len(Spar_64[0]) > 0:
+        plt.plot(Spar_64[0], diff_s64_sn38, label="Delta 64/n38", color=c, linestyle='--')
+        
+    if len(Spar_25) > 0 and len(Spar_25[0]) > 0:
+        plt.xlim(min(Spar_25[0]), max(Spar_25[0]))
+    elif len(Spar_64) > 0 and len(Spar_64[0]) > 0:
+        plt.xlim(min(Spar_64[0]), max(Spar_64[0]))
     plt.ylim(0, 30)
     plt.axvline(x=2.7, color='grey')
     plt.axvline(x=4.1, color='grey')
