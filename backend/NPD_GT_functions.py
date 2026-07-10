@@ -204,13 +204,13 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
     plt.xlabel('Frequency (GHz)')  # , fontsize='x-small'
     plt.ylabel('NP (dBm)')  # , fontsize='x-small'
 
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.plot([freq_min, freq_max], [reqS11Val, reqS11Val], color='r')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
     plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
     plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     # Save the figure
     current_date = datetime.now()  # Get the current date
@@ -361,13 +361,13 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
     plt.xlabel('Frequency (GHz)')  # , fontsize='x-small'
     plt.ylabel('NP (dBm)')  # , fontsize='x-small'
 
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.plot([freq_min, freq_max], [reqS11Val, reqS11Val], color='r')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
     plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     # Save the figure
     current_date = datetime.now()  # Get the current date
@@ -518,13 +518,13 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
     plt.xlabel('Frequency (GHz)')  # , fontsize='x-small'
     plt.ylabel('NPD (dBm/Hz)')  # , fontsize='x-small'
 
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.plot([freq_min, freq_max], [reqS11Val, reqS11Val], color='r')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
     plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
     plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     # Save the figure
     current_date = datetime.now()  # Get the current date
@@ -621,13 +621,13 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
     plt.xlabel('Frequency (GHz)')  # , fontsize='x-small'
     plt.ylabel('NPD (dBm/Hz)')  # , fontsize='x-small'
 
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.plot([freq_min, freq_max], [reqS11Val, reqS11Val], color='r')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
     plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
     plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
     # Save the figure
     current_date = datetime.now()  # Get the current date
@@ -1019,12 +1019,12 @@ def plotS21(filesA,filesB,u_bound_s21, l_bound_s21,RunA,temperature,freq_min,fre
     plt.xlabel('Frequency (GHz)')#, fontsize='x-small'
     plt.ylabel('S21 (dB)')#, fontsize='x-small'
 
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
     plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
     plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     #plt.tight_layout()
     plt.subplots_adjust(right=0.8)
     # Save the figure
@@ -1075,12 +1075,12 @@ def plotS21_single(filesA,u_bound_s21, l_bound_s21,RunA,temperature,freq_min,fre
     plt.xlabel('Frequency (GHz)')#, fontsize='x-small'
     plt.ylabel('S21 (dB)')#, fontsize='x-small'
 
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.axvline(x=freq_min, color='grey', label='axvline - full height')
     plt.axvline(x=freq_max, color='grey', label='axvline - full height')
     plt.axvspan(xmin=freq_min, xmax=freq_max, color='grey', alpha=.15)
     plt.plot(freq_ghz, lower_bound_data, color='red', alpha=1, marker='o', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Lower bound')
     plt.plot(freq_ghz, upper_bound_data, color='red', alpha=1, marker='x', markersize=5, markevery=max(1, len(freq_ghz)//20),  label='Upper bound')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     #plt.tight_layout()
     plt.subplots_adjust(right=0.8)
     # Save the figure

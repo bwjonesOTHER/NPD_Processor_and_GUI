@@ -120,6 +120,7 @@ def upload_files():
     for file in files:
         if file.filename:
             filepath = os.path.join(dest_folder, file.filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
             file.save(filepath)
             saved_files.append(file.filename)
             
