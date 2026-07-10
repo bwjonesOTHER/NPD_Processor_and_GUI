@@ -166,6 +166,12 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
         num_df = df_all.apply(pd.to_numeric, errors='coerce')#'raise' 'coerce' 'ignore'
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
@@ -178,12 +184,6 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
 
         c=next(color_cycle)
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -266,6 +266,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
         num_df = df_all.apply(pd.to_numeric, errors='coerce')#'raise' 'coerce' 'ignore'
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
 
 
         if n_avg > 1:
@@ -275,12 +281,6 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg = np.zeros([len(noise_pow_mod)])
@@ -320,6 +320,12 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
 
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
@@ -327,12 +333,6 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -417,6 +417,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
         num_df = df_all.apply(pd.to_numeric, errors='coerce')#'raise' 'coerce' 'ignore'
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 2], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
 
 
         if n_avg > 1:
@@ -426,12 +432,6 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg = np.zeros([len(noise_pow_mod)])
@@ -471,6 +471,12 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
 
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 2], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
@@ -478,12 +484,6 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -571,6 +571,12 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
         num_df = df_all.apply(pd.to_numeric, errors='coerce')#'raise' 'coerce' 'ignore'
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 2], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
@@ -583,12 +589,6 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
 
         c=next(color_cycle)
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -681,6 +681,12 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)
         noise_pow_den=remove_nan(num_df.values[:, 2], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
 
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
@@ -691,12 +697,6 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
 
@@ -755,6 +755,12 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)
         noise_pow_den=remove_nan(num_df.values[:, 2], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
             freq_ghz = freq_ghz[int(n_avg/2):int(1-n_avg/2):1]
@@ -763,12 +769,6 @@ def plotGT(filesA,lmoFolderA,gainA,n_avg,filesB,lmoFolderB,gainB,RunA,temperatur
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
         idx_low=np.argwhere(freq_ghz==2.6)
         idx_high=np.argwhere(freq_ghz==4.1)
@@ -875,6 +875,12 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
         freq_ghz = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise_pow = remove_nan(num_df.values[:, 1], remove_infinite=True)
         noise_pow_den=remove_nan(num_df.values[:, 2], remove_infinite=True)
+        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
+            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
+        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
+            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
+        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
+            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
 
         if n_avg > 1:
             noise_pow = np.convolve(noise_pow, np.ones(n_avg) / n_avg, mode='valid')
@@ -885,12 +891,6 @@ def plotGT_single(filesA,lmoFolderA,gainA,n_avg,RunA,temperature,freq_min,freq_m
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
 
 
-        if isinstance(specA_s21, np.ndarray) and len(specA_s21) > 1 and len(specA_s21) != len(freq_ghz):
-            specA_s21 = np.interp(freq_ghz, specA_cable_loss.f / 1e9, specA_s21)
-        if isinstance(UUT_cable_s21, np.ndarray) and len(UUT_cable_s21) > 1 and len(UUT_cable_s21) != len(freq_ghz):
-            UUT_cable_s21 = np.interp(freq_ghz, UUT_cable.f / 1e9, UUT_cable_s21)
-        if isinstance(UUT_bulkhead_s21, np.ndarray) and len(UUT_bulkhead_s21) > 1 and len(UUT_bulkhead_s21) != len(freq_ghz):
-            UUT_bulkhead_s21 = np.interp(freq_ghz, UUT_bulkhead.f / 1e9, UUT_bulkhead_s21)
         noise_pow_mod=noise_pow_den-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
 
 
