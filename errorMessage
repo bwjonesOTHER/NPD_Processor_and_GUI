@@ -1,0 +1,18 @@
+C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\backend\NPD_GT_functions.py:630: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
+Plot saved to C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\uploads\Run_0\20260710_Run_9_LMO1208-62_All_Noise_Power_Density.png
+C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\backend\NPD_GT_functions.py:630: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
+Plot saved to C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\uploads\Run_0\20260710_Run_9_LMO1208-62_25C_Noise_Power_Density.png
+C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\backend\NPD_GT_functions.py:630: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
+Plot saved to C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\uploads\Run_0\20260710_Run_9_LMO1208-62_-38C_Noise_Power_Density.png
+Traceback (most recent call last):
+  File "C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\backend\app.py", line 347, in api_generate_plots
+    png_files = plot_generator.generate_plots(params)
+  File "C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\backend\plot_generator.py", line 151, in generate_plots
+    NPD_GT_functions.npd_density_temp_diff_plot(NPD_density_25,NPD_density_64,NPD_density_n38,folder_path,show_plot)
+  File "C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-Combination_testing (8)\NPD_Processor_and_GUI-Combination_testing\backend\NPD_GT_functions.py", line 1172, in npd_density_temp_diff_plot
+    diff_npd25_npd64 = np.abs(NPD25[1] - NPD64[1])
+ValueError: operands could not be broadcast together with shapes (9982,) (0,)
+127.0.0.1 - - [10/Jul/2026 10:49:01] "POST /api/generate_plots?testType=1 HTTP/1.1" 500 -
