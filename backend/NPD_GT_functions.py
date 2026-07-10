@@ -183,8 +183,15 @@ def plotNPD_single(filesA,lmoFolderA,n_avg, u_bound_npd,l_bound_npd,RunA,tempera
                 specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         c=next(color_cycle)
+        try:
 
-        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+
+                except Exception as e:
+
+                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
+
+                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
@@ -280,8 +287,15 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+        try:
 
-        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+
+                except Exception as e:
+
+                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
+
+                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
 
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -332,8 +346,15 @@ def plotNPD(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_bound_npd,Ru
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+        try:
 
-        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+
+                except Exception as e:
+
+                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
+
+                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
@@ -431,8 +452,15 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+        try:
 
-        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+
+                except Exception as e:
+
+                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
+
+                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
 
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
@@ -483,8 +511,15 @@ def plotNPD_density(filesA,lmoFolderA,n_avg,filesB,lmoFolderB,u_bound_npd,l_boun
             UUT_cable_s21 = np.convolve(UUT_cable_s21, np.ones(n_avg) / n_avg, mode='valid')
             specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
             UUT_bulkhead_s21=np.convolve(UUT_bulkhead_s21, np.ones(n_avg) / n_avg, mode='valid')
+        try:
 
-        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+
+                except Exception as e:
+
+                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
+
+                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
 
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
@@ -588,8 +623,15 @@ def plotNPD_density_single(filesA,lmoFolderA,n_avg,u_bound_npd,l_bound_npd, RunA
                 specA_s21=np.convolve(specA_s21, np.ones(n_avg) / n_avg, mode='valid')
 
         c=next(color_cycle)
+        try:
 
-        noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+                    noise_pow_mod=noise_pow-specA_s21-UUT_cable_s21-UUT_bulkhead_s21
+
+                except Exception as e:
+
+                    print(f"DEBUG NOISE POW MOD! noise_pow={getattr(noise_pow, 'shape', noise_pow)}, specA_s21={getattr(specA_s21, 'shape', specA_s21)}, UUT_cable_s21={getattr(UUT_cable_s21, 'shape', UUT_cable_s21)}, UUT_bulk_s21={getattr(UUT_bulkhead_s21, 'shape', UUT_bulkhead_s21)}")
+
+                    raise Exception(f'DEBUG: noise_pow={getattr(noise_pow, "shape", noise_pow)}, spec={getattr(specA_s21, "shape", specA_s21)}, cable={getattr(UUT_cable_s21, "shape", UUT_cable_s21)}, bulk={getattr(UUT_bulkhead_s21, "shape", UUT_bulkhead_s21)} | Error: {e}')
         file_avg = np.zeros([len(noise_pow_mod)])
         file_avg=np.column_stack((file_avg,noise_pow_mod))
 
