@@ -97,7 +97,10 @@ def generate_plots(params):
 
 
     raw_sn = get_SN()
-    serial_number = f"SN{int(raw_sn):04d}"  # -> "SN0002"
+    try:
+        serial_number = f"SN{int(raw_sn):04d}" if raw_sn else ""
+    except Exception:
+        serial_number = ""
 
 
     # Search for files
