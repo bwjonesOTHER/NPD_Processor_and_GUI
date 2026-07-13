@@ -5,6 +5,14 @@ import './App.css';
 
 const API_BASE = window.location.port === '5173' ? `http://${window.location.hostname}:5001/api` : '/api';
 
+const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log', '.s1p', '.s2p'];
+const filterValidFiles = (files) => {
+  return Array.from(files).filter(f => {
+    const name = f.name.toLowerCase();
+    return ALLOWED_EXTENSIONS.some(ext => name.endsWith(ext));
+  });
+};
+
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [testType, setTestType] = useState(null);
@@ -213,18 +221,18 @@ function App() {
   const handleFileDrop = (e) => {
     e.preventDefault();
     if (e.dataTransfer.files) {
-      setFiles(Array.from(e.dataTransfer.files));
+      setFiles(filterValidFiles(e.dataTransfer.files));
     }
   };
   
   const handleFileChange = (e) => {
     if (e.target.files) {
-      setFiles(Array.from(e.target.files));
+      setFiles(filterValidFiles(e.target.files));
     }
   };
 
   const handleDataSourceUpload = async (e) => {
-    const selectedFiles = Array.from(e.target.files);
+    const selectedFiles = filterValidFiles(e.target.files);
     if (selectedFiles.length === 0) return;
     
     setIsUploadingSource(true);
@@ -599,11 +607,7 @@ function App() {
                       onChange={async (e) => {
                         if (!e.target.files || e.target.files.length === 0) return;
                         setUploadingRun(true);
-                        const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log', '.s1p', '.s2p'];
-                        const filesArray = Array.from(e.target.files).filter(f => {
-                          const name = f.name.toLowerCase();
-                          return allowedExtensions.some(ext => name.endsWith(ext));
-                        });
+                        const filesArray = filterValidFiles(e.target.files);
                         
                         if (filesArray.length === 0) {
                           setUploadingRun(false);
@@ -699,7 +703,7 @@ function App() {
                           multiple
                           onChange={e => {
                             const newFiles = [...runFiles];
-                            newFiles[idx] = Array.from(e.target.files);
+                            newFiles[idx] = filterValidFiles(e.target.files);
                             setRunFiles(newFiles);
                             
                             const folderName = e.target.files.length > 0 && e.target.files[0].webkitRelativePath ? e.target.files[0].webkitRelativePath.split('/')[0] : '';
