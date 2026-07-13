@@ -43,12 +43,14 @@ def hydrate_directory(directory_path):
         return
     for root, dirs, files in os.walk(directory_path):
         for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                # Reading 1 byte forces Windows OneDrive to download the file on-demand
-                with open(file_path, "rb") as f:
-                    f.read(1)
-            except Exception:
+            if file.lower().endswith('.csv') or file.lower().endswith('.s2p'):
+                file_path = os.path.join(root, file)
+                try:
+                    # Reading 1 byte forces Windows OneDrive to download the file on-demand
+                    with open(file_path, "rb") as f:
+                        f.read(1)
+                except Exception:
+                    pass
                 pass
 
 
@@ -353,10 +355,9 @@ def api_generate_plots():
         params['runs'] = runs
         
         if folder_path:
-            hydrate_directory(folder_path)
+            pass
         if runs:
-            for r in runs:
-                if r: hydrate_directory(r)
+            pass
         
         try:
             png_files = plot_generator.generate_plots(params)
@@ -376,7 +377,7 @@ def api_generate_plots():
         if path:
             with open("path.txt", "w") as f:
                 f.write(path)
-            hydrate_directory(path)
+            # Removed hydrate_directory to prevent OneDrive image downloads
         params['outputFolder'] = temp_out_dir
         try:
             png_files = Macallan_PMA_BenchtopNPD_PlotData_v2.generate_plots(params)
@@ -392,8 +393,8 @@ def api_generate_plots():
         import Macallan_PMA_Array_BenchtopNPD_PlotData_v2
         path1 = read_txt("path.txt")
         path2 = read_txt("upload_path.txt")
-        if path1: hydrate_directory(path1)
-        if path2: hydrate_directory(path2)
+        if path1: pass
+        if path2: pass
         params['outputFolder'] = temp_out_dir
         try:
             png_files = Macallan_PMA_Array_BenchtopNPD_PlotData_v2.generate_plots(params)
