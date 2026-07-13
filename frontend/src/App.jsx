@@ -10,6 +10,7 @@ function App() {
   const [testType, setTestType] = useState(null);
   const [isConnected, setIsConnected] = useState(true); // Always true now since we removed SharePoint
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isUploadingSource, setIsUploadingSource] = useState(false);
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   
@@ -219,6 +220,31 @@ function App() {
   const handleFileChange = (e) => {
     if (e.target.files) {
       setFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleDataSourceUpload = async (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    if (selectedFiles.length === 0) return;
+    
+    setIsUploadingSource(true);
+    const data = new FormData();
+    selectedFiles.forEach(f => data.append('files', f));
+    
+    try {
+      const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+      const json = await res.json();
+      if (json.status === 'success' && json.folder) {
+        setFormData(prev => ({...prev, basePath: json.folder}));
+      } else {
+        alert("Upload failed.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload error.");
+    } finally {
+      setIsUploadingSource(false);
+      e.target.value = ''; // Reset input
     }
   };
 
@@ -698,19 +724,19 @@ function App() {
                   <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                     <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Data Source Path</h4>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <button onClick={async () => {
-                        try {
-                          const res = await fetch(`${API_BASE}/choose_directory`);
-                          const data = await res.json();
-                          if (data.success && data.path) {
-                            setFormData(prev => ({...prev, basePath: data.path}));
-                          }
-                        } catch (err) {
-                          console.error("Failed to choose directory:", err);
-                        }
-                      }} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
-                        Browse Source
+                      <button type="button" onClick={() => document.getElementById('dataSourceUpload').click()} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {isUploadingSource ? <Activity className="animate-spin" size={16} /> : <UploadCloud size={16} />}
+                        {isUploadingSource ? 'Uploading...' : 'Upload Directory'}
                       </button>
+                      <input 
+                        type="file" 
+                        id="dataSourceUpload" 
+                        webkitdirectory="true" 
+                        directory="true" 
+                        multiple 
+                        style={{ display: 'none' }} 
+                        onChange={handleDataSourceUpload} 
+                      />
                       <input 
                         type="text" 
                         name="basePath" 
