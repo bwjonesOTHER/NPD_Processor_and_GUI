@@ -317,7 +317,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.8 Dingo</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.9 Dingo</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -698,7 +698,17 @@ function App() {
                   <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                     <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Data Source Path</h4>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <button onClick={handleBrowseBasePath} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                      <button onClick={async () => {
+                        try {
+                          const res = await fetch(`${API_BASE}/choose_directory`);
+                          const data = await res.json();
+                          if (data.success && data.path) {
+                            setFormData(prev => ({...prev, basePath: data.path}));
+                          }
+                        } catch (err) {
+                          console.error("Failed to choose directory:", err);
+                        }
+                      }} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
                         Browse Source
                       </button>
                       <input 
