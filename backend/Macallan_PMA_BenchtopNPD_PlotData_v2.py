@@ -81,11 +81,24 @@ def generate_plots(params):
         except FileNotFoundError:
             return None
 
+    def get_LMO_Number():
+        try:
+            with open("LMO_Number.txt", "r") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            return ""
+
     """Collect and categorize files"""
     folder_path = get_saved_path() #\L110475\SN0001\Pre-TSS\PRI
     serial_number = get_SN_path() or ""
+    lmo_number = get_LMO_Number()
+    pma_area = get_PMA_area_path() or ""
+    
+    # Format the folder names based on user feedback
+    area_folder = pma_area
+    lmo_folder = f"LMO{lmo_number}" if not lmo_number.upper().startswith("LMO") else lmo_number
+
     output_folder = params.get('outputFolder') or folder_path
-    #folder_path = r'C:\Users\colton.dunlap.CORP\Downloads'#\L110475\SN0001\Pre-TSS
     lmoFolderA = os.path.join(folder_path, RunA)
     filesSparA = search_files(lmoFolderA, 'NPDoverTempVSWR_ambient',f"{serial_number}")
     if not filesSparA:
@@ -93,7 +106,7 @@ def generate_plots(params):
     filesNPDA = search_files(lmoFolderA, 'NPDoverTempNPD_ambient',f"{serial_number}")
     if not filesNPDA:
         filesNPDA = search_files(lmoFolderA, 'NPDoverTempNPD',f"{serial_number}")
-    lmoFolderB = os.path.join(folder_path, RunB)
+    lmoFolderB = os.path.join(folder_path, area_folder, lmo_folder)
     filesSparB = search_files(lmoFolderB, '.s2p', f"{serial_number}")#'BenchtopNPDS'
     if not filesSparB and serial_number: filesSparB = search_files(lmoFolderB, '.s2p', "")
     filesNPDB = search_files(lmoFolderB, '.csv', f"{serial_number}")#'BenchtopNPDN'

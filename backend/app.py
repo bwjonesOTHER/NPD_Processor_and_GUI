@@ -95,8 +95,10 @@ def submit_file_info():
     elif test == 2:
         pma = data.get('pmaArea', '').strip()
         sn = data.get('serialNumber', '').strip()
+        lmo_num = data.get('lmoNumber', '').strip()
         write_txt("PMA_Area.txt", pma)
         write_txt("SN.txt", sn)
+        write_txt("LMO_Number.txt", lmo_num)
         upload_path = base_path
         write_txt("upload_path.txt", upload_path)
         
