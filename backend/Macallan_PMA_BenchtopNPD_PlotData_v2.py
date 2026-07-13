@@ -95,7 +95,9 @@ def generate_plots(params):
         filesNPDA = search_files(lmoFolderA, 'NPDoverTempNPD',f"{serial_number}")
     lmoFolderB = os.path.join(folder_path, RunB)
     filesSparB = search_files(lmoFolderB, '.s2p', f"{serial_number}")#'BenchtopNPDS'
+    if not filesSparB and serial_number: filesSparB = search_files(lmoFolderB, '.s2p', "")
     filesNPDB = search_files(lmoFolderB, '.csv', f"{serial_number}")#'BenchtopNPDN'
+    if not filesNPDB and serial_number: filesNPDB = search_files(lmoFolderB, '.csv', "")
 
     def extract_serial(filename):
         match = re.search(r'EM-\d+', filename)

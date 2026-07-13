@@ -105,10 +105,14 @@ def generate_plots(params):
 
     # Search for files
     filesSparA = search_files(lmoFolderA, ".s2p", serial_number)
+    if not filesSparA and serial_number: filesSparA = search_files(lmoFolderA, ".s2p", "")
     filesNPDA = search_files(lmoFolderA, ".csv", serial_number)
+    if not filesNPDA and serial_number: filesNPDA = search_files(lmoFolderA, ".csv", "")
 
     filesSparB = search_files(lmoFolderB, ".s2p", serial_number)
+    if not filesSparB and serial_number: filesSparB = search_files(lmoFolderB, ".s2p", "")
     filesNPDB = search_files(lmoFolderB, ".csv", serial_number)
+    if not filesNPDB and serial_number: filesNPDB = search_files(lmoFolderB, ".csv", "")
 
     print("\n=== Files Found in Run A ===")
     for f in filesNPDA + filesSparA:
