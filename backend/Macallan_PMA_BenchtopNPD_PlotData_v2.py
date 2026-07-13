@@ -34,20 +34,34 @@ def generate_plots(params):
 
     n_avg = int(params.get('n_avg', 20))
     show_plot = 0
+    generated_plots = []
 
     def search_files(root_dir, filename_part, SN_value):
-        import glob
+        import subprocess
+        import os
         matches = []
-        # Use glob to filter at the OS level and prevent OneDrive from hydrating irrelevant files like images
-        patterns = [
-            os.path.join(root_dir, f"*{filename_part}*"),
-            os.path.join(root_dir, "*", f"*{filename_part}*"),
-            os.path.join(root_dir, "*", "*", f"*{filename_part}*")
-        ]
-        for pattern in patterns:
-            for file in glob.glob(pattern):
-                if SN_value.lower() in os.path.basename(file).lower():
-                    matches.append(file)
+        # Use OS-level search to completely bypass Python's os.scandir,
+        # preventing OneDrive from downloading unrelated files like images.
+        if os.name == 'nt':
+            cmd = f'dir /b /s "{root_dir}\\*{filename_part}*"'
+            try:
+                output = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL)
+                for line in output.split('\n'):
+                    file = line.strip()
+                    if file and SN_value.lower() in os.path.basename(file).lower():
+                        matches.append(file)
+            except subprocess.CalledProcessError:
+                pass
+        else:
+            cmd = f'find "{root_dir}" -type f -name "*{filename_part}*"'
+            try:
+                output = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL)
+                for line in output.split('\n'):
+                    file = line.strip()
+                    if file and SN_value.lower() in os.path.basename(file).lower():
+                        matches.append(file)
+            except subprocess.CalledProcessError:
+                pass
         return matches
 
 
@@ -214,6 +228,7 @@ def generate_plots(params):
 
         plt.tight_layout()
         plt.savefig(save_path, dpi=300)
+        generated_plots.append(save_path)
         print(f"Plot saved to {save_path}")
 
         if show_plot == 1:
@@ -271,6 +286,7 @@ def generate_plots(params):
         output_dir = output_folder
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
         plt.savefig(save_path, dpi=300)
+        generated_plots.append(save_path)
         print(Fore.BLUE + f"Plot saved to {save_path}")
 
         if show_plot == 1:  # View Plot
@@ -350,6 +366,7 @@ def generate_plots(params):
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
         plt.tight_layout()
         plt.savefig(save_path, dpi=300)
+        generated_plots.append(save_path)
         print(Fore.BLUE + f"Plot saved to {save_path}")
         print(status)
 
@@ -391,6 +408,7 @@ def generate_plots(params):
         file_name_full = f"{formatted_date}_{filename_safe_title}"  # Specify output file name
         save_path = os.path.join(output_folder, file_name_full)
         plt.savefig(save_path, dpi=300)
+        generated_plots.append(save_path)
         print(f"Plot saved to {save_path}")
 
         if show_plot == 1:  # View Plot
@@ -404,5 +422,4 @@ def generate_plots(params):
     if filesSparA or filesSparB:
         plotS21(filesSparA,filesSparB)
 
-    png_files = glob.glob(os.path.join(output_folder, '*.png'))
-    return png_files
+    return generated_plots
