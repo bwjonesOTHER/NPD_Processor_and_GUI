@@ -462,11 +462,11 @@ def generate_plots(params):
             plt.show()
 
     # === Generate plots ===
-    if filesNPDA and filesNPDB:
+    if filesNPDA or filesNPDB:
         plotNPD(filesNPDA, filesNPDB)
         # plotNPDdiff(filesNPD)
 
-    if filesSparA and filesSparB:
+    if filesSparA or filesSparB:
         plotS21(filesSparA, filesSparB)
 
     png_files = glob.glob(os.path.join(full_sn_path, folderA, '*.png')) + glob.glob(os.path.join(full_sn_path, folderB, '*.png'))
