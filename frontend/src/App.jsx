@@ -750,6 +750,19 @@ function App() {
                         {isUploadingSource ? <Activity className="animate-spin" size={16} /> : <UploadCloud size={16} />}
                         {isUploadingSource ? 'Uploading...' : 'Upload Directory'}
                       </button>
+                      <button type="button" onClick={async () => {
+                        try {
+                          const res = await fetch(`${API_BASE}/choose_directory`);
+                          const data = await res.json();
+                          if (data.success && data.path) {
+                            setFormData(prev => ({...prev, basePath: data.path}));
+                          }
+                        } catch (err) {
+                          console.error("Failed to choose directory:", err);
+                        }
+                      }} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                        Browse Server
+                      </button>
                       <input 
                         type="file" 
                         id="dataSourceUpload" 
