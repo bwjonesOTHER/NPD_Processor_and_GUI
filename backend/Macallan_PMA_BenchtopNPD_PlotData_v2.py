@@ -187,7 +187,7 @@ def generate_plots(params):
         current_date = datetime.now()
         formatted_date = current_date.strftime("%Y%m%d")
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-        output_dir = os.path.dirname(file)
+        output_dir = output_folder
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
 
         plt.tight_layout()
@@ -246,7 +246,7 @@ def generate_plots(params):
         current_date = datetime.now()  # Get the current date
         formatted_date = current_date.strftime("%Y%m%d")  # Format the date as Year-Month-Day
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-        output_dir = os.path.dirname(file)
+        output_dir = output_folder
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
         plt.savefig(save_path, dpi=300)
         print(Fore.BLUE + f"Plot saved to {save_path}")
@@ -324,7 +324,7 @@ def generate_plots(params):
         current_date = datetime.now()  # Get the current date
         formatted_date = current_date.strftime("%Y%m%d")  # Format the date as Year-Month-Day
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-        output_dir = os.path.dirname(file)
+        output_dir = output_folder
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
         plt.tight_layout()
         plt.savefig(save_path, dpi=300)
