@@ -340,16 +340,15 @@ function App() {
 
   const handleTestTypeNext = (mode) => {
     setUploadMode(mode);
+    if (testType === 2) {
+      setCurrentStep(1); // Test 2 now ALWAYS uses Step 1
+      return;
+    }
+    
     if (mode === 'access') {
-      // If access, go to Select Runs (Step 3) for Test 1/3, or Process (Step 4) for Test 2
-      if (testType === 2) {
-        setCurrentStep(4);
-      } else {
-        setCurrentStep(3);
-      }
+      setCurrentStep(3); // Test 1 and 3 skip to Select Runs
     } else {
-      // If upload, go to Data Source & Info (Step 1)
-      setCurrentStep(1);
+      setCurrentStep(1); // Upload mode goes to Step 1
     }
   };
 
