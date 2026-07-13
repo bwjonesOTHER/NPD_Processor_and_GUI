@@ -273,7 +273,7 @@ function App() {
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...plotParams, outputFolder: "" })
+        body: JSON.stringify({ ...plotParams, outputFolder: "", dataSource: formData.basePath })
       });
       
       const data = await res.json();
@@ -317,7 +317,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.7 Dingo</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.8 Dingo</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -694,17 +694,36 @@ function App() {
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
 
               {testType === 2 && (
-                <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                  <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
-                      Select Output Folder
-                    </button>
-                    <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
-                    </span>
+                <>
+                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Data Source Path</h4>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button onClick={handleBrowseBasePath} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                        Browse Source
+                      </button>
+                      <input 
+                        type="text" 
+                        name="basePath" 
+                        value={formData.basePath} 
+                        onChange={handleInputChange}
+                        style={{ flex: 1, padding: '0.5rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-main)', fontSize: '0.875rem' }}
+                        placeholder="e.g., C:/NPD_Data/ or /Users/name/NPD_Data/"
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                        Select Output Folder
+                      </button>
+                      <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
+                      </span>
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="form-grid">

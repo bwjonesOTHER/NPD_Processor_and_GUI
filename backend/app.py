@@ -368,8 +368,12 @@ def api_generate_plots():
             
     elif test == 2:
         import Macallan_PMA_BenchtopNPD_PlotData_v2
-        path = read_txt("path.txt")
+        path = params.get('dataSource')
+        if not path:
+            path = read_txt("path.txt")
         if path:
+            with open("path.txt", "w") as f:
+                f.write(path)
             hydrate_directory(path)
         params['outputFolder'] = temp_out_dir
         try:
