@@ -228,20 +228,42 @@ function App() {
     if (selectedFiles.length === 0) return;
     
     setIsUploadingSource(true);
-    const data = new FormData();
-    selectedFiles.forEach(f => data.append('files', f));
     
     try {
-      const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
-      const json = await res.json();
-      if (json.status === 'success' && json.folder) {
-        setFormData(prev => ({...prev, basePath: json.folder}));
+      const CHUNK_SIZE = 50;
+      let finalUploadPath = '';
+      
+      for (let i = 0; i < selectedFiles.length; i += CHUNK_SIZE) {
+        const chunk = selectedFiles.slice(i, i + CHUNK_SIZE);
+        const data = new FormData();
+        chunk.forEach(f => {
+          data.append('files', f);
+          data.append('paths', f.webkitRelativePath || f.name);
+        });
+        data.append('run_index', '0');
+        data.append('chunk_index', i === 0 ? '0' : '1');
+        
+        const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+        
+        const json = await res.json();
+        if (json.status !== 'success') {
+          throw new Error(json.error || 'Upload failed');
+        }
+        finalUploadPath = json.upload_path;
+      }
+
+      if (finalUploadPath) {
+        setFormData(prev => ({...prev, basePath: finalUploadPath}));
       } else {
-        alert("Upload failed.");
+        alert("Upload failed: No upload path returned.");
       }
     } catch (err) {
       console.error(err);
-      alert("Upload error.");
+      alert("Upload error: " + err.message);
     } finally {
       setIsUploadingSource(false);
       e.target.value = ''; // Reset input
@@ -343,7 +365,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.8.9 Dingo</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.4.9.0 Dingo</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
