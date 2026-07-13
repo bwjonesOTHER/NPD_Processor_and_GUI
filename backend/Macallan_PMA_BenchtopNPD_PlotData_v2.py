@@ -36,11 +36,18 @@ def generate_plots(params):
     show_plot = 0
 
     def search_files(root_dir, filename_part, SN_value):
+        import glob
         matches = []
-        for dirpath, _, filenames in os.walk(root_dir):
-            for file in filenames:
-                if filename_part.lower() in file.lower() and SN_value.lower() in file.lower():
-                    matches.append(os.path.join(dirpath, file))  # string only
+        # Use glob to filter at the OS level and prevent OneDrive from hydrating irrelevant files like images
+        patterns = [
+            os.path.join(root_dir, f"*{filename_part}*"),
+            os.path.join(root_dir, "*", f"*{filename_part}*"),
+            os.path.join(root_dir, "*", "*", f"*{filename_part}*")
+        ]
+        for pattern in patterns:
+            for file in glob.glob(pattern):
+                if SN_value.lower() in os.path.basename(file).lower():
+                    matches.append(file)
         return matches
 
 
