@@ -129,14 +129,15 @@ def generate_plots(params):
 
         if not os.path.isdir(cal_folder):
             print(f"Calibration folder not found: {cal_folder}")
-            return None, None
+            return "", ""
 
         # Only load Base RA and Cap RA loss files
         cal_files = []
-        for f in os.listdir(cal_folder):
-            name = f.lower()
-            if ("pathloss_base" in name or "pathloss_cap" in name or "specan_none" in name) and name.endswith(".s2p"):
-                cal_files.append(os.path.join(cal_folder, f))
+        for root, _, files in os.walk(cal_folder):
+            for f in files:
+                name = f.lower()
+                if ("pathloss_base" in name or "pathloss_cap" in name or "specan_none" in name) and name.endswith(".s2p"):
+                    cal_files.append(os.path.join(root, f))
 
         if not cal_files:
             print("WARNING: No Base/Cap calibration files found.")
