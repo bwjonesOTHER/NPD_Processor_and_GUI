@@ -145,7 +145,7 @@ def generate_plots(params):
         for root, _, files in os.walk(cal_folder):
             for f in files:
                 name = f.lower()
-                if ("pathloss_base" in name or "pathloss_cap" in name or "specan_none" in name) and name.endswith(".s2p"):
+                if ("pathloss_base" in name or "pathloss_cap" in name or "specan_none" in name or "specanbase" in name or "specan_base" in name) and name.endswith(".s2p"):
                     cal_files.append(os.path.join(root, f))
 
         if not cal_files:
@@ -183,7 +183,6 @@ def generate_plots(params):
         return freq_ref, total_loss
 
     # Load calibration files (Base RA + Cap RA only)
-    cal_folder = os.path.join(full_sn_path, "Cable Loss")
     freq_cal, total_loss_db = load_calibration_loss(cal_folder)
 
     def extract_serial(filename):
