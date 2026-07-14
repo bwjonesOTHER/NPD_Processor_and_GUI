@@ -190,7 +190,8 @@ def submit_file_info():
         
     elif test == 3:
         sn = data.get('serialNumber', '').strip()
-        sn_folder = f"SN{int(sn):04d}_LMO{lmo}"
+        lmo_num = data.get('lmoNumber', '').strip()
+        sn_folder = f"SN{int(sn):04d}_LMO{lmo_num}"
         upload_path = os.path.join(base_path, sn_folder)
         os.makedirs(upload_path, exist_ok=True)
         write_txt("SN.txt", sn)
