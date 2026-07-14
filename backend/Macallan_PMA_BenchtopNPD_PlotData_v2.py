@@ -123,18 +123,36 @@ def generate_plots(params):
     lmoFolderA = os.path.join(folder_path, RunA)
     if not os.path.exists(lmoFolderA) and os.path.exists(folder_path):
         area_type = pma_area[-1].upper() if pma_area else 'C'
+        lmo_digits = ''.join(filter(str.isdigit, str(lmo_number)))
+        sn_digits = ''.join(filter(str.isdigit, str(serial_number)))
+        
         found_alt = False
+        debug_log = [f"Searching for alternate A run folder. Area Type: {area_type}, SN digits: {sn_digits}, LMO digits: {lmo_digits}"]
+        
         for d in os.listdir(folder_path):
             if d.startswith("Run") and os.path.isdir(os.path.join(folder_path, d)):
                 run_dir = os.path.join(folder_path, d)
+                debug_log.append(f"  Checking Run folder: {d}")
                 for sub in os.listdir(run_dir):
-                    if sub.startswith(area_type + "_SN") and f"{serial_number}" in sub and str(lmo_number) in sub:
-                        lmoFolderA = os.path.join(run_dir, sub)
-                        RunA = d # Update RunA name for the plot titles
-                        found_alt = True
-                        break
+                    sub_upper = sub.upper()
+                    debug_log.append(f"    Evaluating subfolder: {sub}")
+                    
+                    if sub_upper.startswith(area_type + "_SN"):
+                        if sn_digits in sub_upper and lmo_digits in sub_upper:
+                            lmoFolderA = os.path.join(run_dir, sub)
+                            RunA = d # Update RunA name for the plot titles
+                            found_alt = True
+                            debug_log.append(f"      -> MATCH FOUND! Selected: {lmoFolderA}")
+                            break
+                        else:
+                            debug_log.append(f"      -> Rejected: SN {sn_digits} or LMO {lmo_digits} not found in {sub_upper}")
+                    else:
+                        debug_log.append(f"      -> Rejected: Does not start with {area_type}_SN")
             if found_alt:
                 break
+                
+        with open("LMO_SEARCH_LOG.txt", "w") as f_dbg:
+            f_dbg.write("\n".join(debug_log))
                 
     try:
         filesSparA = search_files(lmoFolderA, 'NPDoverTempVSWR_ambient',f"{serial_number}")
