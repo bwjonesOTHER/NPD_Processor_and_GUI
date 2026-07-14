@@ -774,15 +774,6 @@ function App() {
                           }}
                           style={{ flex: 1 }}
                         />
-                        <button 
-                          type="button" 
-                          onClick={() => uploadRun(idx)} 
-                          className="secondary" 
-                          style={{ whiteSpace: 'nowrap' }}
-                          disabled={!runFiles[idx] || runFiles[idx].length === 0}
-                        >
-                          Upload
-                        </button>
                       </div>
                       {runs[idx] && <p style={{ color: 'var(--success)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Uploaded to server successfully.</p>}
                     </div>
