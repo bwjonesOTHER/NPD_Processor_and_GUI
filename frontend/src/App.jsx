@@ -321,6 +321,22 @@ function App() {
   const submitRuns = async () => {
     let finalPaths = [...runs];
 
+    // Safety check: ensure all required inputs are populated
+    const numSlots = testType === 1 ? runs.length : 3;
+    for (let i = 0; i < numSlots; i++) {
+      if (uploadMode === 'upload') {
+        if (!runFiles[i] || runFiles[i].length === 0) {
+          alert(`Please select files for ${i === 2 ? 'Calibration Folder' : 'Run ' + (i+1)} before processing.`);
+          return { success: false };
+        }
+      } else {
+        if (!runs[i]) {
+          alert(`Please browse for ${i === 2 ? 'Calibration Folder' : 'Run ' + (i+1)} before processing.`);
+          return { success: false };
+        }
+      }
+    }
+
     if (uploadMode === 'upload') {
       const numSlots = testType === 1 ? runs.length : 3;
       for (let i = 0; i < numSlots; i++) {
