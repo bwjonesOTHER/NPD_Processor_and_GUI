@@ -174,18 +174,19 @@ def generate_plots(params):
 
         if not all_freqs:
             return
-        ref_freq_full = all_freqs[0]
         
-        idx_min = (np.abs(ref_freq_full - freq_min)).argmin()
-        idx_max = (np.abs(ref_freq_full - freq_max)).argmin()
-        if idx_min > idx_max:
-            idx_min, idx_max = idx_max, idx_min
+        from scipy.interpolate import interp1d
+        common_freq = np.linspace(freq_min, freq_max, 1000)
+        all_noise_win = []
+        for i in range(len(all_freqs)):
+            f_interp = interp1d(all_freqs[i], all_noise[i], bounds_error=False, fill_value=np.nan)
+            all_noise_win.append(f_interp(common_freq))
             
-        all_noise_win = np.array([noise[idx_min:idx_max] for noise in all_noise])
-        ref_freq_win = ref_freq_full[idx_min:idx_max]
+        all_noise_win = np.array(all_noise_win)
+        ref_freq_win = common_freq
 
         # ---- compute average + bounds ---- #
-        avg = np.mean(all_noise_win, axis=0)
+        avg = np.nanmean(all_noise_win, axis=0)
         upper = avg + 2
         lower = avg - 2
 
@@ -309,12 +310,10 @@ def generate_plots(params):
             serial = extract_serial(file)
             plt.plot(freq_ghz, net.s_db[:, 1, 0], label=f'{serial[-21:-4:1]}')
             
-            idx_min = (np.abs(freq_ghz - freq_min)).argmin()
-            idx_max = (np.abs(freq_ghz - freq_max)).argmin()
-            if idx_min > idx_max: idx_min, idx_max = idx_max, idx_min
-            
-            s21_values = net.s_db[idx_min:idx_max, 1, 0]
-            avg_collection.append(s21_values)
+            from scipy.interpolate import interp1d
+            common_freq = np.linspace(freq_min, freq_max, 1000)
+            f_interp = interp1d(freq_ghz, net.s_db[:, 1, 0], bounds_error=False, fill_value=np.nan)
+            avg_collection.append(f_interp(common_freq))
             file_coll.append(serial[-21:-4:1])
         ref_freq_ghz = freq_ghz if len(filesA) > 0 else None
         for file in filesB:
@@ -324,19 +323,18 @@ def generate_plots(params):
             serial = extract_serial(file)
             plt.plot(freq_ghz, net.s_db[:, 1, 0], label=f'{serial[-21:-4:1]}')
             
-            idx_min = (np.abs(freq_ghz - freq_min)).argmin()
-            idx_max = (np.abs(freq_ghz - freq_max)).argmin()
-            if idx_min > idx_max: idx_min, idx_max = idx_max, idx_min
-            
-            s21_values = net.s_db[idx_min:idx_max, 1, 0]
-            avg_collection.append(s21_values)
+            from scipy.interpolate import interp1d
+            common_freq = np.linspace(freq_min, freq_max, 1000)
+            f_interp = interp1d(freq_ghz, net.s_db[:, 1, 0], bounds_error=False, fill_value=np.nan)
+            avg_collection.append(f_interp(common_freq))
             file_coll.append(serial[-21:-4:1])
             if ref_freq_ghz is None: ref_freq_ghz = freq_ghz
 
         #--------PASS or FAIL--------#
         s21_avg = np.array(avg_collection)
         files_collected = np.array(file_coll)
-        avg = np.mean(s21_avg, axis=0)
+        avg = np.nanmean(s21_avg, axis=0)
+        ref_freq_ghz = np.linspace(freq_min, freq_max, 1000)
         upper_bound = avg + 2
         lower_bound = avg - 2
         fail_mask = (s21_avg > upper_bound) | (s21_avg < lower_bound)
@@ -354,14 +352,10 @@ def generate_plots(params):
         lb = lower_bound.copy()
         ub = upper_bound.copy()
 
-        idx_min = (np.abs(ref_freq_ghz - freq_min)).argmin()
-        idx_max = (np.abs(ref_freq_ghz - freq_max)).argmin()
-        if idx_min > idx_max: idx_min, idx_max = idx_max, idx_min
-        
-        plt.plot(ref_freq_ghz[idx_min:idx_max], lb, color='red', alpha=1,
+        plt.plot(ref_freq_ghz, lb, color='red', alpha=1,
                  marker='o', markersize=5, markevery=100, label='Lower bound')
 
-        plt.plot(ref_freq_ghz[idx_min:idx_max], ub, color='red', alpha=1,
+        plt.plot(ref_freq_ghz, ub, color='red', alpha=1,
                  marker='x', markersize=5, markevery=100, label='Upper bound')
 
         plt.xlim(freq_ghz[0], freq_ghz[-1])
