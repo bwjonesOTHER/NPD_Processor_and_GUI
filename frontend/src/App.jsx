@@ -210,6 +210,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           testType,
+          uploadMode,
           ...formData
         })
       });
@@ -302,11 +303,7 @@ function App() {
       });
       if (res.ok) {
         setFiles([]);
-        if (testType === 2) {
-          setCurrentStep(4);
-        } else {
-          setCurrentStep(3);
-        }
+        alert("Files uploaded successfully!");
       }
     } catch (err) {
       console.error(err);
