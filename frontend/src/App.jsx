@@ -445,11 +445,10 @@ function App() {
               <h2>Data Source & Info</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
 
-              {uploadMode === 'access' && (
               <div className="form-group">
                 <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Upload Path'}</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 ? 'Select BenchNPD root folder...' : 'Select a directory to upload files into...'} style={{ flex: 1 }} />
+                  <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 && uploadMode === 'upload' ? 'Select the root project folder (e.g. PMA Tile)...' : testType === 2 ? 'Select BenchNPD root folder...' : 'Select a directory to upload files into...'} style={{ flex: 1 }} />
                   <button onClick={async () => {
                     try {
                       const res = await fetch(`${API_BASE}/choose_directory`);
@@ -463,7 +462,6 @@ function App() {
                   }} className="secondary">Browse</button>
                 </div>
               </div>
-              )}
 
               <div className="form-group">
                 <label>{testType === 2 ? 'LMO Number (e.g. 1234)' : 'LMO Number (####-##)'}</label>
@@ -514,17 +512,22 @@ function App() {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   {testType === 2 ? (
                     <button onClick={async () => {
-                      if (uploadMode === 'access' && !formData.basePath) {
-                        alert("Please select the BenchNPD Root Directory before continuing.");
+                      if (!formData.basePath) {
+                        alert(`Please select the ${uploadMode === 'upload' ? 'Base Upload Directory' : 'BenchNPD Root Directory'} before continuing.`);
                         return;
                       }
-                      if (uploadMode === 'access') {
-                        const result = await submitFileInfo();
-                        if (result && result.requireLmoSelection) return;
-                        if (result && result.success) setCurrentStep(4);
-                      } else {
-                        // For upload mode, wait to submit file info until they pick a destination in Step 2
-                        setCurrentStep(2);
+                      
+                      const result = await submitFileInfo();
+                      
+                      if (result && result.requireLmoSelection) return;
+                      
+                      if (result && result.success) {
+                        if (uploadMode === 'access') {
+                          setCurrentStep(4);
+                        } else {
+                          // For upload mode, directory is now created on the backend, proceed to upload files
+                          setCurrentStep(2);
+                        }
                       }
                     }} className="primary" style={{ background: 'var(--success)' }}>
                       {uploadMode === 'upload' ? 'Proceed to Upload' : 'Proceed to Configuration'} <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
@@ -553,37 +556,6 @@ function App() {
             <div className="step-card">
               <h2>Upload Data Files</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select all relevant data files (.csv + .s2p).</p>
-
-              {testType === 2 && uploadMode === 'upload' && (
-                <div className="form-group" style={{ marginBottom: '2rem' }}>
-                  <label>Select Base Upload Directory</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input type="text" readOnly value={formData.basePath} placeholder="Select the root project folder (e.g. PMA Tile)..." style={{ flex: 1 }} />
-                    <button onClick={async () => {
-                      try {
-                        const res = await fetch(`${API_BASE}/choose_directory`);
-                        const data = await res.json();
-                        if (data.success && data.path) {
-                          setFormData(prev => ({...prev, basePath: data.path}));
-                          // Automatically submit info to create the folder on the backend
-                          const submitRes = await fetch(`${API_BASE}/file-info`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              testType,
-                              uploadMode: 'upload',
-                              ...formData,
-                              basePath: data.path // Use the newly selected path
-                            })
-                          });
-                        }
-                      } catch (err) {
-                        console.error("Failed to choose directory:", err);
-                      }
-                    }} className="secondary">Browse</button>
-                  </div>
-                </div>
-              )}
 
               <div 
                 className="file-upload-zone"
