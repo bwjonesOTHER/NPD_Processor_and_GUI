@@ -320,7 +320,7 @@ function App() {
     try {
       const payload = testType === 1 
         ? { runs } 
-        : { runA: runs[0] || '', runB: runs[1] || '' };
+        : { runA: runs[0] || '', runB: runs[1] || '', calPath: runs[2] || '' };
 
       const res = await fetch(`${API_BASE}/select-runs`, {
         method: 'POST',

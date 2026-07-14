@@ -299,13 +299,16 @@ def select_runs():
                     f.write(run + "\n")
     
     # Legacy support for Test 3
-    if 'runA' in data or 'runB' in data:
-        run_a = data.get('runA')
-        run_b = data.get('runB')
-        if run_a:
-            write_txt("RunA_Path.txt", run_a)
-        if run_b:
-            write_txt("RunB_Path.txt", run_b)
+    if 'runA' in data and 'runB' in data:
+        # Test 2 / 3
+        write_txt("RunA_Path.txt", data['runA'])
+        write_txt("RunB_Path.txt", data['runB'])
+        
+        calPath = data.get('calPath', '')
+        if calPath:
+            write_txt("Cal_Path.txt", calPath)
+            
+        return jsonify({"status": "success"})
         
     return jsonify({"status": "success"})
 

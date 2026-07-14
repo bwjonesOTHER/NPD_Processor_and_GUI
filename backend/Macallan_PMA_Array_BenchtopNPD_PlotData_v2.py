@@ -44,6 +44,13 @@ def generate_plots(params):
         except FileNotFoundError:
             return ""
 
+    def get_CAL():
+        try:
+            with open("Cal_Path.txt", "r") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            return ""
+
 
     folderA = get_RUN_A()
     folderB = get_RUN_B()
@@ -123,7 +130,9 @@ def generate_plots(params):
         print(" -", f, "\n")
 
     # Calibration folder
-    cal_folder = os.path.join(full_sn_path, "Cable Loss")
+    cal_folder = get_CAL()
+    if not cal_folder:
+        cal_folder = os.path.join(full_sn_path, "Cable Loss")
 
     def load_calibration_loss(cal_folder):
 
