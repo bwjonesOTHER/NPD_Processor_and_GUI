@@ -18,7 +18,7 @@ def generate_plots(params):
             with open("PMA_Area.txt", "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            return None
+            return ""
 
     pma_area = get_PMA_area_path()
 
@@ -93,14 +93,14 @@ def generate_plots(params):
             with open("path.txt", "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            return None
+            return ""
 
     def get_SN_path():
         try:
             with open("SN.txt", "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            return None
+            return ""
 
     def get_LMO_Number():
         try:
