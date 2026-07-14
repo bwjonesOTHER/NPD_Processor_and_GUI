@@ -206,7 +206,7 @@ def generate_plots(params):
         plt.plot(ref_freq_win, upper,  color='red', alpha=1, marker='x', markersize=5, markevery=100, label='Upper bound')
 
         # ---- formatting ---- #
-        plt.xlim(ref_freq_full[0], ref_freq_full[-1])
+        plt.xlim(all_freqs[0][0], all_freqs[0][-1])
         plt.ylim(-130, -90)
         plt.grid(True)
 
