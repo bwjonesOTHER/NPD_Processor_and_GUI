@@ -445,6 +445,7 @@ function App() {
               <h2>Data Source & Info</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
 
+              {uploadMode === 'access' && (
               <div className="form-group">
                 <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Upload Path'}</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -462,6 +463,7 @@ function App() {
                   }} className="secondary">Browse</button>
                 </div>
               </div>
+              )}
 
               <div className="form-group">
                 <label>{testType === 2 ? 'LMO Number (e.g. 1234)' : 'LMO Number (####-##)'}</label>
@@ -512,14 +514,21 @@ function App() {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   {testType === 2 ? (
                     <button onClick={async () => {
-                      if (!formData.basePath) {
+                      if (uploadMode === 'access' && !formData.basePath) {
                         alert("Please select the BenchNPD Root Directory before continuing.");
                         return;
                       }
-                      const result = await submitFileInfo();
-                      if (result && result.requireLmoSelection) return;
-                      if (result && result.success) setCurrentStep(4);
-                    }} className="primary" style={{ background: 'var(--success)' }}>Proceed to Configuration <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
+                      if (uploadMode === 'access') {
+                        const result = await submitFileInfo();
+                        if (result && result.requireLmoSelection) return;
+                        if (result && result.success) setCurrentStep(4);
+                      } else {
+                        // For upload mode, wait to submit file info until they pick a destination in Step 2
+                        setCurrentStep(2);
+                      }
+                    }} className="primary" style={{ background: 'var(--success)' }}>
+                      {uploadMode === 'upload' ? 'Proceed to Upload' : 'Proceed to Configuration'} <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
+                    </button>
                   ) : (
                     <>
                       <button onClick={async () => {
@@ -544,6 +553,37 @@ function App() {
             <div className="step-card">
               <h2>Upload Data Files</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select all relevant data files (.csv + .s2p).</p>
+
+              {testType === 2 && uploadMode === 'upload' && (
+                <div className="form-group" style={{ marginBottom: '2rem' }}>
+                  <label>Select Base Upload Directory</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input type="text" readOnly value={formData.basePath} placeholder="Select the root project folder (e.g. PMA Tile)..." style={{ flex: 1 }} />
+                    <button onClick={async () => {
+                      try {
+                        const res = await fetch(`${API_BASE}/choose_directory`);
+                        const data = await res.json();
+                        if (data.success && data.path) {
+                          setFormData(prev => ({...prev, basePath: data.path}));
+                          // Automatically submit info to create the folder on the backend
+                          const submitRes = await fetch(`${API_BASE}/file-info`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              testType,
+                              uploadMode: 'upload',
+                              ...formData,
+                              basePath: data.path // Use the newly selected path
+                            })
+                          });
+                        }
+                      } catch (err) {
+                        console.error("Failed to choose directory:", err);
+                      }
+                    }} className="secondary">Browse</button>
+                  </div>
+                </div>
+              )}
 
               <div 
                 className="file-upload-zone"
@@ -574,7 +614,12 @@ function App() {
 
               <div className="btn-group">
                 <button className="secondary" onClick={() => setCurrentStep(1)}>Back</button>
-                <button onClick={uploadFiles} disabled={files.length === 0}>Upload Files</button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button onClick={uploadFiles} disabled={files.length === 0 || (testType === 2 && !formData.basePath)} className="primary">Upload Files</button>
+                  {testType === 2 && (
+                    <button onClick={() => setCurrentStep(4)} className="primary" style={{ background: 'var(--success)' }}>Proceed to Configuration <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
+                  )}
+                </div>
               </div>
             </div>
           )}

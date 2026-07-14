@@ -98,9 +98,33 @@ def submit_file_info():
         pma = data.get('pmaArea', '').strip()
         sn = data.get('serialNumber', '').strip()
         lmo_num = data.get('lmoNumber', '').strip()
+        upload_mode = data.get('uploadMode', 'access')
         exact_lmo_folder = data.get('exactLmoFolder', '').strip()
         
-        # If exactLmoFolder is provided, use it directly
+        write_txt("PMA_Area.txt", pma)
+        write_txt("serialNumber.txt", sn)
+        write_txt("lmoNumber.txt", lmo_num)
+
+        if upload_mode == 'upload':
+            # Create the folder instead of searching for it
+            pma_path = os.path.join(base_path, "BenchNPD", pma)
+            if not os.path.exists(pma_path) and os.path.exists(os.path.join(base_path, pma)):
+                pma_path = os.path.join(base_path, pma)
+            
+            # Format lmo_num properly (LMOXXXX)
+            lmo_folder = f"LMO{lmo_num}" if not lmo_num.upper().startswith("LMO") else lmo_num
+            upload_path = os.path.join(pma_path, lmo_folder)
+            os.makedirs(upload_path, exist_ok=True)
+            
+            write_txt("upload_path.txt", upload_path)
+            write_txt("path.txt", base_path)
+            
+            return jsonify({
+                "status": "success",
+                "success": True,
+                "upload_path": upload_path
+            })
+
         if exact_lmo_folder:
             lmo_num = exact_lmo_folder
         else:
