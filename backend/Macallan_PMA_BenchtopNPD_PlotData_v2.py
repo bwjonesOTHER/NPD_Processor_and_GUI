@@ -123,25 +123,15 @@ def generate_plots(params):
     lmoFolderA = os.path.join(folder_path, RunA)
     debug_log = [f"Initial lmoFolderA: {lmoFolderA}"]
     
-    # Try finding files in the default NPDoverTemp folder first
-    found_in_default = False
-    if os.path.exists(lmoFolderA):
-        try:
-            if len(search_files(lmoFolderA, 'NPDoverTempVSWR_ambient', f"{serial_number}")) > 0 or \
-               len(search_files(lmoFolderA, 'NPDoverTempVSWR', f"{serial_number}")) > 0:
-                found_in_default = True
-                debug_log.append("Found required files in default NPDoverTemp folder.")
-        except FileNotFoundError:
-            pass
-            
-    if not found_in_default and os.path.exists(folder_path):
-        area_type = pma_area[-1].upper() if pma_area else 'C'
-        lmo_digits = ''.join(filter(str.isdigit, str(lmo_number)))
-        sn_digits = ''.join(filter(str.isdigit, str(serial_number)))
-        
-        found_alt = False
-        debug_log.append(f"Searching for alternate A run folder. Area Type: {area_type}, SN digits: {sn_digits}, LMO digits: {lmo_digits}")
-        
+    # Try finding files in the alternate Runx/(E|C)_SN... folder first
+    area_type = pma_area[-1].upper() if pma_area else 'C'
+    lmo_digits = ''.join(filter(str.isdigit, str(lmo_number)))
+    sn_digits = ''.join(filter(str.isdigit, str(serial_number)))
+    
+    found_alt = False
+    debug_log.append(f"Searching for alternate A run folder FIRST. Area Type: {area_type}, SN digits: {sn_digits}, LMO digits: {lmo_digits}")
+    
+    if os.path.exists(folder_path):
         for d in os.listdir(folder_path):
             if d.startswith("Run") and os.path.isdir(os.path.join(folder_path, d)):
                 run_dir = os.path.join(folder_path, d)
@@ -155,7 +145,7 @@ def generate_plots(params):
                             lmoFolderA = os.path.join(run_dir, sub)
                             RunA = d # Update RunA name for the plot titles
                             found_alt = True
-                            debug_log.append(f"      -> MATCH FOUND! Selected: {lmoFolderA}")
+                            debug_log.append(f"      -> MATCH FOUND! Selected alternate folder: {lmoFolderA}")
                             break
                         else:
                             debug_log.append(f"      -> Rejected: SN {sn_digits} or LMO {lmo_digits} not found in {sub_upper}")
@@ -164,6 +154,14 @@ def generate_plots(params):
             if found_alt:
                 break
                 
+    # If alternate not found, fallback to checking default NPDoverTemp folder
+    if not found_alt:
+        lmoFolderA = os.path.join(folder_path, 'NPDoverTemp')
+        if os.path.exists(lmoFolderA):
+            debug_log.append("Alternate folder not found. Falling back to default NPDoverTemp folder.")
+        else:
+            debug_log.append("Alternate folder not found, and default NPDoverTemp folder does not exist either.")
+    
     with open("LMO_SEARCH_LOG.txt", "w") as f_dbg:
         f_dbg.write("\n".join(debug_log))
             
