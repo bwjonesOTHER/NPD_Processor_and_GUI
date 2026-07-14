@@ -593,7 +593,7 @@ function App() {
                       padding: '3rem 2rem',
                       textAlign: 'center',
                       cursor: uploadingRun ? 'not-allowed' : 'pointer',
-                      background: 'var(--surface)',
+                      background: 'var(--panel-bg)',
                       transition: 'background 0.2s',
                       opacity: uploadingRun ? 0.7 : 1
                     }}
@@ -678,7 +678,7 @@ function App() {
                   </div>
 
                   {runs.filter(r => r !== '').length > 0 && (
-                    <div style={{ background: 'var(--surface)', padding: '1.5rem', borderRadius: '12px' }}>
+                    <div style={{ background: 'var(--panel-bg)', padding: '1.5rem', borderRadius: '12px' }}>
                       <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Added Runs ({runs.filter(r => r !== '').length})</h3>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {runs.filter(r => r !== '').map((runPath, idx) => (
@@ -882,11 +882,11 @@ function App() {
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: 'var(--surface)', padding: '2rem', borderRadius: '12px',
+            background: 'var(--panel-bg)', padding: '2rem', borderRadius: '12px',
             width: '400px', maxWidth: '90%', boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
           }}>
-            <h3 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Multiple LMO Folders Found</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-main)' }}>Multiple LMO Folders Found</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
               We found multiple folders matching that LMO number. Please select the correct one:
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
@@ -918,7 +918,7 @@ function App() {
                     }
                   }}
                 >
-                  <Folder size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--primary)' }} />
+                  <Folder size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--accent)' }} />
                   {opt}
                 </button>
               ))}
