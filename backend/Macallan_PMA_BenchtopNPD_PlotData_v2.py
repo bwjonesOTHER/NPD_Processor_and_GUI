@@ -143,10 +143,9 @@ def generate_plots(params):
     def plotNPD(filesA, filesB):
         plt.figure(figsize=(8, 4), dpi=150)
 
-        all_noise = []  # full traces
-        all_noise_win = []  # windowed (700:2100)
-        all_labels = []
         all_freqs = []
+        all_noise = []
+        all_labels = []
 
         # ---- Helper to load and smooth ---- #
         def load_np_data(file):
@@ -171,15 +170,19 @@ def generate_plots(params):
 
             all_freqs.append(freq)
             all_noise.append(noise)
-            all_noise_win.append(noise[700:2100])
             all_labels.append(serial[-21:-4:1])
 
-        # ---- Convert to arrays for math ---- #
-        all_noise_win = np.array(all_noise_win)
         if not all_freqs:
             return
         ref_freq_full = all_freqs[0]
-        ref_freq_win = ref_freq_full[700:2100]
+        
+        idx_min = (np.abs(ref_freq_full - freq_min)).argmin()
+        idx_max = (np.abs(ref_freq_full - freq_max)).argmin()
+        if idx_min > idx_max:
+            idx_min, idx_max = idx_max, idx_min
+            
+        all_noise_win = np.array([noise[idx_min:idx_max] for noise in all_noise])
+        ref_freq_win = ref_freq_full[idx_min:idx_max]
 
         # ---- compute average + bounds ---- #
         avg = np.mean(all_noise_win, axis=0)
@@ -296,6 +299,7 @@ def generate_plots(params):
 
         avg_collection = []
         file_coll = []
+        ref_freq_ghz = None
 
         plt.figure(figsize=(7, 4), dpi=150)
         for file in filesA:
@@ -304,18 +308,30 @@ def generate_plots(params):
             freq_ghz = net.f / 1e9  # Convert to GHz
             serial = extract_serial(file)
             plt.plot(freq_ghz, net.s_db[:, 1, 0], label=f'{serial[-21:-4:1]}')
-            s21_values = net.s_db[700:2100, 1, 0]
+            
+            idx_min = (np.abs(freq_ghz - freq_min)).argmin()
+            idx_max = (np.abs(freq_ghz - freq_max)).argmin()
+            if idx_min > idx_max: idx_min, idx_max = idx_max, idx_min
+            
+            s21_values = net.s_db[idx_min:idx_max, 1, 0]
             avg_collection.append(s21_values)
             file_coll.append(serial[-21:-4:1])
+        ref_freq_ghz = freq_ghz if len(filesA) > 0 else None
         for file in filesB:
             #file_path = os.path.join(lmoFolder, file)
             net = rf.Network(file)
             freq_ghz = net.f / 1e9  # Convert to GHz
             serial = extract_serial(file)
             plt.plot(freq_ghz, net.s_db[:, 1, 0], label=f'{serial[-21:-4:1]}')
-            s21_values = net.s_db[700:2100, 1, 0]
+            
+            idx_min = (np.abs(freq_ghz - freq_min)).argmin()
+            idx_max = (np.abs(freq_ghz - freq_max)).argmin()
+            if idx_min > idx_max: idx_min, idx_max = idx_max, idx_min
+            
+            s21_values = net.s_db[idx_min:idx_max, 1, 0]
             avg_collection.append(s21_values)
             file_coll.append(serial[-21:-4:1])
+            if ref_freq_ghz is None: ref_freq_ghz = freq_ghz
 
         #--------PASS or FAIL--------#
         s21_avg = np.array(avg_collection)
@@ -338,10 +354,14 @@ def generate_plots(params):
         lb = lower_bound.copy()
         ub = upper_bound.copy()
 
-        plt.plot(freq_ghz[700:2100], lb, color='red', alpha=1,
+        idx_min = (np.abs(ref_freq_ghz - freq_min)).argmin()
+        idx_max = (np.abs(ref_freq_ghz - freq_max)).argmin()
+        if idx_min > idx_max: idx_min, idx_max = idx_max, idx_min
+        
+        plt.plot(ref_freq_ghz[idx_min:idx_max], lb, color='red', alpha=1,
                  marker='o', markersize=5, markevery=100, label='Lower bound')
 
-        plt.plot(freq_ghz[700:2100], ub, color='red', alpha=1,
+        plt.plot(ref_freq_ghz[idx_min:idx_max], ub, color='red', alpha=1,
                  marker='x', markersize=5, markevery=100, label='Upper bound')
 
         plt.xlim(freq_ghz[0], freq_ghz[-1])
