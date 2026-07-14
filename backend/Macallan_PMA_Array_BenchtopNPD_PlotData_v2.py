@@ -28,21 +28,21 @@ def generate_plots(params):
             with open("RunB_Path.txt", "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            return None
+            return ""
 
     def get_path():
         try:
             with open("path.txt", "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            return None
+            return ""
 
     def get_SN():
         try:
             with open("SN.txt", "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            return None
+            return ""
 
 
     folderA = get_RUN_A()
