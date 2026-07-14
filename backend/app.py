@@ -235,6 +235,7 @@ def upload_run_files():
     files = request.files.getlist('files')
     paths = request.form.getlist('paths')
     run_index = request.form.get('run_index', '0')
+    folder_name = request.form.get('folder_name', '')
     chunk_index = request.form.get('chunk_index', '0')
     base_path = read_txt("upload_path.txt")
     if not base_path:
@@ -242,7 +243,10 @@ def upload_run_files():
     if not base_path:
         base_path = os.path.join(os.getcwd(), 'uploads')
         
-    dest_folder = os.path.join(base_path, f'Run_{run_index}')
+    if folder_name:
+        dest_folder = os.path.join(base_path, folder_name)
+    else:
+        dest_folder = os.path.join(base_path, f'Run_{run_index}')
     
     # Clean up old files to conserve disk space ONLY on the first chunk
     if chunk_index == '0' and os.path.exists(dest_folder):

@@ -53,9 +53,9 @@ function App() {
 
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
-  const [runs, setRuns] = useState(['', '']);
+  const [runs, setRuns] = useState(['', '', '']);
   const [runNames, setRunNames] = useState([]);
-  const [runFiles, setRunFiles] = useState([[], []]);
+  const [runFiles, setRunFiles] = useState([[], [], []]);
   const [outputFolder, setOutputFolder] = useState('');
   const [numRuns, setNumRuns] = useState(2);
   const [numRunsInput, setNumRunsInput] = useState('2');
@@ -140,6 +140,9 @@ function App() {
           data.append('paths', f.webkitRelativePath || f.name);
         });
         data.append('run_index', idx);
+        if (testType === 3 && idx === 2) {
+          data.append('folder_name', 'Cable Loss');
+        }
         data.append('chunk_index', i === 0 ? '0' : '1');
         
         const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
@@ -728,9 +731,9 @@ function App() {
 
               {testType === 3 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {[0, 1].map((idx) => (
+                  {[0, 1, 2].map((idx) => (
                     <div key={idx} className="form-group">
-                      <label>{runNames[idx] || `Run ${idx === 0 ? 'A' : 'B'}`}</label>
+                      <label>{idx === 2 ? 'Calibration Folder (Cable Loss)' : (runNames[idx] || `Run ${idx === 0 ? 'A' : 'B'}`)}</label>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <input 
                           type="file" 
