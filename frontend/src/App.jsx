@@ -317,6 +317,16 @@ function App() {
   // uploadFiles removed fetchFolders call and submitRuns removed fetchFolders call
 
   const submitRuns = async () => {
+    if (uploadMode === 'upload') {
+      const numSlots = testType === 1 ? runs.length : 3;
+      for (let i = 0; i < numSlots; i++) {
+        if (runFiles[i] && runFiles[i].length > 0 && !runs[i]) {
+          alert(`Please click the "Upload" button for ${i === 2 ? 'Calibration Folder' : (runNames[i] || 'Run ' + (i+1))} before processing.`);
+          return { success: false };
+        }
+      }
+    }
+
     try {
       const payload = testType === 1 
         ? { runs } 
