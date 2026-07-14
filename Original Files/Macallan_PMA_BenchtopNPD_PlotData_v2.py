@@ -120,9 +120,16 @@ def main():
             return freq, noise
 
         # ---- load files from both folders ---- #
+        ref_freq = None
         for file in filesA + filesB:
             serial = extract_serial(file)
             freq, noise = load_np_data(file)
+            
+            if ref_freq is None:
+                ref_freq = freq
+            else:
+                noise = np.interp(ref_freq, freq, noise)
+                freq = ref_freq
 
             plt.plot(freq, noise, label=f'{serial[-21:-4:1]}')
 
@@ -251,23 +258,22 @@ def main():
         file_coll = []
 
         plt.figure(figsize=(7, 4), dpi=150)
-        for file in filesA:
+        ref_freq_s21 = None
+        for file in filesA + filesB:
             #file_path = os.path.join(lmoFolder, file)
             net = rf.Network(file)
             freq_ghz = net.f / 1e9  # Convert to GHz
+            s21_values = net.s_db[:, 1, 0]
+            
+            if ref_freq_s21 is None:
+                ref_freq_s21 = freq_ghz
+            else:
+                s21_values = np.interp(ref_freq_s21, freq_ghz, s21_values)
+                freq_ghz = ref_freq_s21
+                
             serial = extract_serial(file)
-            plt.plot(freq_ghz, net.s_db[:, 1, 0], label=f'{serial[-21:-4:1]}')
-            s21_values = net.s_db[700:2100, 1, 0]
-            avg_collection.append(s21_values)
-            file_coll.append(serial[-21:-4:1])
-        for file in filesB:
-            #file_path = os.path.join(lmoFolder, file)
-            net = rf.Network(file)
-            freq_ghz = net.f / 1e9  # Convert to GHz
-            serial = extract_serial(file)
-            plt.plot(freq_ghz, net.s_db[:, 1, 0], label=f'{serial[-21:-4:1]}')
-            s21_values = net.s_db[700:2100, 1, 0]
-            avg_collection.append(s21_values)
+            plt.plot(freq_ghz, s21_values, label=f'{serial[-21:-4:1]}')
+            avg_collection.append(s21_values[700:2100])
             file_coll.append(serial[-21:-4:1])
 
         #--------PASS or FAIL--------#

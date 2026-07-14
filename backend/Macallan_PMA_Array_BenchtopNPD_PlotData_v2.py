@@ -8,7 +8,9 @@ import pandas as pd
 from colorama import init, Fore, Back, Style
 
 
-def main():
+import glob
+
+def generate_plots(params):
     """Input Params"""
 
     # Edge:L110172, Center:L110173
@@ -52,14 +54,14 @@ def main():
 
 
 
-    freq_min = 2.7  # operational freq range
-    freq_max = 4.1  # operational freq range
+    freq_min = float(params.get('freq_min', 2.7))
+    freq_max = float(params.get('freq_max', 4.1))
     reqS11Ns = [700, 2100]
-    reqS11Val = -10
-    reqS21Val = -14
+    reqS11Val = float(params.get('reqS11Val', -10))
+    reqS21Val = float(params.get('reqS21Val', -14))
 
-    n_avg = 20  # use even numbers
-    show_plot = 1
+    n_avg = int(params.get('n_avg', 20))
+    show_plot = 0
 
     def search_files(root_dir, filename_part, SN_value):
         matches = []
@@ -95,15 +97,22 @@ def main():
 
 
     raw_sn = get_SN()
-    serial_number = f"SN{int(raw_sn):04d}"  # -> "SN0002"
+    try:
+        serial_number = f"SN{int(raw_sn):04d}" if raw_sn else ""
+    except Exception:
+        serial_number = ""
 
 
     # Search for files
     filesSparA = search_files(lmoFolderA, ".s2p", serial_number)
+    if not filesSparA and serial_number: filesSparA = search_files(lmoFolderA, ".s2p", "")
     filesNPDA = search_files(lmoFolderA, ".csv", serial_number)
+    if not filesNPDA and serial_number: filesNPDA = search_files(lmoFolderA, ".csv", "")
 
     filesSparB = search_files(lmoFolderB, ".s2p", serial_number)
+    if not filesSparB and serial_number: filesSparB = search_files(lmoFolderB, ".s2p", "")
     filesNPDB = search_files(lmoFolderB, ".csv", serial_number)
+    if not filesNPDB and serial_number: filesNPDB = search_files(lmoFolderB, ".csv", "")
 
     print("\n=== Files Found in Run A ===")
     for f in filesNPDA + filesSparA:
@@ -257,7 +266,7 @@ def main():
         current_date = datetime.now()
         formatted_date = current_date.strftime("%Y%m%d")
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-        output_dir = os.path.dirname(file)
+        output_dir = output_folder
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
 
         plt.tight_layout()
@@ -317,7 +326,7 @@ def main():
         current_date = datetime.now()  # Get the current date
         formatted_date = current_date.strftime("%Y%m%d")  # Format the date as Year-Month-Day
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
-        output_dir = os.path.dirname(file)
+        output_dir = output_folder
         save_path = os.path.join(output_dir, f"{formatted_date}_{filename_safe_title}")
         plt.savefig(save_path, dpi=300)
         print(f"Plot saved to {save_path}")
@@ -406,7 +415,7 @@ def main():
                 + ".png"
         )
 
-        output_dir = os.path.dirname(file)
+        output_dir = output_folder
         save_path = os.path.join(output_dir, f"{current_date}_{filename_safe_title}")
 
         plt.tight_layout()
@@ -449,7 +458,7 @@ def main():
         formatted_date = current_date.strftime("%Y%m%d")  # Format the date as Year-Month-Day
         filename_safe_title = title.replace(" ", "_").replace(":", "") + ".png"
         file_name_full = f"{formatted_date}_{filename_safe_title}"  # Specify output file name
-        save_path = os.path.join(folder_path, file_name_full)
+        save_path = os.path.join(params.get('outputFolder') or folder_path, file_name_full)
         plt.savefig(save_path, dpi=300)
         print(f"Plot saved to {save_path}")
 
@@ -457,27 +466,14 @@ def main():
             plt.show()
 
     # === Generate plots ===
-    if filesNPDA and filesNPDB:
+    if filesNPDA or filesNPDB:
         plotNPD(filesNPDA, filesNPDB)
         # plotNPDdiff(filesNPD)
 
-    if filesSparA and filesSparB:
+    if filesSparA or filesSparB:
         plotS21(filesSparA, filesSparB)
-    """
-    if filesS11:
-        plotS22(filesS11)
 
-    if filesSpar:
-        #plotS21(filesSpar)
-        plotS21smooth(filesSpar)
-
-    if filesSpar:
-        plotMagRat(filesSpar)
-
-    if filesSpar:
-        plotPD(filesSpar)
-    """
-
-
-if __name__ == "__main__":
-    main()
+    png_files = glob.glob(os.path.join(full_sn_path, folderA, '*.png')) + glob.glob(os.path.join(full_sn_path, folderB, '*.png'))
+    if params.get('outputFolder'):
+        png_files = list(set(png_files + glob.glob(os.path.join(params.get('outputFolder'), '*.png'))))
+    return png_files
