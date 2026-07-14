@@ -163,9 +163,11 @@ function App() {
         newRuns[idx] = finalUploadPath;
         return newRuns;
       });
+      return finalUploadPath;
     } catch (err) {
       console.error(err);
       alert("Upload error: " + err.message);
+      throw err;
     }
   };
 
@@ -317,20 +319,26 @@ function App() {
   // uploadFiles removed fetchFolders call and submitRuns removed fetchFolders call
 
   const submitRuns = async () => {
+    let finalPaths = [...runs];
+
     if (uploadMode === 'upload') {
       const numSlots = testType === 1 ? runs.length : 3;
       for (let i = 0; i < numSlots; i++) {
         if (runFiles[i] && runFiles[i].length > 0 && !runs[i]) {
-          alert(`Please click the "Upload" button for ${i === 2 ? 'Calibration Folder' : (runNames[i] || 'Run ' + (i+1))} before processing.`);
-          return { success: false };
+          try {
+            const path = await uploadRun(i);
+            finalPaths[i] = path;
+          } catch (err) {
+            return { success: false };
+          }
         }
       }
     }
 
     try {
       const payload = testType === 1 
-        ? { runs } 
-        : { runA: runs[0] || '', runB: runs[1] || '', calPath: runs[2] || '' };
+        ? { runs: finalPaths } 
+        : { runA: finalPaths[0] || '', runB: finalPaths[1] || '', calPath: finalPaths[2] || '' };
 
       const res = await fetch(`${API_BASE}/select-runs`, {
         method: 'POST',
