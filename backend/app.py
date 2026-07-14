@@ -383,6 +383,31 @@ print(folder_path)
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/debug-tree', methods=['GET'])
+def debug_tree():
+    base_path = request.args.get('path', read_txt("path.txt") or read_txt("upload_path.txt") or '')
+    if not base_path or not os.path.exists(base_path):
+        return jsonify({"error": f"Path not found: {base_path}"})
+    
+    def get_tree(path, depth=0, max_depth=3):
+        if depth > max_depth: return "..."
+        tree = {}
+        try:
+            for item in os.listdir(path):
+                full_path = os.path.join(path, item)
+                if os.path.isdir(full_path):
+                    tree[item] = get_tree(full_path, depth + 1, max_depth)
+                else:
+                    tree[item] = "FILE"
+        except Exception as e:
+            return str(e)
+        return tree
+        
+    return jsonify({
+        "base_path": base_path,
+        "tree": get_tree(base_path, max_depth=4)
+    })
+
 @app.route('/api/generate_plots', methods=['POST'])
 def api_generate_plots():
     test = request.args.get('testType', type=int)
