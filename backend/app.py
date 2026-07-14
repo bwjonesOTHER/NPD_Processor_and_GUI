@@ -502,8 +502,8 @@ def api_generate_plots():
         import Macallan_PMA_Array_BenchtopNPD_PlotData_v2
         path1 = read_txt("path.txt")
         path2 = read_txt("upload_path.txt")
-        if path1: pass
-        if path2: pass
+        if path1: params['path1'] = path1
+        if path2: params['path2'] = path2
         params['outputFolder'] = temp_out_dir
         try:
             png_files = Macallan_PMA_Array_BenchtopNPD_PlotData_v2.generate_plots(params)

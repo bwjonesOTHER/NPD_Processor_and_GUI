@@ -543,8 +543,13 @@ function App() {
                         const result = await submitFileInfo();
                         if (result && result.success) setCurrentStep(2);
                       }} className="primary">Upload Files <Upload size={18} style={{ verticalAlign: 'middle' }} /></button>
-                      <button onClick={() => {
-                        setCurrentStep(3);
+                      <button onClick={async () => {
+                        if (!formData.basePath) {
+                          alert("Please select a Base Upload Path before continuing.");
+                          return;
+                        }
+                        const result = await submitFileInfo();
+                        if (result && result.success) setCurrentStep(3);
                       }} className="primary" style={{ background: 'var(--success)' }}>Process <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
                     </>
                   )}
