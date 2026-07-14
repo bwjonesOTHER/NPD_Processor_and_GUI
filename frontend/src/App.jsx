@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download, UploadCloud, XCircle, Save } from 'lucide-react';
+import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download, UploadCloud, XCircle, Save, Folder } from 'lucide-react';
 import JSZip from 'jszip';
 import './App.css';
 
@@ -24,6 +24,9 @@ function App() {
   
   const [uploadMode, setUploadMode] = useState(null); // 'access' or 'upload'
   
+  const [lmoOptions, setLmoOptions] = useState([]);
+  const [showLmoModal, setShowLmoModal] = useState(false);
+  
   // Form state
   const [formData, setFormData] = useState({
     basePath: '',
@@ -33,6 +36,7 @@ function App() {
     serialNumber: '',
     pmaArea: '',
     runEntry: '',
+    exactLmoFolder: '',
   });
 
   const [plotParams, setPlotParams] = useState({
@@ -210,11 +214,19 @@ function App() {
         })
       });
       if (res.ok) {
-        // Validation passed in backend, now we decide where to go (Upload or Access, handled by the button click directly)
+        const data = await res.json().catch(() => ({}));
+        if (data.requireLmoSelection) {
+          setLmoOptions(data.options || []);
+          setShowLmoModal(true);
+          return { success: false, requireLmoSelection: true };
+        }
+        return { success: true };
       }
+      return { success: false };
     } catch (err) {
       console.error(err);
       alert("Failed to submit file info");
+      return { success: false };
     }
   };
 
@@ -504,8 +516,9 @@ function App() {
                         alert("Please select the BenchNPD Root Directory before continuing.");
                         return;
                       }
-                      await submitFileInfo();
-                      setCurrentStep(4);
+                      const result = await submitFileInfo();
+                      if (result && result.requireLmoSelection) return;
+                      if (result && result.success) setCurrentStep(4);
                     }} className="primary" style={{ background: 'var(--success)' }}>Proceed to Configuration <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
                   ) : (
                     <>
@@ -514,8 +527,8 @@ function App() {
                           alert("Please select a Base Upload Path before continuing.");
                           return;
                         }
-                        await submitFileInfo();
-                        setCurrentStep(2);
+                        const result = await submitFileInfo();
+                        if (result && result.success) setCurrentStep(2);
                       }} className="primary">Upload Files <Upload size={18} style={{ verticalAlign: 'middle' }} /></button>
                       <button onClick={() => {
                         setCurrentStep(3);
@@ -860,8 +873,65 @@ function App() {
 
         </div>
       </div>
+
+      {/* LMO Selection Modal */}
+      {showLmoModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'var(--surface)', padding: '2rem', borderRadius: '12px',
+            width: '400px', maxWidth: '90%', boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Multiple LMO Folders Found</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+              We found multiple folders matching that LMO number. Please select the correct one:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+              {lmoOptions.map(opt => (
+                <button 
+                  key={opt}
+                  className="secondary" 
+                  style={{ textAlign: 'left', padding: '0.75rem', justifyContent: 'flex-start' }}
+                  onClick={async () => {
+                    const newFormData = { ...formData, exactLmoFolder: opt };
+                    setFormData(newFormData);
+                    setShowLmoModal(false);
+                    
+                    // Re-submit with the exact folder
+                    try {
+                      const res = await fetch(`${API_BASE}/file-info`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ testType, ...newFormData })
+                      });
+                      if (res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        if (!data.requireLmoSelection) {
+                          setCurrentStep(4);
+                        }
+                      }
+                    } catch(err) {
+                      console.error(err);
+                    }
+                  }}
+                >
+                  <Folder size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--primary)' }} />
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
+              <button className="secondary" onClick={() => setShowLmoModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 export default App;
