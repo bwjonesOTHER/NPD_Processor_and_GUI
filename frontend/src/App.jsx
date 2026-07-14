@@ -302,7 +302,11 @@ function App() {
       });
       if (res.ok) {
         setFiles([]);
-        setCurrentStep(1);
+        if (testType === 2) {
+          setCurrentStep(4);
+        } else {
+          setCurrentStep(3);
+        }
       }
     } catch (err) {
       console.error(err);
