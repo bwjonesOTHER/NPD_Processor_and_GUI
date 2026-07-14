@@ -153,25 +153,53 @@ def generate_plots(params):
                 
         with open("LMO_SEARCH_LOG.txt", "w") as f_dbg:
             f_dbg.write("\n".join(debug_log))
+            
+    # Add detailed logging for the file search phase
+    try:
+        with open("LMO_SEARCH_LOG.txt", "a") as f_dbg:
+            f_dbg.write(f"\n\n--- SEARCHING FOR FILES IN lmoFolderA: {lmoFolderA} ---\n")
+            if os.path.exists(lmoFolderA):
+                all_files = []
+                for root, dirs, files in os.walk(lmoFolderA):
+                    for f in files:
+                        all_files.append(os.path.join(root, f))
+                f_dbg.write(f"Total files found in {lmoFolderA} recursively: {len(all_files)}\n")
+                if len(all_files) <= 20:
+                    for f in all_files:
+                        f_dbg.write(f"  - {os.path.basename(f)}\n")
+                else:
+                    f_dbg.write(f"  (Too many files to list all, showing first 20)\n")
+                    for f in all_files[:20]:
+                        f_dbg.write(f"  - {os.path.basename(f)}\n")
+            else:
+                f_dbg.write(f"ERROR: The folder {lmoFolderA} does not exist!\n")
+    except Exception as e:
+        print("Error logging file search:", e)
                 
     try:
         filesSparA = search_files(lmoFolderA, 'NPDoverTempVSWR_ambient',f"{serial_number}")
+        with open("LMO_SEARCH_LOG.txt", "a") as f: f.write(f"\nSearched for 'NPDoverTempVSWR_ambient' and '{serial_number}': Found {len(filesSparA)} files\n")
     except FileNotFoundError:
         filesSparA = []
+        with open("LMO_SEARCH_LOG.txt", "a") as f: f.write(f"\nSearched for 'NPDoverTempVSWR_ambient' and '{serial_number}': FOLDER NOT FOUND ERROR\n")
+        
     if not filesSparA:
         try:
             filesSparA = search_files(lmoFolderA, 'NPDoverTempVSWR',f"{serial_number}")
+            with open("LMO_SEARCH_LOG.txt", "a") as f: f.write(f"Fallback searched for 'NPDoverTempVSWR' and '{serial_number}': Found {len(filesSparA)} files\n")
         except FileNotFoundError:
             filesSparA = []
     
     try:
         filesNPDA = search_files(lmoFolderA, 'NPDoverTempNPD_ambient',f"{serial_number}")
+        with open("LMO_SEARCH_LOG.txt", "a") as f: f.write(f"Searched for 'NPDoverTempNPD_ambient' and '{serial_number}': Found {len(filesNPDA)} files\n")
     except FileNotFoundError:
         filesNPDA = []
         
     if not filesNPDA:
         try:
             filesNPDA = search_files(lmoFolderA, 'NPDoverTempNPD',f"{serial_number}")
+            with open("LMO_SEARCH_LOG.txt", "a") as f: f.write(f"Fallback searched for 'NPDoverTempNPD' and '{serial_number}': Found {len(filesNPDA)} files\n")
         except FileNotFoundError:
             filesNPDA = []
     lmoFolderB = os.path.join(folder_path, area_folder, lmo_folder)
