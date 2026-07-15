@@ -1,3 +1,9 @@
+"""
+app.py
+======
+Flask backend application serving the React frontend.
+Provides API endpoints to manage files, upload test runs, and trigger the plotting scripts.
+"""
 import os
 import sys
 import shutil
@@ -28,10 +34,12 @@ CORS(app)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def write_txt(filename, content):
+    """Writes content to a text file in the current directory."""
     with open(os.path.join(BASE_DIR, filename), "w") as f:
         f.write(content)
 
 def read_txt(filename):
+    """Reads content from a text file in the current directory."""
     path = os.path.join(BASE_DIR, filename)
     if os.path.exists(path):
         with open(path, "r") as f:
@@ -39,6 +47,7 @@ def read_txt(filename):
     return ""
 
 def hydrate_directory(directory_path):
+    """Recursively hydrates the directory structure to build a JSON tree for the frontend browser."""
     if not directory_path or not os.path.exists(directory_path):
         return
     for root, dirs, files in os.walk(directory_path):
@@ -56,6 +65,7 @@ def hydrate_directory(directory_path):
 
 @app.route('/api/connect', methods=['POST'])
 def connect_sharepoint():
+    """Endpoint to save SharePoint user credentials."""
     data = request.json
     first = data.get('firstName', '').strip().lower()
     last = data.get('lastName', '').strip().lower()
@@ -69,6 +79,7 @@ def connect_sharepoint():
 
 @app.route('/api/file-info', methods=['POST'])
 def submit_file_info():
+    """Endpoint to handle the initial setup of file metadata and generate the upload path."""
     data = request.json
     test = data.get('testType')
     base_path = data.get('basePath', '').strip()
@@ -209,6 +220,7 @@ def submit_file_info():
 
 @app.route('/api/upload', methods=['POST'])
 def upload_files():
+    """Endpoint to handle generic file uploads."""
     if 'files' not in request.files:
         return jsonify({"error": "No files part"}), 400
     
@@ -232,6 +244,7 @@ def upload_files():
 
 @app.route('/api/upload_run', methods=['GET', 'POST', 'OPTIONS'], strict_slashes=False)
 def upload_run_files():
+    """Endpoint to handle uploading directories for test runs, recreating folder structure."""
     if request.method == 'OPTIONS':
         return jsonify({}), 200
     if request.method == 'GET':
@@ -283,6 +296,7 @@ def upload_run_files():
 
 @app.route('/api/folders', methods=['GET'])
 def get_folders():
+    """Endpoint to fetch directory structures for frontend browser tree."""
     path = read_txt("upload_path.txt") # Use upload_path so Test 3 looks inside the SN folder
     if not path:
         path = read_txt("path.txt")
@@ -301,6 +315,7 @@ def get_folders():
 
 @app.route('/api/select-runs', methods=['POST'])
 def select_runs():
+    """Endpoint to save the user-selected runs into text files."""
     data = request.json
     
     if 'runs' in data:
@@ -325,6 +340,7 @@ def select_runs():
 
 @app.route('/api/choose_directory', methods=['GET'])
 def choose_directory():
+    """Endpoint to open an OS-level directory chooser dialog (Tkinter)."""
     try:
         import sys
         import os
@@ -453,6 +469,7 @@ def debug_tree():
 
 @app.route('/api/generate_plots', methods=['POST'])
 def api_generate_plots():
+    """Endpoint to trigger the backend Python plotting scripts based on test type."""
     test = request.args.get('testType', type=int)
     params = request.json or {}
     
@@ -553,6 +570,7 @@ def api_generate_plots():
 
 @app.route('/api/save_plots', methods=['POST'])
 def save_plots():
+    """Endpoint to copy generated plots to a selected destination directory."""
     data = request.json or {}
     output_folder = data.get('outputFolder')
     plots = data.get('plots', [])

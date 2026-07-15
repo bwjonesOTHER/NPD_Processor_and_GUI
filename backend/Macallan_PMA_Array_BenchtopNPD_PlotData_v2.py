@@ -1,3 +1,10 @@
+"""
+Macallan_PMA_Array_BenchtopNPD_PlotData_v2.py
+=============================================
+Plot generation script for Test 3 (Benchtop NPD - Array).
+Analyzes S-Parameter and NPD data, applies calibration loss,
+and generates comparison plots for Run A vs Run B.
+"""
 import os
 import re
 import skrf as rf
@@ -11,12 +18,20 @@ from colorama import init, Fore, Back, Style
 import glob
 
 def generate_plots(params):
+    """
+    Generates plots by locating data files and calibration files,
+    processing them, and saving output PNGs.
+    
+    Args:
+        params (dict): Execution parameters passed from the frontend.
+    """
     """Input Params"""
 
     # Edge:L110172, Center:L110173
 
 
     def get_RUN_A():
+        """Legacy helper to read RunA path from text file."""
         try:
             with open("RunA_Path.txt", "r") as f:
                 return f.read().strip()
@@ -24,6 +39,7 @@ def generate_plots(params):
             return ""
 
     def get_RUN_B():
+        """Legacy helper to read RunB path from text file."""
         try:
             with open("RunB_Path.txt", "r") as f:
                 return f.read().strip()
@@ -31,6 +47,7 @@ def generate_plots(params):
             return ""
 
     def get_path():
+        """Legacy helper to read base path from text file."""
         try:
             with open("path.txt", "r") as f:
                 return f.read().strip()
@@ -38,6 +55,7 @@ def generate_plots(params):
             return ""
 
     def get_SN():
+        """Legacy helper to read Serial Number from text file."""
         try:
             with open("SN.txt", "r") as f:
                 return f.read().strip()
@@ -45,6 +63,7 @@ def generate_plots(params):
             return ""
 
     def get_CAL():
+        """Legacy helper to read Calibration path from text file."""
         try:
             with open("Cal_Path.txt", "r") as f:
                 return f.read().strip()
@@ -72,6 +91,10 @@ def generate_plots(params):
     output_folder = params.get('outputFolder', '')
 
     def search_files(root_dir, filename_part, SN_value):
+        """
+        Recursively searches the filesystem for files matching a partial filename
+        and containing the target Serial Number.
+        """
         matches = []
         for dirpath, _, filenames in os.walk(root_dir):
             for file in filenames:
@@ -80,6 +103,7 @@ def generate_plots(params):
         return matches
 
     def remove_nan(arr, remove_infinite=False):
+        """Cleans NumPy arrays by removing NaN and optionally infinite values."""
 
         if not isinstance(arr, np.ndarray):
             raise TypeError("Input must be a NumPy array.")
@@ -136,6 +160,10 @@ def generate_plots(params):
         cal_folder = os.path.join(full_sn_path, "Cable Loss")
 
     def load_calibration_loss(cal_folder):
+        """
+        Loads the S21 parameters from calibration files in the specified folder
+        to compute baseline cable loss across frequencies.
+        """
 
         if not os.path.isdir(cal_folder):
             print(f"Calibration folder not found: {cal_folder}")
@@ -193,6 +221,10 @@ def generate_plots(params):
     """Plot Functions"""
 
     def plotNPD(filesA, filesB):
+        """
+        Generates the Noise Power Density (NPD) plot comparing Run A vs Run B.
+        Parses CSV files, processes density arrays, and applies scatter/fill formatting.
+        """
         plt.figure(figsize=(8, 4), dpi=150)
 
         all_noise = []  # full traces
@@ -288,6 +320,7 @@ def generate_plots(params):
             plt.show()
 
     def plotNPDdiff(files):
+        """Plots the difference in NPD density (currently unused or legacy)."""
         plt.figure(figsize=(7, 4), dpi=150)
 
         for i in range(0, 2, 1):  # start=0, stop=2, step=1
@@ -345,6 +378,10 @@ def generate_plots(params):
             plt.show()
 
     def plotS21(filesA, filesB):
+        """
+        Generates the S21 (Gain) plot comparing Run A vs Run B using Touchstone (.s2p) files.
+        Applies calibration cable loss subtraction to the measured data.
+        """
 
         avg_collection = []
         file_coll = []
@@ -436,6 +473,7 @@ def generate_plots(params):
             plt.show()
 
     def plotS11(files):
+        """Generates the S11 (Return Loss) plot (currently unused or legacy)."""
         plt.figure(figsize=(8, 4), dpi=150)
         i = 0
         for file in files:

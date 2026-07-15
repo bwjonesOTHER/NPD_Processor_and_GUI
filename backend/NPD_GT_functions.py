@@ -1,3 +1,9 @@
+"""
+NPD_GT_functions.py
+===================
+Contains core helper functions and logic for parsing, processing, and plotting
+S-Parameter (.s2p) and NPD (.csv) data across all test modes.
+"""
 import os
 import re
 import skrf as rf

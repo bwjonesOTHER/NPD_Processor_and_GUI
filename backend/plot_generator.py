@@ -1,3 +1,12 @@
+"""
+plot_generator.py
+=================
+This module acts as the entry point for generating plots for Test 1.
+It searches for relevant S-parameter (VSWR/S21) and NPD files across
+multiple temperature profiles (Ambient, Hot, Cold, All) and orchestrates
+the plotting logic using functions defined in NPD_GT_functions.py.
+"""
+
 import os
 import re
 import skrf as rf
@@ -12,6 +21,17 @@ import glob
 import NPD_GT_functions
 
 def resolve_run_dir(run_dir):
+    """
+    Resolves the provided run directory path.
+    If the specified directory contains exactly one sub-directory, it assumes
+    that sub-directory is the actual target folder and returns its path.
+    
+    Args:
+        run_dir (str): Path to the run directory.
+        
+    Returns:
+        str: The resolved path to the run directory.
+    """
     if not run_dir or not os.path.isdir(run_dir):
         return run_dir
     items = os.listdir(run_dir)
@@ -21,6 +41,16 @@ def resolve_run_dir(run_dir):
     return run_dir
 
 def generate_plots(params):
+    """
+    Main function to generate S-parameter and NPD plots based on input parameters.
+    
+    Args:
+        params (dict): Dictionary of parameters containing configuration for the plots,
+                       including run paths, frequency bounds, number of averages, etc.
+                       
+    Returns:
+        list: A list of file paths pointing to the generated PNG images.
+    """
     runs = params.get('runs', [])
     lmoFolderA = resolve_run_dir(runs[0]) if len(runs) > 0 else ""
     lmoFolderB = resolve_run_dir(runs[1]) if len(runs) > 1 else ""
@@ -28,6 +58,7 @@ def generate_plots(params):
     RunA = params.get('RunA', os.path.basename(lmoFolderA.rstrip('/\\')) if lmoFolderA else "")
     RunB = params.get('RunB', os.path.basename(lmoFolderB.rstrip('/\\')) if lmoFolderB else "")
     
+    # Frequency bounds and VSWR/S21 requirements
     freq_min = float(params.get('freq_min', 2.7))
     freq_max = float(params.get('freq_max', 4.1))
     reqS11Ns = [700,2100]
@@ -37,6 +68,7 @@ def generate_plots(params):
     n_avg = int(params.get('n_avg', 20))
     show_plot = 0
     
+    # Plot display bounds
     u_bound_s21 = float(params.get('u_bound_s21', 2))
     l_bound_s21 = float(params.get('l_bound_s21', 2))
     u_bound_npd = float(params.get('u_bound_npd', 2))
@@ -46,6 +78,7 @@ def generate_plots(params):
     if not folder_path and lmoFolderA:
         folder_path = os.path.dirname(lmoFolderA)
 
+    # Clean up old generated PNGs in the output directory
     old_pngs = glob.glob(os.path.join(folder_path, '*.png'))
     for png in old_pngs:
         try:
@@ -53,26 +86,31 @@ def generate_plots(params):
         except Exception:
             pass
             
+    # Search for S-Parameter (VSWR/S21) files across temperatures for Run A
     filesSparA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR') if lmoFolderA else []
     filesSparA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_ambient') if lmoFolderA else []
     filesSparA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_hot') if lmoFolderA else []
     filesSparA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempVSWR_cold') if lmoFolderA else []
     
+    # Search for NPD files across temperatures for Run A
     filesNPDA = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD') if lmoFolderA else []
     filesNPDA_25C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_ambient') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD_ambient') if lmoFolderA else []
     filesNPDA_64C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_hot') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD_hot') if lmoFolderA else []
     filesNPDA_n38C = NPD_GT_functions.search_files(lmoFolderA, 'NPDOverTempNPD_cold') + NPD_GT_functions.search_files(lmoFolderA, 'BenchtopNPD_cold') if lmoFolderA else []
     
+    # Search for S-Parameter files across temperatures for Run B
     filesSparB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR') if lmoFolderB else []
     filesSparB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_ambient') if lmoFolderB else []
     filesSparB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_hot') if lmoFolderB else []
     filesSparB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempVSWR_cold') if lmoFolderB else []
     
+    # Search for NPD files across temperatures for Run B
     filesNPDB = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD') if lmoFolderB else []
     filesNPDB_25C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_ambient') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD_ambient') if lmoFolderB else []
     filesNPDB_64C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_hot') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD_hot') if lmoFolderB else []
     filesNPDB_n38C = NPD_GT_functions.search_files(lmoFolderB, 'NPDOverTempNPD_cold') + NPD_GT_functions.search_files(lmoFolderB, 'BenchtopNPD_cold') if lmoFolderB else []
 
+    # Initialize data structures for storing parsed plot data
     NPD_density_25 = ([], [])
     NPD_density_64 = ([], [])
     NPD_density_n38 = ([], [])
@@ -83,6 +121,11 @@ def generate_plots(params):
     Spar_64 = ([], [])
     Spar_n38 = ([], [])
 
+    # =========================================================================
+    # NPD Density Plots
+    # =========================================================================
+    
+    # All Temperatures
     if len(filesNPDA)>0 and len(filesNPDB)>0:
         temperature='All'
         u_bound_npd_temp=u_bound_npd+1
@@ -99,6 +142,7 @@ def generate_plots(params):
         l_bound_npd_temp=l_bound_npd+1
         NPD_GT_functions.plotNPD_density_single(filesNPDA,lmoFolderA,n_avg, u_bound_npd_temp, l_bound_npd_temp,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot)
 
+    # 25C (Ambient)
     if len(filesNPDA_25C)>0 and len(filesNPDB_25C)>0:
         temperature='25C'
         u_bound_npd_temp=u_bound_npd-1
@@ -115,6 +159,7 @@ def generate_plots(params):
         l_bound_npd_temp=l_bound_npd-1
         NPD_density_25 = NPD_GT_functions.plotNPD_density_single(filesNPDA_25C,lmoFolderA,n_avg, u_bound_npd_temp, l_bound_npd_temp,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot)
 
+    # 64C (Hot)
     if len(filesNPDA_64C)>0 and len(filesNPDB_64C)>0:
         temperature='64C'
         u_bound_npd_temp=u_bound_npd
@@ -131,6 +176,7 @@ def generate_plots(params):
         l_bound_npd_temp=l_bound_npd
         NPD_density_64=NPD_GT_functions.plotNPD_density_single(filesNPDA_64C,lmoFolderA,n_avg, u_bound_npd_temp, l_bound_npd_temp,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot)
 
+    # -38C (Cold)
     if len(filesNPDA_n38C)>0 and len(filesNPDB_n38C)>0:
         temperature='-38C'
         u_bound_npd_temp=u_bound_npd
@@ -147,9 +193,14 @@ def generate_plots(params):
         l_bound_npd_temp=l_bound_npd
         NPD_density_n38=NPD_GT_functions.plotNPD_density_single(filesNPDA_n38C,lmoFolderA,n_avg, u_bound_npd_temp, l_bound_npd_temp,RunA,temperature,freq_min,freq_max,reqS11Val,folder_path,show_plot)
 
+    # Temperature difference density plot (if multiple temperatures were plotted)
     if NPD_density_25 and len(NPD_density_25)>0 and any([len(NPD_density_25[0]), len(NPD_density_64[0]), len(NPD_density_n38[0])]):
         NPD_GT_functions.npd_density_temp_diff_plot(NPD_density_25,NPD_density_64,NPD_density_n38,folder_path,show_plot)
 
+    # =========================================================================
+    # Standard NPD Plots
+    # =========================================================================
+    
     if len(filesNPDA)>0 and len(filesNPDB)>0:
         temperature='All'
         u_bound_npd_temp=u_bound_npd+1
@@ -216,6 +267,10 @@ def generate_plots(params):
 
     if NPD25 and len(NPD25)>0 and any([len(NPD25[0]), len(NPD64[0]), len(NPDn38[0])]):
         NPD_GT_functions.npd_temp_diff_plot(NPD25,NPD64,NPDn38,folder_path,show_plot)
+
+    # =========================================================================
+    # S21 S-Parameter Plots
+    # =========================================================================
 
     if len(filesSparA)>0 and len(filesSparB)>0:
         temperature='All'
@@ -286,3 +341,4 @@ def generate_plots(params):
 
     plt.close('all')
     return glob.glob(os.path.join(folder_path, '*.png'))
+

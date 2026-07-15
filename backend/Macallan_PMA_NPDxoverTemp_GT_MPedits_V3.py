@@ -1,3 +1,10 @@
+"""
+Macallan_PMA_NPDxoverTemp_GT_MPedits_V3.py
+===========================================
+Plot generation script for Test 1 (Thermal NPD).
+Analyzes S-Parameter and NPD data over varying temperatures
+and generates comprehensive comparison plots against limits.
+"""
 import os
 import re
 import skrf as rf
@@ -13,6 +20,13 @@ from colorama import init, Fore
 
 
 def generate_plots(params):
+    """
+    Generates plots by locating data files across temperatures,
+    processing them, and saving output PNGs.
+    
+    Args:
+        params (dict): Execution parameters passed from the frontend.
+    """
 
     folder_path = params.get('folder_path', '')
     runs = params.get('runs', [])
@@ -38,6 +52,7 @@ def generate_plots(params):
         return glob(os.path.join(root_dir, "**", pattern), recursive=True)
 
     def remove_nan(arr, remove_infinite=False):
+        """Cleans NumPy arrays by removing NaN and optionally infinite values."""
         """
         Remove NaN (and optionally infinite) values from a NumPy array.
 
