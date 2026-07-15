@@ -1,6 +1,6 @@
-Folder B: 
-SN: 0022
+Folder B: /Users/tj/Documents/Redwire/NPD_Processor_and_GUI/uploads
+SN: 0001
 Raw CSV found: []
 Filtered npdB: []
 Filtered sparB: []
-npdA: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA Tile\\NPDoverTemp\\Run 5 LMO1202-62\\Cap_03\\20260504_NPDOverTempNPD_ambient_LMO1202-62_L110172E_SN0022_Pri.csv', 'C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA Tile\\NPDoverTemp\\Run 5 LMO1202-62\\Cap_03\\20260504_NPDOverTempNPD_ambient_LMO1202-62_L110172E_SN0022_Red.csv']
+npdA: []
