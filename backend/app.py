@@ -267,6 +267,10 @@ def upload_run_files():
         if file.filename:
             # Reconstruct relative path if provided, otherwise just base filename
             relative_path = paths[idx] if idx < len(paths) else os.path.basename(file.filename)
+            if folder_name and relative_path.startswith(folder_name + "/"):
+                relative_path = relative_path[len(folder_name)+1:]
+            elif folder_name and relative_path.startswith(folder_name + "\\"):
+                relative_path = relative_path[len(folder_name)+1:]
             filepath = os.path.join(dest_folder, relative_path)
             
             # Ensure subdirectories exist
