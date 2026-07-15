@@ -513,7 +513,7 @@ def generate_plots(params):
         if dp1: generated_plots.append(dp1)
         dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -110), ax2_ylim=(0, 5))
         if dp1_den: generated_plots.append(dp1_den)
-        dp2 = plot_temp_deltas(s21_averages, "S21 Calibrated", "S21 (dB)", output_folder, ax1_ylim=(0, 30), ax2_ylim=(0, 5))
+        dp2 = plot_temp_deltas(s21_averages, "S21", "S21 (dB)", output_folder, ax1_ylim=(-40, 40), ax2_ylim=(-40, 40))
         if dp2: generated_plots.append(dp2)
             
     else:
