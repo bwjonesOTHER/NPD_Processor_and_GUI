@@ -69,7 +69,7 @@ def load_calibration_loss(cal_folder):
         total_loss += ls_interp
     return freq_ref, total_loss
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=False):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -84,7 +84,13 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         df_all = pd.read_csv(file, on_bad_lines='skip', encoding='latin1', engine='python', names=range(10))
         num_df = df_all.apply(pd.to_numeric, errors='coerce')
         freq = remove_nan(num_df.values[:, 0], remove_infinite=True)
-        noise = remove_nan(num_df.values[:, 1], remove_infinite=True)
+        if plot_density:
+            try:
+                noise = remove_nan(num_df.values[:, 2], remove_infinite=True)
+            except IndexError:
+                noise = np.array([])
+        else:
+            noise = remove_nan(num_df.values[:, 1], remove_infinite=True)
         if len(noise) == 0 or len(freq) == 0:
             return np.array([]), np.array([])
             
@@ -150,10 +156,10 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
-    title = f'Noise Power {title_suffix}, {status}'
+    title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
-    plt.ylabel('NP (dBm)')
+    plt.ylabel('NPD (dBm/Hz)') if plot_density else plt.ylabel('NP (dBm)')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
     plt.subplots_adjust(right=0.7)
 
@@ -263,7 +269,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
 
 
-def plot_temp_deltas(data_dict, title, ylabel, output_folder):
+def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2_ylim=None):
     if "Ambient" not in data_dict or "Hot" not in data_dict or "Cold" not in data_dict:
         return None
     
@@ -288,12 +294,14 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder):
     ax1.set_xlabel('Frequency (GHz)')
     ax1.set_ylabel(ylabel)
     ax1.grid(True)
+    if ax1_ylim: ax1.set_ylim(ax1_ylim)
     
     ax2 = ax1.twinx()
     ax2.plot(a_f, np.abs(a_v - h_v), label='|Amb - Hot|', color='orange', linestyle='dashed')
     ax2.plot(a_f, np.abs(a_v - c_v), label='|Amb - Cold|', color='cyan', linestyle='dashed')
     ax2.plot(a_f, np.abs(h_v - c_v), label='|Hot - Cold|', color='purple', linestyle='dashed')
     ax2.set_ylabel('Delta (dB)')
+    if ax2_ylim: ax2.set_ylim(ax2_ylim)
     
     # Combined legend
     lines_1, labels_1 = ax1.get_legend_handles_labels()
@@ -354,6 +362,7 @@ def generate_plots(params):
             ("All Temps", "")
         ]
         
+        np_averages = {}
         npd_averages = {}
         s21_averages = {}
         for name, tag in temp_tags:
@@ -363,19 +372,26 @@ def generate_plots(params):
             sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
             sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=False)
             if p1: 
                 generated_plots.append(p1)
-                npd_averages[name] = (p1.get("freq"), p1.get("avg"))
+                np_averages[name] = (p1.get("freq"), p1.get("avg"))
+                
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=True)
+            if p1_den and p1_den.get("freq") is not None:
+                generated_plots.append(p1_den)
+                npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
             p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, freq_cal, total_loss_db, output_folder)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
                 
-        dp1 = plot_temp_deltas(npd_averages, "Noise Power", "NP (dBm)", output_folder)
+        dp1 = plot_temp_deltas(np_averages, "Noise Power", "NP (dBm)", output_folder, ax1_ylim=(-120, -90), ax2_ylim=(0, 5))
         if dp1: generated_plots.append(dp1)
-        dp2 = plot_temp_deltas(s21_averages, "S21 Calibrated", "S21 (dB)", output_folder)
+        dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -110), ax2_ylim=(0, 5))
+        if dp1_den: generated_plots.append(dp1_den)
+        dp2 = plot_temp_deltas(s21_averages, "S21 Calibrated", "S21 (dB)", output_folder, ax1_ylim=(0, 30), ax2_ylim=(0, 2))
         if dp2: generated_plots.append(dp2)
             
     else:
@@ -385,7 +401,7 @@ def generate_plots(params):
         sparA = search_files(folderA, ".s2p")
         sparB = search_files(folderB, ".s2p")
         
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=False)
         if p1: generated_plots.append(p1)
         
         p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, freq_cal, total_loss_db, output_folder)
