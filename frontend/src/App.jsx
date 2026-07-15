@@ -616,23 +616,7 @@ function App() {
                         </div>
                       </div>
                       
-                      {/* Calibration Files */}
-                      <div className="form-group">
-                        <label>CalibrationFiles Directory (Optional)</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input type="text" readOnly value={runs[2] || ''} placeholder="Select CalibrationFiles folder (Optional)..." style={{ flex: 1 }} />
-                          <button onClick={async () => {
-                            try {
-                              const res = await fetch(`${API_BASE}/choose_directory`);
-                              const data = await res.json();
-                              if (data.success && data.path) {
-                                setRuns(prev => { const n = [...prev]; n[2] = data.path; return n; });
-                                setRunNames(prev => { const n = [...prev]; n[2] = data.path.split(/[\\/]/).pop(); return n; });
-                              }
-                            } catch (err) { console.error(err); }
-                          }} className="secondary">Browse</button>
-                        </div>
-                      </div>
+
                     </div>
                   ) : (
                   <div 
@@ -664,11 +648,11 @@ function App() {
                         {uploadingRun ? "Uploading..." : testType === 3 ? (
                           runs.filter(r => r !== '').length === 0 ? "Click to select Run A folder" :
                           runs.filter(r => r !== '').length === 1 ? "Click to select Run B folder" :
-                          "Click to select Calibration (Optional) folder"
+                          "Click to select Calibration (Cable Loss) folder"
                         ) : "Click to select and upload a run folder"}
                       </strong>
                       {!uploadingRun && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                        {(testType === 3 || testType === 1) ? "(Upload folders in order: Run A, then Run B, then CalibrationFiles (Optional))" : "(Click multiple times to add more runs!)"}
+                        {testType === 3 ? "(Upload folders in order: Run A, then Run B, then Calibration)" : "(Click multiple times to add more runs!)"}
                       </p>}
                     </div>
                     <input 
@@ -754,7 +738,7 @@ function App() {
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '0.75rem 1rem', borderRadius: '8px' }}>
                             <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}>
                               <strong>
-                                {(testType === 3 || testType === 1)
+                                {testType === 3 
                                   ? (idx === 0 ? 'Run A: ' : idx === 1 ? 'Run B: ' : 'Calibration: ') 
                                   : (runNames[idx] || `Run ${idx + 1}: `)}
                               </strong> 
