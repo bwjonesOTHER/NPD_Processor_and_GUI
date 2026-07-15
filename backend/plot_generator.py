@@ -281,11 +281,11 @@ def generate_plots(params):
         ]
         
         for name, tag in temp_tags:
-            npdA = search_files(folderA, f"NPD{tag}") if tag else search_files(folderA, ".csv")
-            npdB = search_files(folderB, f"NPD{tag}") if tag else search_files(folderB, ".csv")
+            npdA = search_files(folderA, f"NPD{tag}") if tag else search_files(folderA, "NPD")
+            npdB = search_files(folderB, f"NPD{tag}") if tag else search_files(folderB, "NPD")
             
-            sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, ".s2p")
-            sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, ".s2p")
+            sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
+            sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
             p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, output_folder)
             if p1: generated_plots.append(p1)
@@ -295,8 +295,8 @@ def generate_plots(params):
             
     else:
         # Benchtop (Test 2 & 3)
-        npdA = search_files(folderA, ".csv")
-        npdB = search_files(folderB, ".csv")
+        npdA = search_files(folderA, "NPD")
+        npdB = search_files(folderB, "NPD")
         sparA = search_files(folderA, ".s2p")
         sparB = search_files(folderB, ".s2p")
         
