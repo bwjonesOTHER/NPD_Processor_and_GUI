@@ -565,6 +565,17 @@ def generate_plots(params):
                     if match:
                         return os.path.join(base_d, d)
                 # If a specific PMA Area was requested but we couldn't find its folder, 
+                # log what we actually saw so we can debug this!
+                try:
+                    with open("debug_log.txt", "a") as dbg:
+                        dbg.write(f"\n--- DEBUG ---\n")
+                        dbg.write(f"Failed to find PMA Area!\n")
+                        dbg.write(f"pma_area: {pma_area}\n")
+                        dbg.write(f"pma_norm: {pma_norm}\n")
+                        dbg.write(f"base_d: {base_d}\n")
+                        dbg.write(f"Directories in base_d: {os.listdir(base_d)}\n")
+                except:
+                    pass
                 # just return the base directory (e.g. OverTemp might not have Area subfolders)
                 return base_d
             
@@ -579,6 +590,15 @@ def generate_plots(params):
                 if lmo:
                     lmo_folder = get_pma_folder(search_dirB, lmo)
                     if lmo_folder: search_dirB = lmo_folder
+            
+            try:
+                with open("debug_log.txt", "a") as f_dbg:
+                    f_dbg.write(f"\n--- DRILLER DEBUG ---\n")
+                    f_dbg.write(f"pma input: {pma}\n")
+                    f_dbg.write(f"lmo input: {lmo}\n")
+                    f_dbg.write(f"bench root: {bench}\n")
+                    f_dbg.write(f"search_dirB final: {search_dirB}\n")
+            except: pass
                 
             temp = get_subfolder(folderA, "overtemp")
             if not temp: temp = get_subfolder(folderA, "temp")
