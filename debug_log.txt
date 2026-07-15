@@ -1,8 +1,1 @@
-Original matches: ['LMO1465-34']
-Filtered by SN '0022': ['LMO1465-34']
-Search base: C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA Tile
-Search pma: L110172E
-Search lmo_num: 1465-34
-Search pma_path: C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA Tile\BenchNPD\L110172E
-All dirs: ['LMO0001419-34', 'LMO1157-1-11T1', 'LMO1157-1-11T2', 'LMO1157-1-11T3', 'LMO1157-1-11T7', 'LMO1157-1-11T8', 'LMO1157-1-11T9', 'LMO1157-1-11_T3_2', 'LMO1157-1-11_T7_2', 'LMO1157-1-11_T8_2', 'LMO1157-1-13T1', 'LMO1157-1-13T2', 'LMO1157-1-13_T2_2', 'LMO1197-81', 'LMO1198-81', 'LMO1199-81', 'LMO1200-81', 'LMO1203-81', 'LMO1204-81', 'LMO1344-34', 'LMO1345-34', 'LMO1346-34', 'LMO1347-34', 'LMO1348-34', 'LMO1349-34', 'LMO1420-34', 'LMO1462-34', 'LMO1464-34', 'LMO1465-34', 'LMO1466-34']
-Matches: ['LMO1465-34']
+[Errno 2] No such file or directory: 'C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA Tile\\Pattern\\L110172_Edge\\SN0014\\1P_Macallan_PMA Tile_EdgeSN0014_2600-4200MHz_NFDirect_65pts_Single Point_2026.03.26.11.16.37.csv'
