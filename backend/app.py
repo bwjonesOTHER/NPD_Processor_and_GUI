@@ -498,11 +498,13 @@ def api_generate_plots():
         if not path:
             path = read_txt("path.txt")
         params['runs'] = [path] if path else []
+        params['serial_number'] = read_txt("serialNumber.txt")
 
     elif test == 3:
         path1 = read_txt("path.txt")
         path2 = read_txt("upload_path.txt")
         params['runs'] = [p for p in [path1, path2] if p]
+        params['serial_number'] = read_txt("serialNumber.txt")
 
     try:
         # Generate plots returns a list of dicts: [{'path': str, 'status': str}]

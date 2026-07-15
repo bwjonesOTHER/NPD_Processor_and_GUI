@@ -31,13 +31,16 @@ def extract_serial(filename):
     match = re.search(r'EM-\d+', filename)
     return match.group(0) if match else filename
 
-def search_files(root_dir, filename_part):
+def search_files(root_dir, filename_part, serial_number=None):
     matches = []
     if not root_dir or not os.path.isdir(root_dir):
         return matches
     for dirpath, _, filenames in os.walk(root_dir):
         for file in filenames:
             if filename_part.lower() in file.lower():
+                if serial_number:
+                    if serial_number.lower() not in file.lower():
+                        continue
                 matches.append(os.path.join(dirpath, file))
     return matches
 
@@ -525,10 +528,11 @@ def generate_plots(params):
             
     else:
         # Benchtop (Test 2 & 3)
-        npdA = search_files(folderA, "NPD")
-        npdB = search_files(folderB, "NPD")
-        sparA = search_files(folderA, ".s2p")
-        sparB = search_files(folderB, ".s2p")
+        sn = params.get('serial_number')
+        npdA = search_files(folderA, "NPD", sn)
+        npdB = search_files(folderB, "NPD", sn)
+        sparA = search_files(folderA, ".s2p", sn)
+        sparB = search_files(folderB, ".s2p", sn)
         
         p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False)
         if p1: generated_plots.append(p1)
