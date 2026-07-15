@@ -712,17 +712,6 @@ function App() {
                 </div>
               )}
 
-              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
-                    Select Output Folder
-                  </button>
-                  <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
-                  </span>
-                </div>
-              </div>
 
               <div className="btn-group" style={{ marginTop: '2rem' }}>
                 <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
@@ -736,21 +725,17 @@ function App() {
               <h2>Plot Configuration</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
 
-              {testType === 2 && (
-                <>
-                  <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                    <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
-                        Select Output Folder
-                      </button>
-                      <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
+              <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
+                    Select Output Folder
+                  </button>
+                  <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
+                  </span>
+                </div>
+              </div>
 
               <div className="form-grid">
                 <div className="input-group">

@@ -69,6 +69,7 @@ def generate_plots(params):
 
     n_avg = int(params.get('n_avg', 20))
     show_plot = 0
+    output_folder = params.get('outputFolder', '')
 
     def search_files(root_dir, filename_part, SN_value):
         matches = []
