@@ -113,63 +113,7 @@ function App() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const uploadRun = async (idx) => {
-    let files = runFiles[idx];
-    if (!files || files.length === 0) return;
-    
-    const allowedExtensions = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log', '.s1p', '.s2p'];
-    files = files.filter(f => {
-      const name = f.name.toLowerCase();
-      return allowedExtensions.some(ext => name.endsWith(ext));
-    });
-    
-    if (files.length === 0) {
-      alert("No valid data files found for this run.");
-      return;
-    }
-    
-    try {
-      const CHUNK_SIZE = 50;
-      let finalUploadPath = '';
-      
-      for (let i = 0; i < files.length; i += CHUNK_SIZE) {
-        const chunk = files.slice(i, i + CHUNK_SIZE);
-        const data = new FormData();
-        chunk.forEach(f => {
-          data.append('files', f);
-          data.append('paths', f.webkitRelativePath || f.name);
-        });
-        data.append('run_index', idx);
-        if (testType === 3 && idx === 2) {
-          data.append('folder_name', 'Cable Loss');
-        }
-        data.append('chunk_index', i === 0 ? '0' : '1');
-        
-        const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
-        
-        const json = await res.json();
-        if (json.status !== 'success') {
-          throw new Error(json.error || 'Upload failed');
-        }
-        finalUploadPath = json.upload_path;
-      }
-      
-      setRuns(prev => {
-        const newRuns = [...prev];
-        newRuns[idx] = finalUploadPath;
-        return newRuns;
-      });
-      return finalUploadPath;
-    } catch (err) {
-      console.error(err);
-      alert("Upload error: " + err.message);
-      throw err;
-    }
-  };
+
 
   const handlePlotParamChange = (e) => {
     const { name, value } = e.target;
@@ -319,42 +263,25 @@ function App() {
   // uploadFiles removed fetchFolders call and submitRuns removed fetchFolders call
 
   const submitRuns = async () => {
-    let finalPaths = [...runs];
-
     // Safety check: ensure all required inputs are populated
-    const numSlots = testType === 1 ? runs.length : 3;
-    for (let i = 0; i < numSlots; i++) {
-      if (uploadMode === 'upload') {
-        if (!runFiles[i] || runFiles[i].length === 0) {
-          alert(`Please select files for ${i === 2 ? 'Calibration Folder' : 'Run ' + (i+1)} before processing.`);
-          return { success: false };
-        }
-      } else {
-        if (!runs[i]) {
-          alert(`Please browse for ${i === 2 ? 'Calibration Folder' : 'Run ' + (i+1)} before processing.`);
-          return { success: false };
-        }
-      }
+    const numSlots = testType === 1 ? (runs.filter(r => r !== '').length > 0 ? runs.length : 1) : 3;
+    
+    // Validate that we have enough runs
+    const validRuns = runs.filter(r => r !== '');
+    if (testType === 3 && validRuns.length < 3) {
+      alert("Please select and upload all 3 folders (Run A, Run B, and Calibration) before processing.");
+      return { success: false };
     }
-
-    if (uploadMode === 'upload') {
-      const numSlots = testType === 1 ? runs.length : 3;
-      for (let i = 0; i < numSlots; i++) {
-        if (runFiles[i] && runFiles[i].length > 0 && !runs[i]) {
-          try {
-            const path = await uploadRun(i);
-            finalPaths[i] = path;
-          } catch (err) {
-            return { success: false };
-          }
-        }
-      }
+    
+    if (testType === 1 && validRuns.length === 0) {
+      alert("Please select and upload at least one run before processing.");
+      return { success: false };
     }
 
     try {
       const payload = testType === 1 
-        ? { runs: finalPaths } 
-        : { runA: finalPaths[0] || '', runB: finalPaths[1] || '', calPath: finalPaths[2] || '' };
+        ? { runs: validRuns } 
+        : { runA: validRuns[0] || '', runB: validRuns[1] || '', calPath: validRuns[2] || '' };
 
       const res = await fetch(`${API_BASE}/select-runs`, {
         method: 'POST',
@@ -644,7 +571,7 @@ function App() {
               <h2>Select Runs</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select runs to process.</p>
 
-              {testType === 1 && (
+              {(testType === 1 || testType === 3) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                   <div 
                     style={{
@@ -657,7 +584,13 @@ function App() {
                       transition: 'background 0.2s',
                       opacity: uploadingRun ? 0.7 : 1
                     }}
-                    onClick={() => !uploadingRun && test1RunsInputRef.current?.click()}
+                    onClick={() => {
+                      if (testType === 3 && runs.filter(r => r !== '').length >= 3) {
+                        alert("You have already uploaded all 3 required folders (Run A, Run B, Calibration).");
+                        return;
+                      }
+                      !uploadingRun && test1RunsInputRef.current?.click();
+                    }}
                   >
                     {uploadingRun ? (
                       <Activity size={40} className="spinner" color="var(--accent)" style={{marginBottom: '1rem'}} />
@@ -666,9 +599,15 @@ function App() {
                     )}
                     <div>
                       <strong style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                        {uploadingRun ? "Uploading..." : "Click to select and upload a run folder"}
+                        {uploadingRun ? "Uploading..." : testType === 3 ? (
+                          runs.filter(r => r !== '').length === 0 ? "Click to select Run A folder" :
+                          runs.filter(r => r !== '').length === 1 ? "Click to select Run B folder" :
+                          "Click to select Calibration (Cable Loss) folder"
+                        ) : "Click to select and upload a run folder"}
                       </strong>
-                      {!uploadingRun && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>(Click multiple times to add more runs!)</p>}
+                      {!uploadingRun && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        {testType === 3 ? "(Upload folders in order: Run A, then Run B, then Calibration)" : "(Click multiple times to add more runs!)"}
+                      </p>}
                     </div>
                     <input 
                       type="file" 
@@ -705,6 +644,9 @@ function App() {
                             });
                             
                             data.append('run_index', runIndex);
+                            if (testType === 3 && runIndex === 2) {
+                              data.append('folder_name', 'Cable Loss');
+                            }
                             data.append('chunk_index', i === 0 ? '0' : '1');
                             
                             const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
@@ -739,11 +681,18 @@ function App() {
 
                   {runs.filter(r => r !== '').length > 0 && (
                     <div style={{ background: 'var(--panel-bg)', padding: '1.5rem', borderRadius: '12px' }}>
-                      <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Added Runs ({runs.filter(r => r !== '').length})</h3>
+                      <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Added Folders ({runs.filter(r => r !== '').length})</h3>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {runs.filter(r => r !== '').map((runPath, idx) => (
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '0.75rem 1rem', borderRadius: '8px' }}>
-                            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}><strong>{runNames[idx] || `Run ${idx + 1}`}:</strong> {runPath.split(/[\\\\/]/).pop() || runPath}</span>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}>
+                              <strong>
+                                {testType === 3 
+                                  ? (idx === 0 ? 'Run A: ' : idx === 1 ? 'Run B: ' : 'Calibration: ') 
+                                  : (runNames[idx] || `Run ${idx + 1}: `)}
+                              </strong> 
+                              {runPath.split(/[\\\\/]/).pop() || runPath}
+                            </span>
                             <button 
                               className="icon-btn" 
                               onClick={() => {
@@ -760,40 +709,6 @@ function App() {
                       </div>
                     </div>
                   )}
-                </div>
-              )}
-
-              {testType === 3 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {[0, 1, 2].map((idx) => (
-                    <div key={idx} className="form-group">
-                      <label>{idx === 2 ? 'Calibration Folder (Cable Loss)' : (runNames[idx] || `Run ${idx === 0 ? 'A' : 'B'}`)}</label>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <input 
-                          type="file" 
-                          webkitdirectory="true"
-                          directory="true"
-                          multiple
-                          onChange={e => {
-                            const newFiles = [...runFiles];
-                            newFiles[idx] = filterValidFiles(e.target.files);
-                            setRunFiles(newFiles);
-                            
-                            const folderName = e.target.files.length > 0 && e.target.files[0].webkitRelativePath ? e.target.files[0].webkitRelativePath.split('/')[0] : '';
-                            const newNames = [...runNames];
-                            newNames[idx] = folderName;
-                            setRunNames(newNames);
-
-                            const newRuns = [...runs];
-                            newRuns[idx] = '';
-                            setRuns(newRuns);
-                          }}
-                          style={{ flex: 1 }}
-                        />
-                      </div>
-                      {runs[idx] && <p style={{ color: 'var(--success)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Uploaded to server successfully.</p>}
-                    </div>
-                  ))}
                 </div>
               )}
 
