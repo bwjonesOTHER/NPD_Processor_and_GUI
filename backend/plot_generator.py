@@ -624,7 +624,7 @@ def generate_plots(params):
         if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_25C", sn)
         
         # If Thermal files are in a root folder without Area subfolders, filter by PMA Area in the filename
-        if pma and search_dirA == temp_dir: # only filter if we didn't successfully drill down into a PMA folder
+        if pma and search_dirA == temp: # only filter if we didn't successfully drill down into a PMA folder
             pma_norm = re.sub(r'[^a-zA-Z0-9]', '', pma).lower()
             
             def file_has_pma(f):
