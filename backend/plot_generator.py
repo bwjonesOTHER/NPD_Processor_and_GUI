@@ -200,8 +200,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             if freq_cal is not None:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
-            loss_interp = np.interp(freq, freq_cal, total_loss_db)
-            noise = noise + loss_interp
             
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
