@@ -41,35 +41,63 @@ def search_files(root_dir, filename_part):
                 matches.append(os.path.join(dirpath, file))
     return matches
 
-def load_calibration_loss(cal_folder):
+def get_calibration_loss(filepath, cal_folder):
     if not cal_folder or not os.path.isdir(cal_folder):
         return None, None
-    cal_files = []
+        
+    filepath_upper = filepath.upper()
+    chain_type = "Pri" if "PRI" in filepath_upper else "Red" if "RED" in filepath_upper else None
+    
+    cal_files_to_load = []
+    
     for root, _, files in os.walk(cal_folder):
         for f in files:
             name = f.lower()
-            if ("pathloss_base" in name or "pathloss_cap" in name or "specan_none" in name or "specanbase" in name or "specan_base" in name) and name.endswith(".s2p"):
-                cal_files.append(os.path.join(root, f))
-    if not cal_files:
-        return None, None
+            if not name.endswith(".s2p"): continue
+            
+            # Base/Pathloss
+            if chain_type == "Pri" and "pathloss_base" in name:
+                cal_files_to_load.append(os.path.join(root, f))
+            elif chain_type == "Red" and "pathloss_cap" in name:
+                cal_files_to_load.append(os.path.join(root, f))
+            # Fallback
+            elif chain_type is None and "pathloss_base" in name:
+                cal_files_to_load.append(os.path.join(root, f))
+                
+            # SpecAn
+            if "specan" in name:
+                cal_files_to_load.append(os.path.join(root, f))
+                
+            # Bulkhead
+            if chain_type == "Pri" and name.startswith("pri") and "bulkhead" not in name:
+                cal_files_to_load.append(os.path.join(root, f))
+            elif chain_type == "Red" and name.startswith("red") and "bulkhead" not in name:
+                cal_files_to_load.append(os.path.join(root, f))
 
-    freq_list = []
-    loss_list = []
-    for f in cal_files:
-        net = rf.Network(f)
-        freq_ghz = net.f / 1e9
-        loss_db = -net.s_db[:, 1, 0]
-        freq_list.append(freq_ghz)
-        loss_list.append(loss_db)
+    if not cal_files_to_load:
+        return None, None
+        
+    freq_ref = None
+    total_loss = None
     
-    freq_ref = freq_list[0]
-    total_loss = np.zeros_like(freq_ref)
-    for fr, ls in zip(freq_list, loss_list):
-        ls_interp = np.interp(freq_ref, fr, ls)
-        total_loss += ls_interp
+    for f in cal_files_to_load:
+        try:
+            net = rf.Network(f)
+            freq_ghz = net.f / 1e9
+            loss_db = -net.s_db[:, 1, 0]
+            
+            if freq_ref is None:
+                freq_ref = freq_ghz
+                total_loss = np.zeros_like(freq_ref)
+                
+            ls_interp = np.interp(freq_ref, freq_ghz, loss_db)
+            total_loss += ls_interp
+        except Exception:
+            pass
+            
     return freq_ref, total_loss
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=False):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -94,6 +122,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         if len(noise) == 0 or len(freq) == 0:
             return np.array([]), np.array([])
             
+        freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
         if freq_cal is not None:
             loss_interp = np.interp(freq, freq_cal, total_loss_db)
             noise = noise + loss_interp
@@ -156,6 +185,11 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
+    if plot_density:
+        plt.ylim(-170, -110)
+    else:
+        plt.ylim(-120, -90)
+    
     title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
@@ -178,7 +212,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, freq_cal, total_loss_db, output_folder):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -195,6 +229,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         raw_s21 = net.s_db[:, 1, 0]
         serial = extract_serial(file)
 
+        freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
         if freq_cal is not None:
             loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
             s21_corr = raw_s21 + loss_interp
@@ -245,6 +280,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
+    plt.ylim(0, 30)
     title = f'S21 Calibrated {title_suffix}, {status}'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
@@ -348,7 +384,6 @@ def generate_plots(params):
             cal_folder = f.read().strip()
     if not cal_folder and folderA:
         cal_folder = os.path.join(os.path.dirname(folderA), "Cable Loss")
-    freq_cal, total_loss_db = load_calibration_loss(cal_folder)
     
     generated_plots = []
 
@@ -372,17 +407,17 @@ def generate_plots(params):
             sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
             sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=False)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=True)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
-            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, freq_cal, total_loss_db, output_folder)
+            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
@@ -391,7 +426,7 @@ def generate_plots(params):
         if dp1: generated_plots.append(dp1)
         dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -110), ax2_ylim=(0, 5))
         if dp1_den: generated_plots.append(dp1_den)
-        dp2 = plot_temp_deltas(s21_averages, "S21 Calibrated", "S21 (dB)", output_folder, ax1_ylim=(0, 30), ax2_ylim=(0, 2))
+        dp2 = plot_temp_deltas(s21_averages, "S21 Calibrated", "S21 (dB)", output_folder, ax1_ylim=(0, 30), ax2_ylim=(0, 5))
         if dp2: generated_plots.append(dp2)
             
     else:
@@ -401,10 +436,10 @@ def generate_plots(params):
         sparA = search_files(folderA, ".s2p")
         sparB = search_files(folderB, ".s2p")
         
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder, plot_density=False)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False)
         if p1: generated_plots.append(p1)
         
-        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, freq_cal, total_loss_db, output_folder)
+        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder)
         if p2: generated_plots.append(p2)
 
     return generated_plots
