@@ -193,6 +193,13 @@ def submit_file_info():
         lmo_num = data.get('lmoNumber', '').strip()
         sn_folder = f"SN{int(sn):04d}_LMO{lmo_num}"
         upload_path = os.path.join(base_path, sn_folder)
+        
+        upload_mode = data.get('uploadMode', 'access')
+        if upload_mode == 'upload':
+            run_entry = data.get('runEntry', '').strip()
+            if run_entry:
+                upload_path = os.path.join(upload_path, run_entry)
+                
         os.makedirs(upload_path, exist_ok=True)
         write_txt("SN.txt", sn)
         write_txt("path.txt", upload_path) # Overwrites path.txt with upload_path as in original code

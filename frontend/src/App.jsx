@@ -644,8 +644,11 @@ function App() {
                             });
                             
                             data.append('run_index', runIndex);
+                            const extractedFolderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : '';
                             if (testType === 3 && runIndex === 2) {
                               data.append('folder_name', 'Cable Loss');
+                            } else if (extractedFolderName) {
+                              data.append('folder_name', extractedFolderName);
                             }
                             data.append('chunk_index', i === 0 ? '0' : '1');
                             
