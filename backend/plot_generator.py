@@ -535,14 +535,12 @@ def generate_plots(params):
         if not sparA: sparA = search_files(folderA, "NPDoverTempS_25C", sn)
         if not sparA: sparA = search_files(folderA, "NPDoverTempVSWR", sn)
         if not sparA: sparA = search_files(folderA, "NPDoverTempS", sn)
-        if not sparA: sparA = search_files(folderA, ".s2p", sn)
         
         # NPD Search with fallbacks for Run A
         npdA = search_files(folderA, "NPDoverTempNPD_ambient", sn)
         if not npdA: npdA = search_files(folderA, "NPDoverTempN_25C", sn)
         if not npdA: npdA = search_files(folderA, "NPDoverTempNPD", sn)
         if not npdA: npdA = search_files(folderA, "NPDoverTempN", sn)
-        if not npdA: npdA = search_files(folderA, "NPD", sn)
         
         # Run B is usually pure benchtop, just search by extension and SN
         # IMPORTANT: Since folderB is the same root folder, it will accidentally find the NPDoverTemp files again.
