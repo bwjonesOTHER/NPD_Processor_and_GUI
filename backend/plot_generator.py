@@ -292,7 +292,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -309,10 +309,13 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         raw_s21 = net.s_db[:, 1, 0]
         serial = extract_serial(file)
 
-        freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
-        if freq_cal is not None:
-            loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
-            s21_corr = raw_s21 + loss_interp
+        if test_type != 1:
+            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
+            if freq_cal is not None:
+                loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
+                s21_corr = raw_s21 + loss_interp
+            else:
+                s21_corr = raw_s21
         else:
             s21_corr = raw_s21
 
@@ -360,8 +363,11 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
-    plt.ylim(0, 30)
-    title = f'S21 Calibrated {title_suffix}, {status}'
+    if test_type != 1:
+        plt.ylim(0, 30)
+        title = f'S21 Calibrated {title_suffix}, {status}'
+    else:
+        title = f'S21 {title_suffix}, {status}'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('S21 (dB)')
