@@ -41,14 +41,15 @@ def search_files(root_dir, filename_part):
                 matches.append(os.path.join(dirpath, file))
     return matches
 
-def find_cal_file(folder, cap_num, cal_type):
+def find_cal_file(folders, cap_num, cal_type):
     cal_type_lower = cal_type.lower()
     try:
         cap_num_int = int(cap_num)
     except (ValueError, TypeError):
         return None
         
-    for root, dirs, files in os.walk(folder):
+    for folder in folders:
+        for root, dirs, files in os.walk(folder):
         for file in files:
             if not file.lower().endswith('.s2p'):
                 continue
@@ -72,8 +73,16 @@ def find_cal_file(folder, cap_num, cal_type):
     return None
 
 def get_calibration_loss(filepath, cal_folder):
-    if not cal_folder or not os.path.isdir(cal_folder):
-        print(f"DEBUG: No cal folder provided or not a dir: {cal_folder}")
+    search_dirs = []
+    if cal_folder and os.path.isdir(cal_folder):
+        search_dirs.append(cal_folder)
+        
+    run_folder = os.path.dirname(filepath)
+    if run_folder and os.path.isdir(run_folder):
+        search_dirs.append(run_folder)
+        
+    if not search_dirs:
+        print(f"DEBUG: No valid search directories found for {filepath}")
         return None, None
         
     cal_files_to_load = []
@@ -89,21 +98,23 @@ def get_calibration_loss(filepath, cal_folder):
     print(f"DEBUG: Found Cap_num: {cap_num}")
     
     if cap_num is not None:
-        base_file = find_cal_file(cal_folder, cap_num, "Base")
+        base_file = find_cal_file(search_dirs, cap_num, "Base")
         if base_file: cal_files_to_load.append(base_file)
         
-        bulkhead_file = find_cal_file(cal_folder, cap_num, "Bulkhead")
+        bulkhead_file = find_cal_file(search_dirs, cap_num, "Bulkhead")
         if bulkhead_file: cal_files_to_load.append(bulkhead_file)
         
         # SpecA
-        for root, _, files in os.walk(cal_folder):
-            for file in files:
-                if 'speca' in file.lower() and file.lower().endswith('.s2p'):
-                    cal_files_to_load.append(os.path.join(root, file))
-                    break
-            else:
-                continue
-            break
+        found = False
+        for s_dir in search_dirs:
+            for root, _, files in os.walk(s_dir):
+                for file in files:
+                    if 'speca' in file.lower() and file.lower().endswith('.s2p'):
+                        cal_files_to_load.append(os.path.join(root, file))
+                        found = True
+                        break
+                if found: break
+            if found: break
             
     else:
         # 2. Benchtop Search (Fallback)
@@ -111,7 +122,8 @@ def get_calibration_loss(filepath, cal_folder):
         chain_type = "Pri" if "PRI" in filepath_upper else "Red" if "RED" in filepath_upper else None
         print(f"DEBUG: Fallback chain_type: {chain_type}")
         
-        for root, _, files in os.walk(cal_folder):
+        for s_dir in search_dirs:
+            for root, _, files in os.walk(s_dir):
             for f in files:
                 name = f.lower()
                 if not name.endswith(".s2p"): continue
