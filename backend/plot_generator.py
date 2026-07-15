@@ -132,11 +132,15 @@ def get_calibration_loss(filepath, cal_folder):
     freq_ref = None
     total_loss = None
     
+    print(f"\nDEBUG get_cal: Processing file {filepath}")
+    print(f"DEBUG get_cal: Found cal files: {cal_files_to_load}")
+    
     for f in cal_files_to_load:
         try:
             net = rf.Network(f)
             freq_ghz = net.f / 1e9
             loss_db = -net.s_db[:, 1, 0]
+            print(f"DEBUG get_cal: Loaded {f} (loss={loss_db[0]:.2f}dB to {loss_db[-1]:.2f}dB)")
             
             if freq_ref is None:
                 freq_ref = freq_ghz
@@ -144,9 +148,12 @@ def get_calibration_loss(filepath, cal_folder):
                 
             ls_interp = np.interp(freq_ref, freq_ghz, loss_db)
             total_loss += ls_interp
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG get_cal: Failed to load {f}: {e}")
             pass
             
+    if total_loss is not None:
+        print(f"DEBUG get_cal: TOTAL LOSS to apply = {total_loss[0]:.2f}dB to {total_loss[-1]:.2f}dB")
     return freq_ref, total_loss
 
 def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False):
@@ -177,6 +184,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
         if freq_cal is not None:
             loss_interp = np.interp(freq, freq_cal, total_loss_db)
+            print(f"DEBUG plotNPD: raw noise={noise[0]:.2f}, loss_interp={loss_interp[0]:.2f}, new noise={noise[0]+loss_interp[0]:.2f}")
             noise = noise + loss_interp
             
         if n_avg > 1:
