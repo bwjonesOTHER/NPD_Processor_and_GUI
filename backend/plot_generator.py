@@ -202,11 +202,20 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             freq = freq[int(n_avg / 2):int(1 - n_avg / 2):1]
         return freq, noise
 
+    ref_freq_full = None
     for file in all_files:
         serial = extract_serial(file)
         freq, noise = load_np_data(file)
         if len(freq) == 0:
             continue
+            
+        if ref_freq_full is None:
+            ref_freq_full = freq
+        else:
+            if len(freq) != len(ref_freq_full) or not np.allclose(freq, ref_freq_full):
+                noise = np.interp(ref_freq_full, freq, noise)
+                freq = ref_freq_full
+
         plt.plot(freq, noise, label=f'{serial[-21:-4:1]}')
         all_freqs.append(freq)
         all_noise.append(noise)
@@ -226,7 +235,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         return None
 
     all_noise_win = np.array([x for x in all_noise_win if len(x) > 0])
-    ref_freq_full = all_freqs[0]
     
     start_idx = np.searchsorted(ref_freq_full, freq_min)
     end_idx = np.searchsorted(ref_freq_full, freq_max)
