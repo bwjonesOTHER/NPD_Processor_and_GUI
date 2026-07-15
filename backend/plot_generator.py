@@ -561,7 +561,7 @@ def generate_plots(params):
             raw_npdB = search_files(folderB, ".csv", "")
             npdB = filter_benchtop(raw_npdB)
         
-        with open(os.path.join(output_folder, "DEBUG_TEST2.txt"), "w") as f:
+        with open("debug_test2_output.txt", "w") as f:
             f.write(f"Folder B: {folderB}\n")
             f.write(f"SN: {sn}\n")
             f.write(f"Raw CSV found: {raw_npdB}\n")
