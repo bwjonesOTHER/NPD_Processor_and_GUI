@@ -86,7 +86,6 @@ def get_calibration_loss(filepath, cal_folder):
         search_dirs.append(parent_run_folder)
         
     if not search_dirs:
-        print(f"DEBUG: No valid search directories found for {filepath}")
         return None, None
         
     cal_files_to_load = []
@@ -98,8 +97,6 @@ def get_calibration_loss(filepath, cal_folder):
             cap_num = n
             break
             
-    print(f"DEBUG: Processing file: {filepath}")
-    print(f"DEBUG: Found Cap_num: {cap_num}")
     
     if cap_num is not None:
         base_file = find_cal_file(search_dirs, cap_num, "Base")
@@ -124,7 +121,6 @@ def get_calibration_loss(filepath, cal_folder):
         # 2. Benchtop Search (Fallback)
         filepath_upper = filepath.upper()
         chain_type = "Pri" if "PRI" in filepath_upper else "Red" if "RED" in filepath_upper else None
-        print(f"DEBUG: Fallback chain_type: {chain_type}")
         
         for s_dir in search_dirs:
             for root, _, files in os.walk(s_dir):
@@ -148,20 +144,17 @@ def get_calibration_loss(filepath, cal_folder):
                         cal_files_to_load.append(os.path.join(root, f))
 
     if not cal_files_to_load:
-        print(f"DEBUG: Failed to find ANY calibration files for {filepath}")
         return None, None
         
     freq_ref = None
     total_loss = None
     
-    print(f"DEBUG: Found calibration files to load: {cal_files_to_load}")
     for f in cal_files_to_load:
         try:
             net = rf.Network(f)
             freq_ghz = net.f / 1e9
             loss_db = -net.s_db[:, 1, 0]
             
-            print(f"DEBUG: Loaded {f} (loss: {loss_db[0]:.2f} dB to {loss_db[-1]:.2f} dB)")
             
             if freq_ref is None:
                 freq_ref = freq_ghz
@@ -170,10 +163,8 @@ def get_calibration_loss(filepath, cal_folder):
             ls_interp = np.interp(freq_ref, freq_ghz, loss_db)
             total_loss += ls_interp
         except Exception as e:
-            print(f"DEBUG: Failed to load {f}: {e}")
             pass
             
-    print(f"DEBUG: TOTAL LOSS = {total_loss[0]:.2f} dB to {total_loss[-1]:.2f} dB")
     return freq_ref, total_loss
 
 def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False):
@@ -204,7 +195,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
         if freq_cal is not None:
             loss_interp = np.interp(freq, freq_cal, total_loss_db)
-            print(f"DEBUG plotNPD: raw noise={noise[0]:.2f}, loss_interp={loss_interp[0]:.2f}, new noise={noise[0]+loss_interp[0]:.2f}")
             noise = noise + loss_interp
             
         if n_avg > 1:
