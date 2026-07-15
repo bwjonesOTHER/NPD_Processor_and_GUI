@@ -81,7 +81,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     all_freqs = []
 
     def load_np_data(file):
-        df_all = pd.read_csv(file)
+        df_all = pd.read_csv(file, on_bad_lines='skip')
         num_df = df_all.apply(pd.to_numeric, errors='coerce')
         freq = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise = remove_nan(num_df.values[:, 1], remove_infinite=True)
