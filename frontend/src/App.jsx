@@ -212,6 +212,7 @@ function App() {
         });
         data.append('run_index', '0');
         data.append('chunk_index', i === 0 ? '0' : '1');
+        data.append('testType', testType);
         
         const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
         if (!res.ok) {
@@ -575,6 +576,65 @@ function App() {
 
               {(testType === 1 || testType === 3) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  {uploadMode === 'access' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <p style={{ color: 'var(--text-muted)' }}>Select the local folders on your hard drive.</p>
+                      
+                      {/* Run A */}
+                      <div className="form-group">
+                        <label>Run A Directory</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input type="text" readOnly value={runs[0] || ''} placeholder="Select Run A folder..." style={{ flex: 1 }} />
+                          <button onClick={async () => {
+                            try {
+                              const res = await fetch(`${API_BASE}/choose_directory`);
+                              const data = await res.json();
+                              if (data.success && data.path) {
+                                setRuns(prev => { const n = [...prev]; n[0] = data.path; return n; });
+                                setRunNames(prev => { const n = [...prev]; n[0] = data.path.split(/[\\/]/).pop(); return n; });
+                              }
+                            } catch (err) { console.error(err); }
+                          }} className="secondary">Browse</button>
+                        </div>
+                      </div>
+                      
+                      {/* Run B */}
+                      <div className="form-group">
+                        <label>Run B Directory</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input type="text" readOnly value={runs[1] || ''} placeholder="Select Run B folder..." style={{ flex: 1 }} />
+                          <button onClick={async () => {
+                            try {
+                              const res = await fetch(`${API_BASE}/choose_directory`);
+                              const data = await res.json();
+                              if (data.success && data.path) {
+                                setRuns(prev => { const n = [...prev]; n[1] = data.path; return n; });
+                                setRunNames(prev => { const n = [...prev]; n[1] = data.path.split(/[\\/]/).pop(); return n; });
+                              }
+                            } catch (err) { console.error(err); }
+                          }} className="secondary">Browse</button>
+                        </div>
+                      </div>
+                      
+                      {/* Calibration Files */}
+                      <div className="form-group">
+                        <label>CalibrationFiles Directory (Optional)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input type="text" readOnly value={runs[2] || ''} placeholder="Select CalibrationFiles folder (Optional)..." style={{ flex: 1 }} />
+                          <button onClick={async () => {
+                            try {
+                              const res = await fetch(`${API_BASE}/choose_directory`);
+                              const data = await res.json();
+                              if (data.success && data.path) {
+                                setRuns(prev => { const n = [...prev]; n[2] = data.path; return n; });
+                                setRunNames(prev => { const n = [...prev]; n[2] = data.path.split(/[\\/]/).pop(); return n; });
+                              }
+                            } catch (err) { console.error(err); }
+                          }} className="secondary">Browse</button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
                   <div 
                     style={{
                       border: '2px dashed var(--border-color)',
@@ -604,11 +664,11 @@ function App() {
                         {uploadingRun ? "Uploading..." : testType === 3 ? (
                           runs.filter(r => r !== '').length === 0 ? "Click to select Run A folder" :
                           runs.filter(r => r !== '').length === 1 ? "Click to select Run B folder" :
-                          "Click to select Calibration (Cable Loss) folder"
+                          "Click to select Calibration (Optional) folder"
                         ) : "Click to select and upload a run folder"}
                       </strong>
                       {!uploadingRun && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                        {testType === 3 ? "(Upload folders in order: Run A, then Run B, then Calibration)" : "(Click multiple times to add more runs!)"}
+                        {(testType === 3 || testType === 1) ? "(Upload folders in order: Run A, then Run B, then CalibrationFiles (Optional))" : "(Click multiple times to add more runs!)"}
                       </p>}
                     </div>
                     <input 
@@ -653,6 +713,7 @@ function App() {
                               data.append('folder_name', extractedFolderName);
                             }
                             data.append('chunk_index', i === 0 ? '0' : '1');
+                            data.append('testType', testType);
                             
                             const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
                             if (!res.ok) {
@@ -683,6 +744,7 @@ function App() {
                       }} 
                     />
                   </div>
+                  )}
 
                   {runs.filter(r => r !== '').length > 0 && (
                     <div style={{ background: 'var(--panel-bg)', padding: '1.5rem', borderRadius: '12px' }}>
@@ -692,7 +754,7 @@ function App() {
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '0.75rem 1rem', borderRadius: '8px' }}>
                             <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}>
                               <strong>
-                                {testType === 3 
+                                {(testType === 3 || testType === 1)
                                   ? (idx === 0 ? 'Run A: ' : idx === 1 ? 'Run B: ' : 'Calibration: ') 
                                   : (runNames[idx] || `Run ${idx + 1}: `)}
                               </strong> 

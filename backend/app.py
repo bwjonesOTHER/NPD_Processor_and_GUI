@@ -262,11 +262,11 @@ def upload_run_files():
     run_index = request.form.get('run_index', '0')
     folder_name = request.form.get('folder_name', '')
     chunk_index = request.form.get('chunk_index', '0')
-    base_path = read_txt("upload_path.txt")
-    if not base_path:
-        base_path = read_txt("path.txt")
-    if not base_path:
-        base_path = os.path.join(os.getcwd(), 'uploads')
+    test_type = request.form.get('testType', '1')
+    
+    # Completely sever ties to upload_path.txt and path.txt. 
+    # Uploaded runs ALWAYS go into a strict, isolated local test folder.
+    base_path = os.path.join(os.getcwd(), 'uploads', f'Test{test_type}')
         
     if folder_name:
         dest_folder = os.path.join(base_path, folder_name)

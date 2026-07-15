@@ -482,7 +482,9 @@ def generate_plots(params):
 
     # Figure out calibration folder (look in parent directory)
     cal_folder = ""
-    if os.path.exists("Cal_Path.txt"):
+    if len(runs) > 2 and runs[2]:
+        cal_folder = runs[2]
+    elif os.path.exists("Cal_Path.txt"):
         with open("Cal_Path.txt", "r") as f:
             cal_folder = f.read().strip()
     if not cal_folder and folderA:
@@ -510,17 +512,17 @@ def generate_plots(params):
             sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
             sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, "", output_folder, plot_density=False, apply_cal=False)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, "", output_folder, plot_density=True, apply_cal=False)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
-            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, "", output_folder, apply_cal=False)
+            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))

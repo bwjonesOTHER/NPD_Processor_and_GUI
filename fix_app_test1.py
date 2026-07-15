@@ -1,38 +1,30 @@
-import re
-
-with open('frontend/src/App.jsx', 'r') as f:
+with open('backend/app.py', 'r') as f:
     content = f.read()
 
-# Fix basePath input visibility
-old_input = """              {uploadMode !== 'upload' && (
-                <div className="form-group">
-                  <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Source Path'}</label>"""
+old_generate = """    # Gather paths based on the test type for backward compatibility with existing text file logic
+    if test == 1:
+        runs = []
+        # If in Upload mode, the runs are in uploads/Test1. The frontend passes dataSource as the path if we used Access mode.
+        # But wait! For Test 1, the user uploads runs via Step 3 "Select Runs", which puts them in uploads/Test1!
+        # So we should just read the directories from uploads/Test1!
+        test1_dir = os.path.join(os.getcwd(), 'uploads', 'Test1')
+        if os.path.exists(test1_dir):
+            runs = [os.path.join(test1_dir, d) for d in os.listdir(test1_dir) if os.path.isdir(os.path.join(test1_dir, d))]
+        params['runs'] = sorted(runs)"""
 
-new_input = """              {uploadMode !== 'upload' && testType !== 1 && (
-                <div className="form-group">
-                  <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Source Path'}</label>"""
+new_generate = """    # Gather paths based on the test type for backward compatibility with existing text file logic
+    if test == 1:
+        runs = []
+        if os.path.exists("SelectedRuns.txt"):
+            with open("SelectedRuns.txt", "r") as f:
+                runs = [line.strip() for line in f if line.strip()]
+        else:
+            run_a = read_txt("RunA_Path.txt")
+            run_b = read_txt("RunB_Path.txt")
+            runs = [run for run in [run_a, run_b] if run]
+        params['runs'] = runs"""
 
-content = content.replace(old_input, new_input)
+content = content.replace(old_generate, new_generate)
 
-
-# Fix validation for Test 1/3 buttons
-old_val13 = """                    <>
-                      <button onClick={async () => {
-                        if (uploadMode !== 'upload' && !formData.basePath) {"""
-
-new_val13 = """                    <>
-                      <button onClick={async () => {
-                        if (uploadMode !== 'upload' && testType !== 1 && !formData.basePath) {"""
-
-content = content.replace(old_val13, new_val13)
-
-old_val13b = """                      <button onClick={async () => {
-                        if (uploadMode !== 'upload' && !formData.basePath) {"""
-
-new_val13b = """                      <button onClick={async () => {
-                        if (uploadMode !== 'upload' && testType !== 1 && !formData.basePath) {"""
-
-content = content.replace(old_val13b, new_val13b)
-
-with open('frontend/src/App.jsx', 'w') as f:
+with open('backend/app.py', 'w') as f:
     f.write(content)
