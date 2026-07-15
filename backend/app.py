@@ -503,6 +503,7 @@ def api_generate_plots():
             path = read_txt("path.txt")
         params['runs'] = [path] if path else []
         params['serial_number'] = read_txt("serialNumber.txt")
+        params['pma'] = read_txt("PMA_Area.txt")
 
     elif test == 3:
         path1 = read_txt("path.txt")

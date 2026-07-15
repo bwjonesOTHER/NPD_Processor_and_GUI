@@ -316,7 +316,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         raw_s21 = net.s_db[:, 1, 0]
         serial = extract_serial(file)
 
-        if test_type != 1:
+        if test_type != 1 and apply_cal:
             freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
             if freq_cal is not None:
                 loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
@@ -379,7 +379,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
-    if test_type != 1:
+    if test_type != 1 and apply_cal:
         plt.ylim(0, 30)
         title = f'S21 Calibrated {title_suffix}, {status}'
     else:
@@ -540,8 +540,12 @@ def generate_plots(params):
         search_dirB = folderB
         
         if test_type == 2:
+            pma = params.get('pma')
             bench_dir = os.path.join(folderB, "BenchNPD")
             temp_dir = os.path.join(folderA, "OverTemp")
+            if pma:
+                if os.path.exists(os.path.join(bench_dir, pma)): bench_dir = os.path.join(bench_dir, pma)
+                if os.path.exists(os.path.join(temp_dir, pma)): temp_dir = os.path.join(temp_dir, pma)
             if os.path.exists(bench_dir):
                 search_dirB = bench_dir
             if os.path.exists(temp_dir):
