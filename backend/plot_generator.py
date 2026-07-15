@@ -69,7 +69,7 @@ def load_calibration_loss(cal_folder):
         total_loss += ls_interp
     return freq_ref, total_loss
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, output_folder):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -87,6 +87,11 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         noise = remove_nan(num_df.values[:, 1], remove_infinite=True)
         if len(noise) == 0 or len(freq) == 0:
             return np.array([]), np.array([])
+            
+        if freq_cal is not None:
+            loss_interp = np.interp(freq, freq_cal, total_loss_db)
+            noise = noise + loss_interp
+            
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
             freq = freq[int(n_avg / 2):int(1 - n_avg / 2):1]
@@ -340,7 +345,7 @@ def generate_plots(params):
             sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
             sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, output_folder)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder)
             if p1: 
                 generated_plots.append(p1)
                 npd_averages[name] = (p1.get("freq"), p1.get("avg"))
@@ -362,7 +367,7 @@ def generate_plots(params):
         sparA = search_files(folderA, ".s2p")
         sparB = search_files(folderB, ".s2p")
         
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, output_folder)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, freq_cal, total_loss_db, output_folder)
         if p1: generated_plots.append(p1)
         
         p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, freq_cal, total_loss_db, output_folder)
