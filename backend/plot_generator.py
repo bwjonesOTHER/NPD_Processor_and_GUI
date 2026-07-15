@@ -81,6 +81,10 @@ def get_calibration_loss(filepath, cal_folder):
     if run_folder and os.path.isdir(run_folder):
         search_dirs.append(run_folder)
         
+    parent_run_folder = os.path.dirname(run_folder)
+    if parent_run_folder and os.path.isdir(parent_run_folder):
+        search_dirs.append(parent_run_folder)
+        
     if not search_dirs:
         print(f"DEBUG: No valid search directories found for {filepath}")
         return None, None
