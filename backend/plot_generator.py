@@ -545,11 +545,16 @@ def generate_plots(params):
         if not npdA: npdA = search_files(folderA, "NPD", sn)
         
         # Run B is usually pure benchtop, just search by extension and SN
-        sparB = search_files(folderB, ".s2p", sn)
-        if not sparB and sn: sparB = search_files(folderB, ".s2p", "")
+        # IMPORTANT: Since folderB is the same root folder, it will accidentally find the NPDoverTemp files again.
+        # We must filter out "NPDoverTemp" files from Run B.
+        def filter_benchtop(files):
+            return [f for f in files if "npdovertemp" not in f.lower()]
+            
+        sparB = filter_benchtop(search_files(folderB, ".s2p", sn))
+        if not sparB and sn: sparB = filter_benchtop(search_files(folderB, ".s2p", ""))
         
-        npdB = search_files(folderB, ".csv", sn)
-        if not npdB and sn: npdB = search_files(folderB, ".csv", "")
+        npdB = filter_benchtop(search_files(folderB, ".csv", sn))
+        if not npdB and sn: npdB = filter_benchtop(search_files(folderB, ".csv", ""))
         
         p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False)
         if p1: generated_plots.append(p1)
