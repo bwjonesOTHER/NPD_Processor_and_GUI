@@ -561,12 +561,17 @@ def generate_plots(params):
                 # just return the base directory (e.g. OverTemp might not have Area subfolders)
                 return base_d
             
+            lmo = params.get('lmo')
+            
             bench = get_subfolder(folderB, "bench")
             if bench:
                 search_dirB = bench
                 if pma:
                     pma_folder = get_pma_folder(search_dirB, pma)
                     if pma_folder: search_dirB = pma_folder
+                if lmo:
+                    lmo_folder = get_pma_folder(search_dirB, lmo)
+                    if lmo_folder: search_dirB = lmo_folder
                 
             temp = get_subfolder(folderA, "overtemp")
             if not temp: temp = get_subfolder(folderA, "temp")
@@ -575,6 +580,9 @@ def generate_plots(params):
                 if pma:
                     pma_folder = get_pma_folder(search_dirA, pma)
                     if pma_folder: search_dirA = pma_folder
+                if lmo:
+                    lmo_folder = get_pma_folder(search_dirA, lmo)
+                    if lmo_folder: search_dirA = lmo_folder
         
         # S2P Search with fallbacks for Run A to ensure we only get ambient if pointed to a Temp folder
         sparA = search_files(search_dirA, "NPDoverTempVSWR_ambient", sn)
