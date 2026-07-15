@@ -85,6 +85,8 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         num_df = df_all.apply(pd.to_numeric, errors='coerce')
         freq = remove_nan(num_df.values[:, 0], remove_infinite=True)
         noise = remove_nan(num_df.values[:, 1], remove_infinite=True)
+        if len(noise) == 0 or len(freq) == 0:
+            return np.array([]), np.array([])
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
             freq = freq[int(n_avg / 2):int(1 - n_avg / 2):1]
