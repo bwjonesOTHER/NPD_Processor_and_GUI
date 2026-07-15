@@ -529,10 +529,27 @@ def generate_plots(params):
     else:
         # Benchtop (Test 2 & 3)
         sn = params.get('serial_number')
-        npdA = search_files(folderA, "NPD", sn)
-        npdB = search_files(folderB, "NPD", sn)
-        sparA = search_files(folderA, ".s2p", sn)
+        
+        # S2P Search with fallbacks for Run A to ensure we only get ambient if pointed to a Temp folder
+        sparA = search_files(folderA, "NPDoverTempVSWR_ambient", sn)
+        if not sparA: sparA = search_files(folderA, "NPDoverTempS_25C", sn)
+        if not sparA: sparA = search_files(folderA, "NPDoverTempVSWR", sn)
+        if not sparA: sparA = search_files(folderA, "NPDoverTempS", sn)
+        if not sparA: sparA = search_files(folderA, ".s2p", sn)
+        
+        # NPD Search with fallbacks for Run A
+        npdA = search_files(folderA, "NPDoverTempNPD_ambient", sn)
+        if not npdA: npdA = search_files(folderA, "NPDoverTempN_25C", sn)
+        if not npdA: npdA = search_files(folderA, "NPDoverTempNPD", sn)
+        if not npdA: npdA = search_files(folderA, "NPDoverTempN", sn)
+        if not npdA: npdA = search_files(folderA, "NPD", sn)
+        
+        # Run B is usually pure benchtop, just search by extension and SN
         sparB = search_files(folderB, ".s2p", sn)
+        if not sparB and sn: sparB = search_files(folderB, ".s2p", "")
+        
+        npdB = search_files(folderB, ".csv", sn)
+        if not npdB and sn: npdB = search_files(folderB, ".csv", "")
         
         p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False)
         if p1: generated_plots.append(p1)
