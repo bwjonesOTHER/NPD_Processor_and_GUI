@@ -162,7 +162,15 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
-    return {"path": save_path, "status": status.lower(), "freq": ref_freq_win if len(all_noise_win)>0 else None, "avg": avg if len(all_noise_win)>0 else None}
+    
+    full_avg = None
+    if len(all_noise) > 0:
+        min_len = min(len(x) for x in all_noise)
+        full_avg = np.mean([x[:min_len] for x in all_noise], axis=0)
+        ref_freq_full = ref_freq_full[:min_len]
+        
+    return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
+
 
 def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, freq_cal, total_loss_db, output_folder):
     all_files = filesA + filesB
@@ -170,6 +178,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         return None
 
     avg_collection = []
+    all_s21_full = []
     file_coll = []
     plt.figure(figsize=(7, 4), dpi=150)
     
@@ -203,6 +212,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 ref_freq_win = freq_ghz
             
         avg_collection.append(s21_window)
+        all_s21_full.append(s21_corr)
         file_coll.append(serial[-21:-4:1])
 
     s21_avg = np.array([x for x in avg_collection if len(x) > 0])
@@ -241,7 +251,15 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
-    return {"path": save_path, "status": status.lower(), "freq": ref_freq_win if len(s21_avg)>0 else None, "avg": avg if len(s21_avg)>0 else None}
+    
+    full_avg = None
+    if len(all_s21_full) > 0:
+        min_len = min(len(x) for x in all_s21_full)
+        full_avg = np.mean([x[:min_len] for x in all_s21_full], axis=0)
+        ref_freq_ghz = ref_freq_ghz[:min_len]
+        
+    return {"path": save_path, "status": status.lower(), "freq": ref_freq_ghz if full_avg is not None else None, "avg": full_avg}
+
 
 
 
