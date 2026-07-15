@@ -139,7 +139,9 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             plt.plot(ref_freq_win, lower, color='red', alpha=1, marker='o', markersize=3, markevery=100, label='Lower bound')
             plt.plot(ref_freq_win, upper, color='red', alpha=1, marker='x', markersize=3, markevery=100, label='Upper bound')
 
-    plt.xlim(freq_min, freq_max)
+    plt.xlim(ref_freq_full[0], ref_freq_full[-1])
+    plt.axvline(x=freq_min, color='g')
+    plt.axvline(x=freq_max, color='g')
     plt.grid(True)
     title = f'Noise Power {title_suffix}, {status}'
     plt.title(title)
@@ -213,7 +215,12 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
             plt.plot(ref_freq_win, lower_bound, 'ro-', markersize=3, markevery=100, label='Lower bound')
             plt.plot(ref_freq_win, upper_bound, 'rx-', markersize=3, markevery=100, label='Upper bound')
 
-    plt.xlim(freq_min, freq_max)
+    if ref_freq_ghz is not None:
+        plt.xlim(ref_freq_ghz[0], ref_freq_ghz[-1])
+    else:
+        plt.xlim(freq_min, freq_max)
+    plt.axvline(x=freq_min, color='g')
+    plt.axvline(x=freq_max, color='g')
     plt.grid(True)
     title = f'S21 Calibrated {title_suffix}, {status}'
     plt.title(title)
