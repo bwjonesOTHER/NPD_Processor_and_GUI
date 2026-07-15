@@ -462,7 +462,7 @@ def generate_plots(params):
             resolved_runs.append(run)
     
     folderA = resolved_runs[0] if len(resolved_runs) > 0 else ""
-    folderB = resolved_runs[1] if len(resolved_runs) > 1 else ""
+    folderB = resolved_runs[1] if len(resolved_runs) > 1 else folderA
 
     freq_min = float(params.get('freq_min', 2.7))
     freq_max = float(params.get('freq_max', 4.1))
