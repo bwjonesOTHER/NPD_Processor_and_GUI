@@ -170,7 +170,7 @@ def get_calibration_loss(filepath, cal_folder):
             
     return freq_ref, total_loss
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -195,8 +195,11 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         if len(noise) == 0 or len(freq) == 0:
             return np.array([]), np.array([])
             
-        freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
-        if freq_cal is not None:
+        if apply_cal:
+            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
+            if freq_cal is not None:
+                loss_interp = np.interp(freq, freq_cal, total_loss_db)
+                noise = noise + loss_interp
             loss_interp = np.interp(freq, freq_cal, total_loss_db)
             noise = noise + loss_interp
             
@@ -504,17 +507,17 @@ def generate_plots(params):
             sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
             sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, "", output_folder, plot_density=False)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, "", output_folder, plot_density=False, apply_cal=False)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, "", output_folder, plot_density=True)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, "", output_folder, plot_density=True, apply_cal=False)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
-            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, "", output_folder)
+            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, "", output_folder, apply_cal=False)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
