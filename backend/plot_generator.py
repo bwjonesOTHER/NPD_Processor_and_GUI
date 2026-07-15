@@ -367,6 +367,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         plt.ylim(0, 30)
         title = f'S21 Calibrated {title_suffix}, {status}'
     else:
+        plt.ylim(-40, 40)
         title = f'S21 {title_suffix}, {status}'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
