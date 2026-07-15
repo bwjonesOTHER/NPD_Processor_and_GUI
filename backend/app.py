@@ -475,11 +475,14 @@ def api_generate_plots():
     
     import tempfile
     import shutil
+    import plot_generator
     temp_out_dir = tempfile.mkdtemp(prefix="npd_plots_")
+    params['folder_path'] = temp_out_dir
+    params['outputFolder'] = temp_out_dir
+    params['testType'] = test
     
-    # We need to set folder_path and runs for Test 1
+    # Gather paths based on the test type for backward compatibility with existing text file logic
     if test == 1:
-        import plot_generator
         runs = []
         if os.path.exists("SelectedRuns.txt"):
             with open("SelectedRuns.txt", "r") as f:
@@ -488,84 +491,45 @@ def api_generate_plots():
             run_a = read_txt("RunA_Path.txt")
             run_b = read_txt("RunB_Path.txt")
             runs = [run for run in [run_a, run_b] if run]
-            
-        if runs:
-            folder_path = runs[0]
-        else:
-            folder_path = read_txt("upload_path.txt")
-            if not folder_path:
-                folder_path = read_txt("path.txt")
-            
-        params['folder_path'] = temp_out_dir
         params['runs'] = runs
-        
-        if folder_path:
-            pass
-        if runs:
-            pass
-        
-        try:
-            png_files = plot_generator.generate_plots(params)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            with open("debug_log.txt", "a") as f_dbg:
-                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
-                f_dbg.write(traceback.format_exc() + "\n")
-            return jsonify({"success": False, "error": str(e)}), 500
-            
+
     elif test == 2:
-        import Macallan_PMA_BenchtopNPD_PlotData_v2
         path = params.get('dataSource')
         if not path:
             path = read_txt("path.txt")
-        if path:
-            with open("path.txt", "w") as f:
-                f.write(path)
-            # Removed hydrate_directory to prevent OneDrive image downloads
-        params['outputFolder'] = temp_out_dir
-        try:
-            png_files = Macallan_PMA_BenchtopNPD_PlotData_v2.generate_plots(params)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            with open("debug_log.txt", "a") as f_dbg:
-                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
-                f_dbg.write(traceback.format_exc() + "\n")
-            return jsonify({"success": False, "error": str(e)}), 500
-            
+        params['runs'] = [path] if path else []
+
     elif test == 3:
-        import Macallan_PMA_Array_BenchtopNPD_PlotData_v2
         path1 = read_txt("path.txt")
         path2 = read_txt("upload_path.txt")
-        if path1: params['path1'] = path1
-        if path2: params['path2'] = path2
-        params['outputFolder'] = temp_out_dir
-        try:
-            png_files = Macallan_PMA_Array_BenchtopNPD_PlotData_v2.generate_plots(params)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            with open("debug_log.txt", "a") as f_dbg:
-                f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
-                f_dbg.write(traceback.format_exc() + "\n")
-            return jsonify({"success": False, "error": str(e)}), 500
-    else:
-        return jsonify({"success": False, "error": "Invalid test type"}), 400
+        params['runs'] = [p for p in [path1, path2] if p]
+
+    try:
+        # Generate plots returns a list of dicts: [{'path': str, 'status': str}]
+        generated_data = plot_generator.generate_plots(params)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        with open("debug_log.txt", "a") as f_dbg:
+            f_dbg.write(f"EXCEPTION in generate_plots: {e}\n")
+            f_dbg.write(traceback.format_exc() + "\n")
+        return jsonify({"success": False, "error": str(e)}), 500
 
     results = []
-    if png_files:
-        for file_path in png_files:
+    if generated_data:
+        for item in generated_data:
+            file_path = item.get("path")
+            status = item.get("status", "")
             if os.path.exists(file_path):
                 with open(file_path, "rb") as image_file:
                     encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
                     results.append({
                         "filename": os.path.basename(file_path),
-                        "data": f"data:image/png;base64,{encoded_string}"
+                        "data": f"data:image/png;base64,{encoded_string}",
+                        "status": status
                     })
                     
     shutil.rmtree(temp_out_dir, ignore_errors=True)
-    
     return jsonify({"success": True, "images": results})
 
 @app.route('/api/save_plots', methods=['POST'])

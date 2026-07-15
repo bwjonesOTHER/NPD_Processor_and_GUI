@@ -349,7 +349,7 @@ function App() {
     <div className="container">
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.5.1.0 Dingo</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.6.0.0 Dingo</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -803,7 +803,7 @@ function App() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                     {images.map((img, idx) => (
                       <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                        <img src={img.data} alt={img.filename} style={{ width: '100%', height: 'auto', borderRadius: '4px' }} />
+                        <img src={img.data} alt={img.filename} className={img.status === 'pass' ? 'plot-pass' : img.status === 'fail' ? 'plot-fail' : ''} style={{ width: '100%', height: 'auto', borderRadius: '4px' }} />
                         <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                           {img.filename}
                         </div>

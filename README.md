@@ -19,7 +19,7 @@ This application provides an elegant, glassmorphic React frontend that guides us
   - Developed with modern CSS, using fluid animations, dark modes, and dynamic designs.
 - `backend/`
   - Python Flask application serving a REST API to interface with the frontend.
-  - Contains plotting scripts: `plot_generator.py`, `Macallan_PMA_*.py`, and `NPD_GT_functions.py`.
+  - Contains the centralized plotting script: `plot_generator.py`.
 
 ## Getting Started
 
