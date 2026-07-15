@@ -95,6 +95,7 @@ def submit_file_info():
         run_num = data.get('runNumber', '').strip()
         cap_num = data.get('capNumber', '').strip()
         lmo_num = data.get('lmoNumber', '').strip()
+        base_path = os.path.join(os.getcwd(), 'uploads')
         
         # Construct the requested folder structure: Run_[runNumber] [LMONumber]/Cap_[capNumber]
         # Using .strip() inside the f-string just in case any field was left blank, though it shouldn't be.
@@ -117,6 +118,7 @@ def submit_file_info():
         write_txt("lmoNumber.txt", lmo_num)
 
         if upload_mode == 'upload':
+            base_path = os.path.join(os.getcwd(), 'uploads')
             # Create the folder instead of searching for it
             pma_path = os.path.join(base_path, "BenchNPD", pma)
             if not os.path.exists(pma_path) and os.path.exists(os.path.join(base_path, pma)):
@@ -207,6 +209,8 @@ def submit_file_info():
         
         upload_mode = data.get('uploadMode', 'access')
         if upload_mode == 'upload':
+            base_path = os.path.join(os.getcwd(), 'uploads')
+            upload_path = os.path.join(base_path, sn_folder)
             run_entry = data.get('runEntry', '').strip()
             if run_entry:
                 upload_path = os.path.join(upload_path, run_entry)

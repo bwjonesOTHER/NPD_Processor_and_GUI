@@ -410,23 +410,25 @@ function App() {
               <h2>Data Source & Info</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
 
-              <div className="form-group">
-                <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Upload Path'}</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 && uploadMode === 'upload' ? 'Select the root project folder (e.g. PMA Tile)...' : testType === 2 ? 'Select BenchNPD root folder...' : 'Select a directory to upload files into...'} style={{ flex: 1 }} />
-                  <button onClick={async () => {
-                    try {
-                      const res = await fetch(`${API_BASE}/choose_directory`);
-                      const data = await res.json();
-                      if (data.success && data.path) {
-                        setFormData(prev => ({...prev, basePath: data.path}));
+              {uploadMode !== 'upload' && testType !== 1 && (
+                <div className="form-group">
+                  <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Source Path'}</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 ? 'Select BenchNPD root folder...' : 'Select a directory to read files from...'} style={{ flex: 1 }} />
+                    <button onClick={async () => {
+                      try {
+                        const res = await fetch(`${API_BASE}/choose_directory`);
+                        const data = await res.json();
+                        if (data.success && data.path) {
+                          setFormData(prev => ({...prev, basePath: data.path}));
+                        }
+                      } catch (err) {
+                        console.error("Failed to choose directory:", err);
                       }
-                    } catch (err) {
-                      console.error("Failed to choose directory:", err);
-                    }
-                  }} className="secondary">Browse</button>
+                    }} className="secondary">Browse</button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="form-group">
                 <label>{testType === 2 ? 'LMO Number (e.g. 1234)' : 'LMO Number (####-##)'}</label>
@@ -477,8 +479,8 @@ function App() {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   {testType === 2 ? (
                     <button onClick={async () => {
-                      if (!formData.basePath) {
-                        alert(`Please select the ${uploadMode === 'upload' ? 'Base Upload Directory' : 'BenchNPD Root Directory'} before continuing.`);
+                      if (uploadMode !== 'upload' && !formData.basePath) {
+                        alert(`Please select the BenchNPD Root Directory before continuing.`);
                         return;
                       }
                       
@@ -500,16 +502,16 @@ function App() {
                   ) : (
                     <>
                       <button onClick={async () => {
-                        if (!formData.basePath) {
-                          alert("Please select a Base Upload Path before continuing.");
+                        if (uploadMode !== 'upload' && testType !== 1 && !formData.basePath) {
+                          alert("Please select a Base Source Path before continuing.");
                           return;
                         }
                         const result = await submitFileInfo();
                         if (result && result.success) setCurrentStep(2);
                       }} className="primary">Upload Files <Upload size={18} style={{ verticalAlign: 'middle' }} /></button>
                       <button onClick={async () => {
-                        if (!formData.basePath) {
-                          alert("Please select a Base Upload Path before continuing.");
+                        if (uploadMode !== 'upload' && testType !== 1 && !formData.basePath) {
+                          alert("Please select a Base Source Path before continuing.");
                           return;
                         }
                         const result = await submitFileInfo();
@@ -557,7 +559,7 @@ function App() {
               <div className="btn-group">
                 <button className="secondary" onClick={() => setCurrentStep(1)}>Back</button>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button onClick={uploadFiles} disabled={files.length === 0 || (testType === 2 && !formData.basePath)} className="primary">Upload Files</button>
+                  <button onClick={uploadFiles} disabled={files.length === 0 || (testType === 2 && uploadMode !== 'upload' && !formData.basePath)} className="primary">Upload Files</button>
                   {testType === 2 && (
                     <button onClick={() => setCurrentStep(4)} className="primary" style={{ background: 'var(--success)' }}>Proceed to Configuration <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
                   )}
