@@ -1,6 +1,0 @@
-Folder B: /Users/tj/Documents/Redwire/NPD_Processor_and_GUI/uploads
-SN: 0001
-Raw CSV found: []
-Filtered npdB: []
-Filtered sparB: []
-npdA: []
