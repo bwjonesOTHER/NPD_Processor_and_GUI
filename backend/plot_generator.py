@@ -236,7 +236,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
-    return {"path": save_path, "status": status.lower(), "freq": ref_freq_win if len(all_noise_win)>0 else None, "avg": avg if len(all_noise_win)>0 else None}
+    return {"path": save_path, "status": status.lower(), "freq": ref_freq_win if len(s21_avg)>0 else None, "avg": avg if len(s21_avg)>0 else None}
 
 
 
