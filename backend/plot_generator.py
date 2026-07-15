@@ -548,13 +548,27 @@ def generate_plots(params):
         # IMPORTANT: Since folderB is the same root folder, it will accidentally find the NPDoverTemp files again.
         # We must filter out "NPDoverTemp" files from Run B.
         def filter_benchtop(files):
-            return [f for f in files if "npdovertemp" not in f.lower()]
+            import os
+            # Only check the filename and immediate parent directory, not the entire path which might coincidentally contain 'npdovertemp'
+            return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
             
         sparB = filter_benchtop(search_files(folderB, ".s2p", sn))
         if not sparB and sn: sparB = filter_benchtop(search_files(folderB, ".s2p", ""))
         
-        npdB = filter_benchtop(search_files(folderB, ".csv", sn))
-        if not npdB and sn: npdB = filter_benchtop(search_files(folderB, ".csv", ""))
+        raw_npdB = search_files(folderB, ".csv", sn)
+        npdB = filter_benchtop(raw_npdB)
+        if not npdB and sn: 
+            raw_npdB = search_files(folderB, ".csv", "")
+            npdB = filter_benchtop(raw_npdB)
+        
+        with open(os.path.join(output_folder, "DEBUG_TEST2.txt"), "w") as f:
+            f.write(f"Folder B: {folderB}\n")
+            f.write(f"SN: {sn}\n")
+            f.write(f"Raw CSV found: {raw_npdB}\n")
+            f.write(f"Filtered npdB: {npdB}\n")
+            f.write(f"Filtered sparB: {sparB}\n")
+            f.write(f"npdA: {npdA}\n")
+
         
         p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False)
         if p1: generated_plots.append(p1)
