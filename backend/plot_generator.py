@@ -555,7 +555,11 @@ def generate_plots(params):
         with open("Cal_Path.txt", "r") as f:
             cal_folder = f.read().strip()
     if not cal_folder and folderA:
-        cal_folder = os.path.join(os.path.dirname(folderA), "Cable Loss")
+        inner_cal = os.path.join(folderA, "Cable Loss")
+        if os.path.exists(inner_cal):
+            cal_folder = inner_cal
+        else:
+            cal_folder = os.path.join(os.path.dirname(folderA), "Cable Loss")
     
     generated_plots = []
 
