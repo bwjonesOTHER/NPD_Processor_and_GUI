@@ -499,10 +499,22 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     return {"path": save_path, "status": "passed"}
 
 def generate_plots(params):
+    test_type = int(params.get('testType', 1))
     runs = params.get('runs', [])
-    test_type = params.get('testType', 1)
     
-    # Process runs to actual directories
+    # Force Windows to download SharePoint Files On-Demand before searching
+    for run_path in runs:
+        if run_path and os.path.exists(run_path):
+            for root, _, files in os.walk(run_path):
+                for file in files:
+                    if file.lower().endswith(('.csv', '.s2p')):
+                        try:
+                            with open(os.path.join(root, file), "rb") as f:
+                                f.read(1)
+                        except Exception:
+                            pass
+                            
+        # Process runs to actual directories
     resolved_runs = []
     for run in runs:
         if run and os.path.isdir(run):
