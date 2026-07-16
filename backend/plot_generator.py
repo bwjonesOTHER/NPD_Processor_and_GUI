@@ -146,20 +146,23 @@ def get_calibration_loss(filepath, cal_folder, chain_override=None):
                     name = f.lower()
                     if not name.endswith(".s2p"): continue
                     
-                    if chain_type == "Pri" and "pathloss_base" in name:
+                    if chain_type == "Pri" and "pathloss_base" in name and not any("pathloss_base" in os.path.basename(p).lower() for p in cal_files_to_load):
                         cal_files_to_load.append(os.path.join(root, f))
-                    elif chain_type == "Red" and "pathloss_cap" in name:
+                    elif chain_type == "Red" and "pathloss_cap" in name and not any("pathloss_cap" in os.path.basename(p).lower() for p in cal_files_to_load):
                         cal_files_to_load.append(os.path.join(root, f))
-                    elif chain_type is None and "pathloss_base" in name:
-                        cal_files_to_load.append(os.path.join(root, f))
-                        
-                    if "speca" in name:  # Matches specan or speca
+                    elif chain_type is None and "pathloss_base" in name and not any("pathloss_base" in os.path.basename(p).lower() for p in cal_files_to_load):
                         cal_files_to_load.append(os.path.join(root, f))
                         
-                    if chain_type == "Pri" and name.startswith("pri") and "bulkhead" not in name:
+                    if "speca" in name and not any("speca" in os.path.basename(p).lower() for p in cal_files_to_load):  # Matches specan or speca
                         cal_files_to_load.append(os.path.join(root, f))
-                    elif chain_type == "Red" and name.startswith("red") and "bulkhead" not in name:
+                        
+                    if chain_type == "Pri" and name.startswith("pri") and "bulkhead" not in name and not any(os.path.basename(p).lower().startswith("pri") for p in cal_files_to_load):
                         cal_files_to_load.append(os.path.join(root, f))
+                    elif chain_type == "Red" and name.startswith("red") and "bulkhead" not in name and not any(os.path.basename(p).lower().startswith("red") for p in cal_files_to_load):
+                        cal_files_to_load.append(os.path.join(root, f))
+            if cal_files_to_load:
+                cal_files_to_load = list(set(cal_files_to_load))
+                break
 
     if not cal_files_to_load:
         return None, None
