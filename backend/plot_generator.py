@@ -211,7 +211,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             # Apply Calibration
             if freq_cal is not None and should_apply_cal and test_type == 1:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
-                noise = noise - loss_interp
+                noise = noise + loss_interp
             
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
@@ -279,7 +279,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             avg = np.mean(all_noise_win, axis=0)
 
         # -- USER UPLOADED AVERAGE OVERRIDE -- #
-        if average_data_path and os.path.exists(average_data_path):
+        if average_data_path and os.path.exists(average_data_path) and (test_type != 1 or title_suffix == "Ambient"):
             try:
                 avg_df = pd.read_csv(average_data_path, header=None)
                 avg_num_df = avg_df.apply(pd.to_numeric, errors='coerce')
