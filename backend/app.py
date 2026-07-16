@@ -342,6 +342,32 @@ def select_runs():
         
     return jsonify({"status": "success"})
 
+
+@app.route('/api/choose_file', methods=['GET'])
+def choose_file():
+    """Endpoint to open an OS-level file chooser dialog (Tkinter)."""
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)
+        
+        file_path = filedialog.askopenfilename(parent=root, title="Select File")
+        
+        root.destroy()
+        
+        if file_path:
+            return jsonify({"success": True, "path": file_path})
+        else:
+            return jsonify({"success": False, "error": "No file selected"})
+            
+    except Exception as e:
+        print("Error in choose_file:", str(e))
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/choose_directory', methods=['GET'])
 def choose_directory():
     """Endpoint to open an OS-level directory chooser dialog (Tkinter)."""
