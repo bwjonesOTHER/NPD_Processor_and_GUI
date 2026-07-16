@@ -652,17 +652,24 @@ def generate_plots(params):
             f_dbg.write(f"sn: {sn}\n")
             f_dbg.write(f"test_type: {test_type}\n")
 
-        # S2P Search with fallbacks for Run A to ensure we only get ambient if pointed to a Temp folder
-        sparA = search_files(search_dirA, "NPDoverTempVSWR_ambient", sn)
-        if not sparA: sparA = search_files(search_dirA, "NPDoverTempVSWR_25C", sn)
-        if not sparA: sparA = search_files(search_dirA, "NPDoverTempS_ambient", sn)
-        if not sparA: sparA = search_files(search_dirA, "NPDoverTempS_25C", sn)
-        
-        # NPD Search with fallbacks for Run A
-        npdA = search_files(search_dirA, "NPDoverTempNPD_ambient", sn)
-        if not npdA: npdA = search_files(search_dirA, "NPDoverTempNPD_25C", sn)
-        if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_ambient", sn)
-        if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_25C", sn)
+        if test_type == 2:
+            # S2P Search with fallbacks for Run A
+            sparA = search_files(search_dirA, "NPDoverTempVSWR_ambient", sn)
+            if not sparA: sparA = search_files(search_dirA, "NPDoverTempS_25C", sn)
+            if not sparA: sparA = search_files(search_dirA, "NPDoverTempVSWR", sn)
+            if not sparA: sparA = search_files(search_dirA, "NPDoverTempS", sn)
+            
+            # NPD Search with fallbacks for Run A
+            npdA = search_files(search_dirA, "NPDoverTempNPD_ambient", sn)
+            if not npdA: npdA = search_files(search_dirA, "NPDoverTempNPD_25C", sn)
+            if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_ambient", sn)
+            if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_25C", sn)
+        else: # test_type == 3
+            sparA = search_files(search_dirA, ".s2p", sn)
+            if not sparA and sn: sparA = search_files(search_dirA, ".s2p", "")
+            
+            npdA = search_files(search_dirA, ".csv", sn)
+            if not npdA and sn: npdA = search_files(search_dirA, ".csv", "")
         
         # If Thermal files are in a root folder without Area subfolders, filter by PMA Area in the filename
         if pma and search_dirA == temp: # only filter if we didn't successfully drill down into a PMA folder
@@ -692,10 +699,12 @@ def generate_plots(params):
             return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()] if test_type == 2 else files
             
         raw_sparB = search_files(search_dirB, ".s2p", sn)
+        if not raw_sparB and sn: raw_sparB = search_files(search_dirB, ".s2p", "")
         sparB_filt = [f for f in raw_sparB if "vswr" in os.path.basename(f).lower()]
         sparB = filter_benchtop(sparB_filt if sparB_filt else raw_sparB)
         
         raw_npdB = search_files(search_dirB, ".csv", sn)
+        if not raw_npdB and sn: raw_npdB = search_files(search_dirB, ".csv", "")
         npdB_filt = [f for f in raw_npdB if "nfdirect" in os.path.basename(f).lower() or "npd" in os.path.basename(f).lower()]
         npdB = filter_benchtop(npdB_filt if npdB_filt else raw_npdB)
         
