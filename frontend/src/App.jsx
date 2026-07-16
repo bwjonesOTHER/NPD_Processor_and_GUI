@@ -64,8 +64,8 @@ function App() {
     } else {
       setPlotParams(prev => ({
         ...prev,
-        freq_min: 1.5,
-        freq_max: 3.0,
+        freq_min: 2.7,
+        freq_max: 4.1,
         u_bound_s21: 2,
         l_bound_s21: 2,
         u_bound_npd: 2,
