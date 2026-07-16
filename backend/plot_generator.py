@@ -336,9 +336,9 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
     if plot_density:
-        plt.ylim(-170, -110)
+        plt.ylim(-170, -90)
     else:
-        plt.ylim(-130, -90)
+        plt.ylim(-130, -60)
     
     title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     plt.title(title)
@@ -601,9 +601,9 @@ def generate_plots(params):
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
                 
-        dp1 = plot_temp_deltas(np_averages, "Noise Power", "NP (dBm)", output_folder, ax1_ylim=(-130, -90), ax2_ylim=(0, 5))
+        dp1 = plot_temp_deltas(np_averages, "Noise Power", "NP (dBm)", output_folder, ax1_ylim=(-130, -60), ax2_ylim=(0, 5))
         if dp1: generated_plots.append(dp1)
-        dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -110), ax2_ylim=(0, 5))
+        dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -90), ax2_ylim=(0, 5))
         if dp1_den: generated_plots.append(dp1_den)
         dp2 = plot_temp_deltas(s21_averages, "S21", "S21 (dB)", output_folder, ax1_ylim=(-40, 40), ax2_ylim=(0, 30))
         if dp2: generated_plots.append(dp2)
