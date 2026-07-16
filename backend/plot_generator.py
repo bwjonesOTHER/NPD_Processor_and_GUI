@@ -211,9 +211,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
             is_runA = file in filesA
             should_apply_cal = apply_cal
-            # Test 3 Run A is Thermal, do not apply benchtop calibration to it
-            if test_type == 3 and is_runA:
-                should_apply_cal = False
                 
             # Apply Calibration
             if freq_cal is not None and should_apply_cal:
