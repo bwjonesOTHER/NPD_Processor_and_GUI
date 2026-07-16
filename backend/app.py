@@ -347,16 +347,32 @@ def select_runs():
 def choose_file():
     """Endpoint to open an OS-level file chooser dialog (Tkinter)."""
     try:
-        import tkinter as tk
-        from tkinter import filedialog
+        import sys
+        import subprocess
         
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes('-topmost', True)
-        
-        file_path = filedialog.askopenfilename(parent=root, title="Select File")
-        
-        root.destroy()
+        file_path = ""
+        if sys.platform == 'darwin':
+            # macOS native file picker using AppleScript
+            script = 'tell app "System Events" to activate\ntell app "System Events" to return POSIX path of (choose file with prompt "Select Average Data File:")'
+            result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+            file_path = result.stdout.strip()
+        else:
+            # Fallback for Windows/Linux
+            script = """
+import tkinter as tk
+from tkinter import filedialog
+root = tk.Tk()
+root.withdraw()
+root.attributes('-topmost', True)
+file_path = filedialog.askopenfilename(title="Select File")
+root.destroy()
+print(file_path)
+"""
+            import os
+            env = os.environ.copy()
+            env['PYTHONPATH'] = os.pathsep.join(sys.path)
+            result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
+            file_path = result.stdout.strip()
         
         if file_path:
             return jsonify({"success": True, "path": file_path})
@@ -444,8 +460,13 @@ print(path)
             )
             folder_path = result.stdout.strip()
         else:
-            # macOS / Linux fallback using tkinter in subprocess
-            script = """
+            # macOS / Linux fallback
+            if sys.platform == 'darwin':
+                script = 'tell app "System Events" to activate\ntell app "System Events" to return POSIX path of (choose folder with prompt "Select Base Path")'
+                result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+                folder_path = result.stdout.strip()
+            else:
+                script = """
 import tkinter as tk
 from tkinter import filedialog
 root = tk.Tk()
@@ -455,10 +476,10 @@ folder_path = filedialog.askdirectory(title="Select Base Path")
 root.destroy()
 print(folder_path)
 """
-            env = os.environ.copy()
-            env['PYTHONPATH'] = os.pathsep.join(sys.path)
-            result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
-            folder_path = result.stdout.strip()
+                env = os.environ.copy()
+                env['PYTHONPATH'] = os.pathsep.join(sys.path)
+                result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
+                folder_path = result.stdout.strip()
             
             if result.returncode != 0:
                 return jsonify({"success": False, "error": result.stderr.strip()})
