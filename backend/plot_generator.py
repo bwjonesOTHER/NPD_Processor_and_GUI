@@ -568,11 +568,11 @@ def generate_plots(params):
     output_folder = params.get('outputFolder', '/tmp')
     average_data_path = params.get('average_data_path', '')
 
-    # Figure out calibration folder (look in parent directory)
-    cal_folder = ""
-    if len(runs) > 2 and runs[2]:
+    # Figure out calibration folder
+    cal_folder = params.get('calFolder', "")
+    if not cal_folder and len(runs) > 2 and runs[2]:
         cal_folder = runs[2]
-    elif os.path.exists("Cal_Path.txt"):
+    elif not cal_folder and os.path.exists("Cal_Path.txt"):
         with open("Cal_Path.txt", "r") as f:
             cal_folder = f.read().strip()
     if not cal_folder and folderA:

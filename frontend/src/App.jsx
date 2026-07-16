@@ -30,6 +30,7 @@ function App() {
   // Form state
   const [formData, setFormData] = useState({
     basePath: '',
+    calPath: '',
     lmoNumber: '',
     runNumber: '',
     capNumber: '',
@@ -333,7 +334,7 @@ function App() {
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...plotParams, outputFolder: "", dataSource: formData.basePath })
+        body: JSON.stringify({ ...plotParams, outputFolder: "", dataSource: formData.basePath, calFolder: formData.calPath })
       });
       
       const data = await res.json();
@@ -438,23 +439,44 @@ function App() {
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
 
               {uploadMode !== 'upload' && testType !== 1 && (
-                <div className="form-group">
-                  <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Source Path'}</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 ? 'Select BenchNPD root folder...' : 'Select a directory to read files from...'} style={{ flex: 1 }} />
-                    <button onClick={async () => {
-                      try {
-                        const res = await fetch(`${API_BASE}/choose_directory`);
-                        const data = await res.json();
-                        if (data.success && data.path) {
-                          setFormData(prev => ({...prev, basePath: data.path}));
+                <>
+                  <div className="form-group">
+                    <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Source Path'}</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 ? 'Select BenchNPD root folder...' : 'Select a directory to read files from...'} style={{ flex: 1 }} />
+                      <button onClick={async () => {
+                        try {
+                          const res = await fetch(`${API_BASE}/choose_directory`);
+                          const data = await res.json();
+                          if (data.success && data.path) {
+                            setFormData(prev => ({...prev, basePath: data.path}));
+                          }
+                        } catch (err) {
+                          console.error("Failed to choose directory:", err);
                         }
-                      } catch (err) {
-                        console.error("Failed to choose directory:", err);
-                      }
-                    }} className="secondary">Browse</button>
+                      }} className="secondary">Browse</button>
+                    </div>
                   </div>
-                </div>
+                  {testType === 2 && (
+                    <div className="form-group">
+                      <label>Calibration Directory (Optional)</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input type="text" name="calPath" value={formData.calPath} onChange={handleInputChange} placeholder="Select explicit Cable Loss / SN folder..." style={{ flex: 1 }} />
+                        <button onClick={async () => {
+                          try {
+                            const res = await fetch(`${API_BASE}/choose_directory`);
+                            const data = await res.json();
+                            if (data.success && data.path) {
+                              setFormData(prev => ({...prev, calPath: data.path}));
+                            }
+                          } catch (err) {
+                            console.error("Failed to choose directory:", err);
+                          }
+                        }} className="secondary">Browse</button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="form-group">
