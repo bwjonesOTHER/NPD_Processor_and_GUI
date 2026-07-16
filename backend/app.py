@@ -509,9 +509,9 @@ def api_generate_plots():
             params['lmo'] = read_txt("lmoNumber.txt")
 
     elif test == 3:
-        path1 = read_txt("path.txt")
-        path2 = read_txt("upload_path.txt")
-        params['runs'] = [p for p in [path1, path2] if p]
+        run_a = read_txt("RunA_Path.txt")
+        run_b = read_txt("RunB_Path.txt")
+        params['runs'] = [run for run in [run_a, run_b] if run]
         params['serial_number'] = read_txt("serialNumber.txt")
 
     try:
