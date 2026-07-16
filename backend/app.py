@@ -356,8 +356,20 @@ def choose_file():
             script = 'tell app "System Events" to activate\ntell app "System Events" to return POSIX path of (choose file with prompt "Select Average Data File:")'
             result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
             file_path = result.stdout.strip()
+        elif sys.platform == 'win32':
+            # Windows native file picker using PowerShell
+            script = """
+Add-Type -AssemblyName System.Windows.Forms
+$f = New-Object System.Windows.Forms.OpenFileDialog
+$f.Title = "Select File"
+if ($f.ShowDialog() -eq 'OK') {
+    Write-Output $f.FileName
+}
+"""
+            result = subprocess.run(['powershell', '-NoProfile', '-Command', script], capture_output=True, text=True)
+            file_path = result.stdout.strip()
         else:
-            # Fallback for Windows/Linux
+            # Fallback for Linux
             script = """
 import tkinter as tk
 from tkinter import filedialog
