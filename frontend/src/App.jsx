@@ -43,7 +43,6 @@ function App() {
     freq_min: 2.7,
     freq_max: 4.1,
     reqS11Val: -10,
-    reqS21Val: -14,
     n_avg: 20,
     u_bound_s21: 2,
     l_bound_s21: 2,
@@ -776,10 +775,6 @@ function App() {
                 <div className="input-group">
                   <label>Max Frequency (GHz)</label>
                   <input type="number" step="0.1" name="freq_max" value={plotParams.freq_max} onChange={handlePlotParamChange} />
-                </div>
-                <div className="input-group">
-                  <label>reqS21Val</label>
-                  <input type="number" step="1" name="reqS21Val" value={plotParams.reqS21Val} onChange={handlePlotParamChange} />
                 </div>
                 <div className="input-group">
                   <label>Averaging (n_avg)</label>
