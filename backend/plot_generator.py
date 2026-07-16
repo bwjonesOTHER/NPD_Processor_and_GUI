@@ -46,7 +46,14 @@ def search_files(root_dir, filename_part, serial_number=None):
                     pattern = r'(?<!\d)(?:SN|EM-)?0*' + re.escape(sn_clean) + r'(?!\d)'
                     if not re.search(pattern, file, re.IGNORECASE):
                         continue
-                matches.append(os.path.join(dirpath, file))
+                filepath = os.path.join(dirpath, file)
+                matches.append(filepath)
+                # Force Windows OneDrive to download the file on-demand
+                try:
+                    with open(filepath, "rb") as f:
+                        f.read(1)
+                except Exception:
+                    pass
     return matches
 
 def find_cal_file(folders, cap_num, cal_type):
@@ -502,19 +509,7 @@ def generate_plots(params):
     test_type = int(params.get('testType', 1))
     runs = params.get('runs', [])
     
-    # Force Windows to download SharePoint Files On-Demand before searching
-    for run_path in runs:
-        if run_path and os.path.exists(run_path):
-            for root, _, files in os.walk(run_path):
-                for file in files:
-                    if file.lower().endswith(('.csv', '.s2p')):
-                        try:
-                            with open(os.path.join(root, file), "rb") as f:
-                                f.read(1)
-                        except Exception:
-                            pass
-                            
-        # Process runs to actual directories
+    # Process runs to actual directories
     resolved_runs = []
     for run in runs:
         if run and os.path.isdir(run):
