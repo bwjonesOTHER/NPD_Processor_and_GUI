@@ -576,65 +576,6 @@ function App() {
 
               {(testType === 1 || testType === 3) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  {(uploadMode === 'access' && testType === 3) ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      <p style={{ color: 'var(--text-muted)' }}>Select the local folders on your hard drive.</p>
-                      
-                      {/* Run A */}
-                      <div className="form-group">
-                        <label>Run A Directory</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input type="text" readOnly value={runs[0] || ''} placeholder="Select Run A folder..." style={{ flex: 1 }} />
-                          <button onClick={async () => {
-                            try {
-                              const res = await fetch(`${API_BASE}/choose_directory`);
-                              const data = await res.json();
-                              if (data.success && data.path) {
-                                setRuns(prev => { const n = [...prev]; n[0] = data.path; return n; });
-                                setRunNames(prev => { const n = [...prev]; n[0] = data.path.split(/[\\/]/).pop(); return n; });
-                              }
-                            } catch (err) { console.error(err); }
-                          }} className="secondary">Browse</button>
-                        </div>
-                      </div>
-                      
-                      {/* Run B */}
-                      <div className="form-group">
-                        <label>Run B Directory</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input type="text" readOnly value={runs[1] || ''} placeholder="Select Run B folder..." style={{ flex: 1 }} />
-                          <button onClick={async () => {
-                            try {
-                              const res = await fetch(`${API_BASE}/choose_directory`);
-                              const data = await res.json();
-                              if (data.success && data.path) {
-                                setRuns(prev => { const n = [...prev]; n[1] = data.path; return n; });
-                                setRunNames(prev => { const n = [...prev]; n[1] = data.path.split(/[\\/]/).pop(); return n; });
-                              }
-                            } catch (err) { console.error(err); }
-                          }} className="secondary">Browse</button>
-                        </div>
-                      </div>
-                      
-                      {/* Calibration Files */}
-                      <div className="form-group">
-                        <label>CalibrationFiles Directory</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input type="text" readOnly value={runs[2] || ''} placeholder="Select CalibrationFiles folder..." style={{ flex: 1 }} />
-                          <button onClick={async () => {
-                            try {
-                              const res = await fetch(`${API_BASE}/choose_directory`);
-                              const data = await res.json();
-                              if (data.success && data.path) {
-                                setRuns(prev => { const n = [...prev]; n[2] = data.path; return n; });
-                                setRunNames(prev => { const n = [...prev]; n[2] = data.path.split(/[\\/]/).pop(); return n; });
-                              }
-                            } catch (err) { console.error(err); }
-                          }} className="secondary">Browse</button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
                   <div 
                     style={{
                       border: '2px dashed var(--border-color)',
@@ -744,7 +685,6 @@ function App() {
                       }} 
                     />
                   </div>
-                  )}
 
                   {runs.filter(r => r !== '').length > 0 && (
                     <div style={{ background: 'var(--panel-bg)', padding: '1.5rem', borderRadius: '12px' }}>
