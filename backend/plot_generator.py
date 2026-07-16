@@ -211,7 +211,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             # Apply Calibration
             if freq_cal is not None and should_apply_cal:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
-                noise = noise + loss_interp if test_type == 1 else noise - loss_interp
+                noise = noise + loss_interp
             
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
@@ -254,14 +254,30 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     
     start_idx = np.searchsorted(ref_freq_full, freq_min)
     end_idx = np.searchsorted(ref_freq_full, freq_max)
-    if start_idx != end_idx:
-        ref_freq_win = ref_freq_full[start_idx:end_idx]
+    if test_type != 3:
+        if start_idx != end_idx:
+            ref_freq_win = ref_freq_full[start_idx:end_idx]
+        else:
+            ref_freq_win = ref_freq_full
     else:
+        # We will interpolate in the next step, so we just set ref_freq_win to full here temporarily
         ref_freq_win = ref_freq_full
     
     status = "Passed"
-    if len(all_noise_win) > 0:
-        avg = np.mean(all_noise_win, axis=0)
+    if len(all_noise_win) > 0 or (test_type == 3 and len(all_noise) > 0):
+        if test_type == 3:
+            from scipy.interpolate import interp1d
+            common_freq = np.linspace(freq_min, freq_max, 1000)
+            all_noise_interp = []
+            for i in range(len(all_noise)):
+                f_interp = interp1d(all_freqs[i], all_noise[i], bounds_error=False, fill_value=np.nan)
+                all_noise_interp.append(f_interp(common_freq))
+            all_noise_win = np.array(all_noise_interp)
+            ref_freq_win = common_freq
+            avg = np.nanmean(all_noise_win, axis=0)
+        else:
+            avg = np.mean(all_noise_win, axis=0)
+
         # Using requested bounds
         upper = avg + u_bound_npd
         lower = avg - l_bound_npd
@@ -336,7 +352,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         # Apply cal
         if freq_cal is not None and should_apply_cal:
             loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
-            s21_corr = raw_s21 + loss_interp if test_type == 1 else raw_s21 - loss_interp
+            s21_corr = raw_s21 + loss_interp
         else:
             s21_corr = raw_s21
 
@@ -393,7 +409,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
-    if test_type != 1 and apply_cal:
+    if (test_type != 1 and test_type != 3) and apply_cal:
         plt.ylim(0, 30)
         title = f'S21 Calibrated {title_suffix}, {status}'
     else:

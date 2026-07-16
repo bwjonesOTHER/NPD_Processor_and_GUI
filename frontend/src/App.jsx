@@ -45,10 +45,10 @@ function App() {
     reqS11Val: -10,
     reqS21Val: -14,
     n_avg: 20,
-    u_bound_s21: 15,
-    l_bound_s21: 5,
-    u_bound_npd: -100,
-    l_bound_npd: -130,
+    u_bound_s21: 2,
+    l_bound_s21: 2,
+    u_bound_npd: 2,
+    l_bound_npd: 2,
   });
 
   useEffect(() => {
@@ -57,20 +57,20 @@ function App() {
         ...prev,
         freq_min: 2.7,
         freq_max: 4.1,
-        u_bound_s21: 15,
-        l_bound_s21: 5,
-        u_bound_npd: -100,
-        l_bound_npd: -130,
+        u_bound_s21: 2,
+        l_bound_s21: 2,
+        u_bound_npd: 2,
+        l_bound_npd: 2,
       }));
     } else {
       setPlotParams(prev => ({
         ...prev,
         freq_min: 1.5,
         freq_max: 3.0,
-        u_bound_s21: 15,
-        l_bound_s21: 5,
-        u_bound_npd: -135,
-        l_bound_npd: -168,
+        u_bound_s21: 2,
+        l_bound_s21: 2,
+        u_bound_npd: 2,
+        l_bound_npd: 2,
       }));
     }
   }, [testType]);
