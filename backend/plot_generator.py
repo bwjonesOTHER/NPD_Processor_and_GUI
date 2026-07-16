@@ -87,7 +87,7 @@ def find_cal_file(folders, cap_num, cal_type):
                     
     return None
 
-def get_calibration_loss(filepath, cal_folder):
+def get_calibration_loss(filepath, cal_folder, chain_override=None):
     search_dirs = []
     if cal_folder and os.path.isdir(cal_folder):
         search_dirs.append(cal_folder)
@@ -135,7 +135,10 @@ def get_calibration_loss(filepath, cal_folder):
     else:
         # 2. Benchtop Search (Fallback)
         filepath_upper = filepath.upper()
-        chain_type = "Pri" if "PRI" in filepath_upper else "Red" if "RED" in filepath_upper else None
+        if chain_override:
+            chain_type = chain_override
+        else:
+            chain_type = "Pri" if "PRI" in filepath_upper else "Red" if "RED" in filepath_upper else None
         
         for s_dir in search_dirs:
             for root, _, files in os.walk(s_dir):
@@ -187,6 +190,15 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     if not all_files:
         return None
 
+    common_chain = None
+    for f in all_files:
+        if "PRI" in f.upper():
+            common_chain = "Pri"
+            break
+        elif "RED" in f.upper():
+            common_chain = "Red"
+            break
+
     plt.figure(figsize=(8, 4), dpi=150)
     all_noise = []
     all_noise_win = []
@@ -208,7 +220,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
+            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder, common_chain)
             is_runA = file in filesA
             should_apply_cal = apply_cal
                 
@@ -352,6 +364,15 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     if not all_files:
         return None
 
+    common_chain = None
+    for f in all_files:
+        if "PRI" in f.upper():
+            common_chain = "Pri"
+            break
+        elif "RED" in f.upper():
+            common_chain = "Red"
+            break
+
     avg_collection = []
     all_s21_full = []
     file_coll = []
@@ -366,7 +387,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         freq_cal, total_loss_db = None, None
         if test_type != 1 and apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder)
+            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder, common_chain)
         
         is_runA = fpath in filesA
         s21_corr = raw_s21
