@@ -175,7 +175,7 @@ def get_calibration_loss(filepath, cal_folder):
             
     return freq_ref, total_loss
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path=""):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -277,6 +277,27 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             avg = np.nanmean(all_noise_win, axis=0)
         else:
             avg = np.mean(all_noise_win, axis=0)
+
+        # -- USER UPLOADED AVERAGE OVERRIDE -- #
+        if average_data_path and os.path.exists(average_data_path):
+            try:
+                avg_df = pd.read_csv(average_data_path, header=None)
+                avg_num_df = avg_df.apply(pd.to_numeric, errors='coerce')
+                user_avg_freq = remove_nan(avg_num_df.values[:, 0], remove_infinite=True)
+                user_avg_noise = remove_nan(avg_num_df.values[:, 1], remove_infinite=True)
+                
+                if not plot_density:
+                    # Convert NPD (dBm/Hz) to NP (dBm) based on 10 kHz bandwidth (+40 dB)
+                    user_avg_noise = user_avg_noise + 40
+                    
+                # Interpolate the user average onto ref_freq_win to match dimensions for bounds
+                from scipy.interpolate import interp1d
+                f_avg_interp = interp1d(user_avg_freq, user_avg_noise, bounds_error=False, fill_value=np.nan)
+                avg = f_avg_interp(ref_freq_win)
+                
+                plt.plot(user_avg_freq, user_avg_noise, color='black', linewidth=2.5, linestyle='--', label='User Average')
+            except Exception as e:
+                print(f"Failed to load user average: {e}")
 
         # Using requested bounds
         upper = avg + u_bound_npd
@@ -499,6 +520,7 @@ def generate_plots(params):
     u_bound_npd = float(params.get('u_bound_npd', 2))
     l_bound_npd = float(params.get('l_bound_npd', 2))
     output_folder = params.get('outputFolder', '/tmp')
+    average_data_path = params.get('average_data_path', '')
 
     # Figure out calibration folder (look in parent directory)
     cal_folder = ""
@@ -532,12 +554,12 @@ def generate_plots(params):
             sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
             sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
@@ -716,7 +738,7 @@ def generate_plots(params):
             f.write(f"npdA: {npdA}\n")
 
         
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=test_type)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=test_type, average_data_path=average_data_path)
         if p1: generated_plots.append(p1)
         
         p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=True)
