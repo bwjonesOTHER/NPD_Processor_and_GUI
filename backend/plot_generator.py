@@ -209,9 +209,9 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 should_apply_cal = False
                 
             # Apply Calibration
-            if freq_cal is not None and should_apply_cal:
+            if freq_cal is not None and should_apply_cal and test_type == 1:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
-                noise = noise - loss_interp
+                noise = noise + loss_interp
             
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
@@ -350,9 +350,9 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
             should_apply_cal = False
             
         # Apply cal
-        if freq_cal is not None and should_apply_cal:
+        if freq_cal is not None and should_apply_cal and test_type != 2:
             loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
-            s21_corr = raw_s21 - loss_interp
+            s21_corr = raw_s21 + loss_interp if test_type == 1 else raw_s21 - loss_interp
         else:
             s21_corr = raw_s21
 
@@ -372,17 +372,17 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 ref_freq_win = ref_freq_ghz
         else:
             if len(freq_ghz) != len(ref_freq_ghz) or not np.allclose(freq_ghz, ref_freq_ghz):
-                s21_corr = np.interp(ref_freq_ghz, freq_ghz, s21_corr)
+                s21_interp = np.interp(ref_freq_ghz, freq_ghz, s21_corr)
                 
         start_idx = np.searchsorted(ref_freq_ghz, freq_min)
         end_idx = np.searchsorted(ref_freq_ghz, freq_max)
         if start_idx != end_idx:
-            s21_window = s21_corr[start_idx:end_idx]
+            s21_window = s21_interp[start_idx:end_idx] if "s21_interp" in locals() else s21_corr[start_idx:end_idx]
         else:
             s21_window = s21_corr
 
         avg_collection.append(s21_window)
-        all_s21_full.append(s21_corr)
+        all_s21_full.append(s21_interp if "s21_interp" in locals() else s21_corr)
         file_coll.append(serial[-21:-4:1])
 
     s21_avg = np.array([x for x in avg_collection if len(x) > 0])
@@ -689,7 +689,7 @@ def generate_plots(params):
         def filter_benchtop(files):
             import os
             # Only check the filename and immediate parent directory, not the entire path which might coincidentally contain 'npdovertemp'
-            return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
+            return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()] if test_type == 2 else files
             
         raw_sparB = search_files(search_dirB, ".s2p", sn)
         sparB_filt = [f for f in raw_sparB if "vswr" in os.path.basename(f).lower()]
