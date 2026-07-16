@@ -211,7 +211,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             # Apply Calibration
             if freq_cal is not None and should_apply_cal:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
-                noise = noise + loss_interp
+                noise = noise - loss_interp
             
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
@@ -352,7 +352,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         # Apply cal
         if freq_cal is not None and should_apply_cal:
             loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
-            s21_corr = raw_s21 + loss_interp
+            s21_corr = raw_s21 - loss_interp
         else:
             s21_corr = raw_s21
 
