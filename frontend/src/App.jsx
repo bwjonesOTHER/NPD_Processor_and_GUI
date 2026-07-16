@@ -638,26 +638,99 @@ function App() {
                         {testType === 3 ? "(Upload folders in order: Run A, then Run B, then Calibration)" : "(Click multiple times to add more runs!)"}
                       </p>}
                     </div>
-                    <button 
-                      style={{ display: 'none' }} 
-                      ref={test1RunsInputRef}
-                      onClick={async () => {
-                        setUploadingRun(true);
-                        try {
-                          const res = await fetch(`${API_BASE}/choose_directory`);
-                          const data = await res.json();
-                          if (data.success && data.path) {
-                            const validRuns = runs.filter(r => r !== '');
-                            setRuns([...validRuns, data.path]);
-                            setRunNames(prev => [...prev, data.path.split(/[\\/]/).pop()]);
+                    {testType === 1 ? (
+                      <input 
+                        type="file" 
+                        webkitdirectory="true" 
+                        directory="true"
+                        multiple={true}
+                        ref={test1RunsInputRef} 
+                        style={{ display: 'none' }} 
+                        onChange={async (e) => {
+                          if (!e.target.files || e.target.files.length === 0) return;
+                          setUploadingRun(true);
+                          const filesArray = filterValidFiles(e.target.files);
+                          
+                          if (filesArray.length === 0) {
+                            setUploadingRun(false);
+                            alert("No valid data files (.csv, .xlsx, etc.) found in the selected folder.");
+                            return;
                           }
-                        } catch (err) {
-                          alert(`Error selecting folder: ${err.message}`);
-                        } finally {
+                          
+                          const validRuns = runs.filter(r => r !== '');
+                          const runIndex = validRuns.length;
+                          
+                          try {
+                            const CHUNK_SIZE = 50;
+                            let finalUploadPath = '';
+                            
+                            for (let i = 0; i < filesArray.length; i += CHUNK_SIZE) {
+                              const chunk = filesArray.slice(i, i + CHUNK_SIZE);
+                              const data = new FormData();
+                              
+                              chunk.forEach(f => {
+                                data.append('files', f);
+                                data.append('paths', f.webkitRelativePath || f.name);
+                              });
+                              
+                              data.append('run_index', runIndex);
+                              const extractedFolderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : '';
+                              if (extractedFolderName) {
+                                data.append('folder_name', extractedFolderName);
+                              }
+                              data.append('chunk_index', i === 0 ? '0' : '1');
+                              data.append('testType', testType);
+                              
+                              const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+                              if (!res.ok) {
+                                const errText = await res.text();
+                                throw new Error(`HTTP ${res.status}: ${errText}`);
+                              }
+                              
+                              const json = await res.json();
+                              if (json.status !== 'success') {
+                                throw new Error(json.error || 'Upload failed');
+                              }
+                              finalUploadPath = json.upload_path;
+                            }
+                            
+                            const folderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : filesArray[0].name;
+                            setRuns([...validRuns, finalUploadPath]);
+                            setRunNames(prev => {
+                              const newNames = [...prev];
+                              newNames[runIndex] = folderName;
+                              return newNames;
+                            });
+                          } catch (err) {
+                            console.error(err);
+                            alert("Upload error: " + err.message);
+                          }
+                          if (test1RunsInputRef.current) test1RunsInputRef.current.value = "";
                           setUploadingRun(false);
-                        }
-                      }}
-                    />
+                        }} 
+                      />
+                    ) : (
+                      <button 
+                        style={{ display: 'none' }} 
+                        ref={test1RunsInputRef}
+                        onClick={async () => {
+                          setUploadingRun(true);
+                          try {
+                            const res = await fetch(`${API_BASE}/choose_directory`);
+                            const data = await res.json();
+                            if (data.success && data.path) {
+                              const validRuns = runs.filter(r => r !== '');
+                              setRuns([...validRuns, data.path]);
+                              setRunNames(prev => [...prev, data.path.split(/[\\/]/).pop()]);
+                            }
+                          } catch (err) {
+                            alert(`Error selecting folder: ${err.message}`);
+                          } finally {
+                            setUploadingRun(false);
+                          }
+                        }}
+                      />
+                    )}
                   </div>
 
                   {runs.filter(r => r !== '').length > 0 && (
