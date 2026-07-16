@@ -202,9 +202,16 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             
         if apply_cal:
             freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
-            if freq_cal is not None:
+            is_runA = file in filesA
+            should_apply_cal = apply_cal
+            # Test 3 Run A is Thermal, do not apply benchtop calibration to it
+            if test_type == 3 and is_runA:
+                should_apply_cal = False
+                
+            # Apply Calibration
+            if freq_cal is not None and should_apply_cal:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
-                noise = noise + loss_interp
+                noise = noise + loss_interp if test_type == 1 else noise - loss_interp
             
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
@@ -310,19 +317,26 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.figure(figsize=(7, 4), dpi=150)
     
     ref_freq_ghz = None
-    for file in all_files:
-        net = rf.Network(file)
+    for fpath in all_files:
+        net = rf.Network(fpath)
         freq_ghz = net.f / 1e9
         raw_s21 = net.s_db[:, 1, 0]
-        serial = extract_serial(file)
+        serial = extract_serial(fpath)
 
+        freq_cal, total_loss_db = None, None
         if test_type != 1 and apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
-            if freq_cal is not None:
-                loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
-                s21_corr = raw_s21 + loss_interp
-            else:
-                s21_corr = raw_s21
+            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder)
+        
+        is_runA = fpath in filesA
+        should_apply_cal = apply_cal
+        # Test 3 Run A is Thermal, do not apply benchtop calibration to it
+        if test_type == 3 and is_runA:
+            should_apply_cal = False
+            
+        # Apply cal
+        if freq_cal is not None and should_apply_cal:
+            loss_interp = np.interp(freq_ghz, freq_cal, total_loss_db)
+            s21_corr = raw_s21 + loss_interp if test_type == 1 else raw_s21 - loss_interp
         else:
             s21_corr = raw_s21
 
