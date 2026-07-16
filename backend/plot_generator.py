@@ -634,12 +634,6 @@ def generate_plots(params):
         if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_ambient", sn)
         if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_25C", sn)
         
-        with open("debug.txt", "a") as f_dbg:
-            f_dbg.write(f"sparA len: {len(sparA) if sparA else 0}\n")
-            f_dbg.write(f"npdA len: {len(npdA) if npdA else 0}\n")
-            f_dbg.write(f"sparB len: {len(sparB) if sparB else 0}\n")
-            f_dbg.write(f"npdB len: {len(npdB) if npdB else 0}\n")
-
         # If Thermal files are in a root folder without Area subfolders, filter by PMA Area in the filename
         if pma and search_dirA == temp: # only filter if we didn't successfully drill down into a PMA folder
             pma_norm = re.sub(r'[^a-zA-Z0-9]', '', pma).lower()
