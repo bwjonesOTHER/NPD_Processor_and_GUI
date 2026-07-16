@@ -541,6 +541,8 @@ def generate_plots(params):
         search_dirA = folderA
         search_dirB = folderB
         
+        pma = None
+        lmo = None
         if test_type == 2:
             pma = params.get('pma')
             
