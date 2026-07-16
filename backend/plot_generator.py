@@ -216,7 +216,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 should_apply_cal = False
                 
             # Apply Calibration
-            if freq_cal is not None and should_apply_cal and test_type == 1:
+            if freq_cal is not None and should_apply_cal:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
             
