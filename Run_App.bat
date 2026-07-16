@@ -3,10 +3,17 @@ cd /d "%~dp0"
 echo Starting NPD Processor GUI...
 start "" "http://localhost:5001"
 
-where python >nul 2>nul
-if %ERRORLEVEL%==0 (
-    echo System Python found.
-    python backend\app.py
+set SYS_PYTHON=
+for /f "delims=" %%i in ('where python 2^>nul') do (
+    echo %%i | findstr /i /v "WindowsApps" >nul
+    if not errorlevel 1 (
+        if not defined SYS_PYTHON set "SYS_PYTHON=%%i"
+    )
+)
+
+if defined SYS_PYTHON (
+    echo System Python found at: %SYS_PYTHON%
+    "%SYS_PYTHON%" backend\app.py
 ) else if exist "C:\Python\python.exe" (
     echo System Python not found. Found custom Python environment at C:\Python.
     C:\Python\python.exe backend\app.py
