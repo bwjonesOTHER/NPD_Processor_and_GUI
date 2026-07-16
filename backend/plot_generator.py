@@ -164,6 +164,16 @@ def get_calibration_loss(filepath, cal_folder, chain_override=None):
                 cal_files_to_load = list(set(cal_files_to_load))
                 break
 
+    debug_path = os.path.expanduser("~/Desktop/debug_cal_loss.txt")
+    try:
+        with open(debug_path, "a") as f:
+            f.write(f"\n--- Cal for {filepath} ---\n")
+            f.write(f"cal_folder: {cal_folder}\n")
+            f.write(f"search_dirs: {search_dirs}\n")
+            f.write(f"cal_files_to_load: {cal_files_to_load}\n")
+    except:
+        pass
+
     if not cal_files_to_load:
         return None, None
         
@@ -186,6 +196,14 @@ def get_calibration_loss(filepath, cal_folder, chain_override=None):
         except Exception as e:
             pass
             
+    try:
+        with open("debug_cal_loss.txt", "a") as f:
+            f.write(f"\n--- Cal for {filepath} ---\n")
+            f.write(f"cal_files_to_load: {cal_files_to_load}\n")
+            f.write(f"total_loss_db (mean): {np.mean(total_loss) if total_loss is not None else 'None'}\n")
+    except:
+        pass
+
     return freq_ref, total_loss
 
 def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path=""):
@@ -336,9 +354,9 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
     if plot_density:
-        plt.ylim(-170, -90)
+        plt.ylim(-170, -110)
     else:
-        plt.ylim(-130, -60)
+        plt.ylim(-130, -90)
     
     title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     plt.title(title)
@@ -558,8 +576,11 @@ def generate_plots(params):
         with open("Cal_Path.txt", "r") as f:
             cal_folder = f.read().strip()
     if not cal_folder and folderA:
+        inner_cal_sn = os.path.join(folderA, "Cable Loss", "SN006")
         inner_cal = os.path.join(folderA, "Cable Loss")
-        if os.path.exists(inner_cal):
+        if os.path.exists(inner_cal_sn):
+            cal_folder = inner_cal_sn
+        elif os.path.exists(inner_cal):
             cal_folder = inner_cal
         else:
             cal_folder = os.path.join(os.path.dirname(folderA), "Cable Loss")
@@ -601,9 +622,9 @@ def generate_plots(params):
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
                 
-        dp1 = plot_temp_deltas(np_averages, "Noise Power", "NP (dBm)", output_folder, ax1_ylim=(-130, -60), ax2_ylim=(0, 5))
+        dp1 = plot_temp_deltas(np_averages, "Noise Power", "NP (dBm)", output_folder, ax1_ylim=(-130, -90), ax2_ylim=(0, 5))
         if dp1: generated_plots.append(dp1)
-        dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -90), ax2_ylim=(0, 5))
+        dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -110), ax2_ylim=(0, 5))
         if dp1_den: generated_plots.append(dp1_den)
         dp2 = plot_temp_deltas(s21_averages, "S21", "S21 (dB)", output_folder, ax1_ylim=(-40, 40), ax2_ylim=(0, 30))
         if dp2: generated_plots.append(dp2)
