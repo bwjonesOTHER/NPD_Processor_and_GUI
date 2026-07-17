@@ -104,7 +104,7 @@ def plot_npd(files, title_suffix):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth + np.interp(freq_smooth, spec_freq, spec_s21) + np.interp(freq_smooth, base_freq, base_s21) + np.interp(freq_smooth, hat_freq, hat_s21)
+        corrected = npd_smooth - np.interp(freq_smooth, spec_freq, spec_s21) - np.interp(freq_smooth, base_freq, base_s21) - np.interp(freq_smooth, hat_freq, hat_s21)
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
@@ -210,8 +210,8 @@ def overlay_temperature(temp_name, folder1, folder2):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth + np.interp(freq_smooth, spec_freq, spec_s21) + np.interp(freq_smooth, hat_freq, hat_s21) + np.interp(freq_smooth, base_freq, base_s21)
-        plt.plot(freq_smooth, corrected+40, label=os.path.basename(f), color=next(color_cycle))
+        corrected = npd_smooth - np.interp(freq_smooth, spec_freq, spec_s21) - np.interp(freq_smooth, hat_freq, hat_s21) - np.interp(freq_smooth, base_freq, base_s21)
+        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
     plt.title(f"NPD OVERLAY — {temp_name} & {temp_name}2")

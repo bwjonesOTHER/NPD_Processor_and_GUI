@@ -659,13 +659,15 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         smoothed = _ota_smooth(raw, n_avg)
         freq_smooth = freq[:len(smoothed)]
 
+        # Cable-loss cal: pathloss S21 is negative, so subtracting it adds the
+        # loss back and refers the measurement to the DUT plane. No other offsets.
         corrected = smoothed
         if spec_freq is not None:
-            corrected = corrected + np.interp(freq_smooth, spec_freq, spec_s21)
+            corrected = corrected - np.interp(freq_smooth, spec_freq, spec_s21)
         if base_freq is not None:
-            corrected = corrected + np.interp(freq_smooth, base_freq, base_s21)
+            corrected = corrected - np.interp(freq_smooth, base_freq, base_s21)
         if hat_freq is not None:
-            corrected = corrected + np.interp(freq_smooth, hat_freq, hat_s21)
+            corrected = corrected - np.interp(freq_smooth, hat_freq, hat_s21)
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
         plotted += 1
