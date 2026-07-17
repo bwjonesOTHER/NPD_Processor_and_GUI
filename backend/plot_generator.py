@@ -561,6 +561,17 @@ _OTA_NPD_YLIM = (-170, -120)
 _OTA_S21_YLIM = (-105, 5)
 _OTA_XLIM = (2.0, 5.0)
 
+# Non-fatal issues from the most recent generate_plots() call (e.g. a
+# reference-average file the user pointed to that couldn't be read) — surfaced
+# to the frontend via app.py so failures aren't silent.
+_warnings = []
+
+def _warn(msg):
+    _warnings.append(msg)
+
+def get_warnings():
+    return list(_warnings)
+
 def _ota_matches(name, keywords):
     lname = name.lower()
     return any(k in lname for k in keywords)
@@ -682,6 +693,10 @@ def _ota_load_avg_reference(filepath):
     """Loads a reference-average NPD file (.xlsx or .csv). Tolerates leading
     title/blank rows by scanning for the row whose first cell starts with
     "freq" and treating everything after it as Freq(GHz)/value data."""
+    if filepath:
+        # Tolerate a path pasted with surrounding quotes/whitespace (e.g.
+        # Windows Explorer's "Copy as path").
+        filepath = filepath.strip().strip('"').strip("'").strip()
     if not filepath or not os.path.isfile(filepath):
         return None, None
     try:
@@ -860,6 +875,12 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     avg_ref = _ota_load_avg_reference(average_data_path)
     if avg_ref[0] is None:
         avg_ref = None
+        if average_data_path:
+            clean_path = average_data_path.strip().strip('"').strip("'").strip()
+            if not os.path.isfile(clean_path):
+                _warn(f"Reference average file not found on the server: {average_data_path}")
+            else:
+                _warn(f"Reference average file could not be read (expected a Freq (GHz) / value column pair): {average_data_path}")
 
     ambient = _ota_find_dir(base_folder, ["ambient"])
     cold = _ota_find_dir(base_folder, ["cold"])
@@ -917,9 +938,10 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
 
 
 def generate_plots(params):
+    _warnings.clear()
     test_type = int(params.get('testType', 1))
     runs = params.get('runs', [])
-    
+
     # Process runs to actual directories
     resolved_runs = []
     for run in runs:

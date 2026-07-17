@@ -21,6 +21,7 @@ function App() {
   const [isUploadingSource, setIsUploadingSource] = useState(false);
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
+  const [warnings, setWarnings] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
   
   const [uploadMode, setUploadMode] = useState(null); // 'access' or 'upload'
@@ -166,6 +167,8 @@ function App() {
       const data = await res.json();
       if (data.success && data.path) {
         setOutputFolder(data.path);
+      } else if (!data.success && data.error && data.error !== "No directory selected") {
+        alert("Error selecting output directory: " + data.error);
       }
     } catch (err) {
       console.error(err);
@@ -341,18 +344,20 @@ function App() {
   const startProcessing = async () => {
     setIsProcessing(true);
     setError('');
+    setWarnings([]);
     setImages([]);
-    
+
     try {
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...plotParams, outputFolder: "", dataSource: formData.basePath, calFolder: formData.calPath })
       });
-      
+
       const data = await res.json();
       if (data.success) {
         setImages(data.images || []);
+        setWarnings(data.warnings || []);
       } else {
         setError(data.error || 'Failed to generate plots');
       }
@@ -468,9 +473,12 @@ function App() {
                           const data = await res.json();
                           if (data.success && data.path) {
                             setFormData(prev => ({...prev, basePath: data.path}));
+                          } else if (!data.success && data.error && data.error !== "No directory selected") {
+                            alert("Error opening directory picker: " + data.error);
                           }
                         } catch (err) {
                           console.error("Failed to choose directory:", err);
+                          alert("Error opening directory picker: " + err.message);
                         }
                       }} className="secondary">Browse</button>
                     </div>
@@ -486,9 +494,12 @@ function App() {
                             const data = await res.json();
                             if (data.success && data.path) {
                               setFormData(prev => ({...prev, calPath: data.path}));
+                            } else if (!data.success && data.error && data.error !== "No directory selected") {
+                              alert("Error opening directory picker: " + data.error);
                             }
                           } catch (err) {
                             console.error("Failed to choose directory:", err);
+                            alert("Error opening directory picker: " + err.message);
                           }
                         }} className="secondary">Browse</button>
                       </div>
@@ -805,6 +816,8 @@ function App() {
                               const validRuns = runs.filter(r => r !== '');
                               setRuns([...validRuns, data.path]);
                               setRunNames(prev => [...prev, data.path.split(/[\\/]/).pop()]);
+                            } else if (!data.success && data.error && data.error !== "No directory selected") {
+                              alert("Error opening directory picker: " + data.error);
                             }
                           } catch (err) {
                             alert(`Error selecting folder: ${err.message}`);
@@ -905,9 +918,12 @@ function App() {
                           const data = await res.json();
                           if (data.success && data.path) {
                             setPlotParams(prev => ({...prev, average_data_path: data.path}));
+                          } else if (!data.success && data.error && data.error !== "No file selected") {
+                            alert("Error opening file picker: " + data.error);
                           }
                         } catch (err) {
                           console.error("Failed to choose file:", err);
+                          alert("Error opening file picker: " + err.message);
                         }
                       }}
                       className="secondary"
@@ -959,6 +975,12 @@ function App() {
 
 
               {error && <div style={{ color: 'var(--error)', marginBottom: '1rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{error}</div>}
+
+              {warnings.length > 0 && (
+                <div style={{ color: '#f59e0b', marginBottom: '1rem', padding: '1rem', background: 'rgba(245,158,11,0.1)', borderRadius: '8px' }}>
+                  {warnings.map((w, i) => <div key={i}>{w}</div>)}
+                </div>
+              )}
 
               <button className="btn-primary" onClick={startProcessing} disabled={isProcessing} style={{ marginTop: '2rem' }}>
                 {isProcessing ? <Activity className="animate-spin" size={18} /> : <Play size={18} />}

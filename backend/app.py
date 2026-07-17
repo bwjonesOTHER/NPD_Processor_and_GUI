@@ -391,12 +391,17 @@ print(file_path)
             env['PYTHONPATH'] = os.pathsep.join(sys.path)
             result = subprocess.run([sys.executable, '-c', script], capture_output=True, text=True, env=env)
             file_path = result.stdout.strip()
-        
+
+            if result.returncode != 0:
+                stderr = (result.stderr or "").strip()
+                hint = " (tkinter is not installed on this server — type the file path in manually instead)" if "tkinter" in stderr.lower() else ""
+                return jsonify({"success": False, "error": f"File browser failed to launch{hint}: {stderr.splitlines()[-1] if stderr else 'unknown error'}"})
+
         if file_path:
             return jsonify({"success": True, "path": file_path})
         else:
             return jsonify({"success": False, "error": "No file selected"})
-            
+
     except Exception as e:
         print("Error in choose_file:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
@@ -611,7 +616,7 @@ def api_generate_plots():
                     })
                     
     shutil.rmtree(temp_out_dir, ignore_errors=True)
-    return jsonify({"success": True, "images": results})
+    return jsonify({"success": True, "images": results, "warnings": plot_generator.get_warnings()})
 
 @app.route('/api/save_plots', methods=['POST'])
 def save_plots():
