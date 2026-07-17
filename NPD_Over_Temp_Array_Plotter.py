@@ -80,10 +80,8 @@ def plot_npd(files, title_suffix):
         print(f"No NPD files for {title_suffix}")
         return
 
-    spec_freq, spec_s21 = load_s2p(SPECAN)
-    spec_s21 = smooth(spec_s21)
-    spec_freq, spec_s21 = enforce_equal_length(spec_freq, spec_s21)
-
+    # SPECAN excluded: its S21 is non-reciprocal and tens of dB larger than
+    # the physical Base/Hat cables, so it isn't a cable-loss file.
     base_freq, base_s21 = load_s2p(BASE)
     hat_freq, hat_s21 = load_s2p(HAT)
 
@@ -104,7 +102,7 @@ def plot_npd(files, title_suffix):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth + np.abs(np.interp(freq_smooth, spec_freq, spec_s21)) + np.abs(np.interp(freq_smooth, base_freq, base_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
+        corrected = npd_smooth + np.abs(np.interp(freq_smooth, base_freq, base_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
@@ -186,10 +184,6 @@ def overlay_temperature(temp_name, folder1, folder2):
 
     files = get_csv(folder1) + get_csv(folder2)
 
-    spec_freq, spec_s21 = load_s2p(SPECAN)
-    spec_s21 = smooth(spec_s21)
-    spec_freq, spec_s21 = enforce_equal_length(spec_freq, spec_s21)
-
     base_freq, base_s21 = load_s2p(BASE)
     hat_freq, hat_s21 = load_s2p(HAT)
 
@@ -210,7 +204,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth + np.abs(np.interp(freq_smooth, spec_freq, spec_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21)) + np.abs(np.interp(freq_smooth, base_freq, base_s21))
+        corrected = npd_smooth + np.abs(np.interp(freq_smooth, hat_freq, hat_s21)) + np.abs(np.interp(freq_smooth, base_freq, base_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)

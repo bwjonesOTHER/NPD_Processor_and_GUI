@@ -644,7 +644,6 @@ def _ota_load_csv(filepath, col):
 def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False):
     if not files:
         return None
-    spec_freq, spec_s21 = cal["spec"]
     base_freq, base_s21 = cal["base"]
     hat_freq, hat_s21 = cal["hat"]
 
@@ -664,8 +663,6 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         # regardless of whether the pathloss S2P stores S21 as negative
         # (standard convention) or as a positive loss value. No other offsets.
         corrected = smoothed
-        if spec_freq is not None:
-            corrected = corrected + np.abs(np.interp(freq_smooth, spec_freq, spec_s21))
         if base_freq is not None:
             corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
         if hat_freq is not None:
@@ -760,12 +757,13 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     cold2 = _ota_find_dir(cold, ["2"]) if cold else None
     hot2 = _ota_find_dir(hot, ["2"]) if hot else None
 
-    spec_file = _ota_find_cal_file(cable, ["specan"])
+    # SpecAnBaseCableAssy is excluded: its S21 is non-reciprocal (S21 != S12)
+    # and tens of dB larger than the physical Base/Hat cables, so it isn't a
+    # cable-loss file. Only the two physical cables (Base, Hat) are applied.
     base_file = _ota_find_cal_file(cable, ["base"], must_exclude=["specan"])
     hat_file = _ota_find_cal_file(cable, ["hat"])
 
     cal = {
-        "spec": _ota_load_cal(spec_file, n_avg),
         "base": _ota_load_cal(base_file, n_avg),
         "hat": _ota_load_cal(hat_file, n_avg),
     }
