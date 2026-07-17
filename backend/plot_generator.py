@@ -689,22 +689,12 @@ def _ota_load_csv(filepath, col):
     mask = np.isfinite(freq) & np.isfinite(val)
     return freq[mask], val[mask]
 
-def _ota_load_avg_reference(filepath):
-    """Loads a reference-average NPD file (.xlsx or .csv). Tolerates leading
-    title/blank rows by scanning for the row whose first cell starts with
-    "freq" and treating everything after it as Freq(GHz)/value data."""
-    if filepath:
-        # Tolerate a path pasted with surrounding quotes/whitespace (e.g.
-        # Windows Explorer's "Copy as path").
-        filepath = filepath.strip().strip('"').strip("'").strip()
-    if not filepath or not os.path.isfile(filepath):
-        return None, None
-    try:
-        if filepath.lower().endswith(('.xlsx', '.xls')):
-            raw = pd.read_excel(filepath, header=None)
-        else:
-            raw = pd.read_csv(filepath, header=None, on_bad_lines='skip', encoding='latin1', engine='python')
-    except Exception:
+def _ota_parse_avg_sheet(raw):
+    """Given a raw (header=None) DataFrame, find the row whose first cell
+    starts with "freq" and parse everything after it as Freq(GHz)/value
+    data. Returns (freq, vals) or (None, None) if this sheet doesn't have
+    recognizable data."""
+    if raw.shape[1] < 2:
         return None, None
 
     header_row = None
@@ -723,6 +713,41 @@ def _ota_load_avg_reference(filepath):
         return None, None
     order = np.argsort(freq)
     return freq[order], vals[order]
+
+def _ota_load_avg_reference(filepath):
+    """Loads a reference-average NPD file (.xlsx/.xls/.csv). Tolerates leading
+    title/blank rows by scanning for the row whose first cell starts with
+    "freq" and treating everything after it as Freq(GHz)/value data. For
+    workbooks, every sheet is tried (not just the first) since the data may
+    sit behind a cover/notes sheet.
+    Returns (freq, vals, error) — error is None on success, otherwise a short
+    diagnostic string explaining what went wrong."""
+    if filepath:
+        # Tolerate a path pasted with surrounding quotes/whitespace (e.g.
+        # Windows Explorer's "Copy as path").
+        filepath = filepath.strip().strip('"').strip("'").strip()
+    if not filepath:
+        return None, None, None
+    if not os.path.isfile(filepath):
+        return None, None, "file not found on the server"
+
+    try:
+        if filepath.lower().endswith(('.xlsx', '.xls')):
+            sheets = pd.read_excel(filepath, header=None, sheet_name=None)
+            candidates = list(sheets.values())
+        else:
+            candidates = [pd.read_csv(filepath, header=None, on_bad_lines='skip', encoding='latin1', engine='python')]
+    except Exception as e:
+        return None, None, f"failed to open file ({e})"
+
+    for raw in candidates:
+        freq, vals = _ota_parse_avg_sheet(raw)
+        if freq is not None:
+            return freq, vals, None
+
+    n_sheets = len(candidates)
+    sheet_note = f" across all {n_sheets} sheet(s)" if n_sheets > 1 else ""
+    return None, None, f"no sheet had recognizable Freq/value data{sheet_note} (expected a Freq (GHz) column and a value column)"
 
 def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False, apply_cal=False, date_str=None, avg_ref=None, u_bound=None, l_bound=None):
     if not files:
@@ -872,15 +897,10 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
 
     # Reference-average pass/fail only applies to Ambient NPD plots — the
     # reference curve represents ambient-condition performance, not Cold/Hot.
-    avg_ref = _ota_load_avg_reference(average_data_path)
-    if avg_ref[0] is None:
-        avg_ref = None
-        if average_data_path:
-            clean_path = average_data_path.strip().strip('"').strip("'").strip()
-            if not os.path.isfile(clean_path):
-                _warn(f"Reference average file not found on the server: {average_data_path}")
-            else:
-                _warn(f"Reference average file could not be read (expected a Freq (GHz) / value column pair): {average_data_path}")
+    avg_freq, avg_vals, avg_err = _ota_load_avg_reference(average_data_path)
+    avg_ref = (avg_freq, avg_vals) if avg_freq is not None else None
+    if avg_ref is None and average_data_path and avg_err:
+        _warn(f"Reference average file could not be used ({avg_err}): {average_data_path}")
 
     ambient = _ota_find_dir(base_folder, ["ambient"])
     cold = _ota_find_dir(base_folder, ["cold"])
