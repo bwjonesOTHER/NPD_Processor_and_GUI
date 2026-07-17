@@ -887,38 +887,36 @@ function App() {
                   <label>Averaging (n_avg)</label>
                   <input type="number" step="1" min="1" name="n_avg" value={plotParams.n_avg} onChange={handlePlotParamChange} />
                 </div>
-                {testType !== 4 && (
-                  <div className="input-group">
-                    <label>Average Data File</label>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      <input
-                        type="text"
-                        name="average_data_path"
-                        value={plotParams.average_data_path}
-                        onChange={handlePlotParamChange}
-                        placeholder="Default average..."
-                        style={{ flex: 1, minWidth: 0, padding: '0.5rem', fontSize: '0.8rem' }}
-                      />
-                      <button
-                        onClick={async () => {
-                          try {
-                            const res = await fetch(`${API_BASE}/choose_file`);
-                            const data = await res.json();
-                            if (data.success && data.path) {
-                              setPlotParams(prev => ({...prev, average_data_path: data.path}));
-                            }
-                          } catch (err) {
-                            console.error("Failed to choose file:", err);
+                <div className="input-group">
+                  <label>{testType === 4 ? 'Ambient NPD Reference Average File' : 'Average Data File'}</label>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <input
+                      type="text"
+                      name="average_data_path"
+                      value={plotParams.average_data_path}
+                      onChange={handlePlotParamChange}
+                      placeholder={testType === 4 ? 'Optional — enables pass/fail on Ambient NPD...' : 'Default average...'}
+                      style={{ flex: 1, minWidth: 0, padding: '0.5rem', fontSize: '0.8rem' }}
+                    />
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`${API_BASE}/choose_file`);
+                          const data = await res.json();
+                          if (data.success && data.path) {
+                            setPlotParams(prev => ({...prev, average_data_path: data.path}));
                           }
-                        }}
-                        className="secondary"
-                        style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}
-                      >
-                        Browse
-                      </button>
-                    </div>
+                        } catch (err) {
+                          console.error("Failed to choose file:", err);
+                        }
+                      }}
+                      className="secondary"
+                      style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}
+                    >
+                      Browse
+                    </button>
                   </div>
-                )}
+                </div>
                 {testType !== 4 && (
                   <>
                     <div className="input-group">
@@ -929,16 +927,16 @@ function App() {
                       <label>S21 Lower Bound Offset</label>
                       <input type="number" step="0.1" name="l_bound_s21" value={plotParams.l_bound_s21} onChange={handlePlotParamChange} />
                     </div>
-                    <div className="input-group">
-                      <label>NPD Upper Bound Offset</label>
-                      <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
-                    </div>
-                    <div className="input-group">
-                      <label>NPD Lower Bound Offset</label>
-                      <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
-                    </div>
                   </>
                 )}
+                <div className="input-group">
+                  <label>NPD Upper Bound Offset</label>
+                  <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
+                </div>
+                <div className="input-group">
+                  <label>NPD Lower Bound Offset</label>
+                  <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
+                </div>
                 {testType === 4 && (
                   <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
                     <label htmlFor="apply_npd_cal" className="toggle-row-label">

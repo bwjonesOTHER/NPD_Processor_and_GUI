@@ -678,13 +678,51 @@ def _ota_load_csv(filepath, col):
     mask = np.isfinite(freq) & np.isfinite(val)
     return freq[mask], val[mask]
 
-def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False, apply_cal=False, date_str=None):
+def _ota_load_avg_reference(filepath):
+    """Loads a reference-average NPD file (.xlsx or .csv). Tolerates leading
+    title/blank rows by scanning for the row whose first cell starts with
+    "freq" and treating everything after it as Freq(GHz)/value data."""
+    if not filepath or not os.path.isfile(filepath):
+        return None, None
+    try:
+        if filepath.lower().endswith(('.xlsx', '.xls')):
+            raw = pd.read_excel(filepath, header=None)
+        else:
+            raw = pd.read_csv(filepath, header=None, on_bad_lines='skip', encoding='latin1', engine='python')
+    except Exception:
+        return None, None
+
+    header_row = None
+    for i in range(len(raw)):
+        cell = str(raw.iloc[i, 0]).strip().lower()
+        if cell.startswith('freq'):
+            header_row = i
+            break
+    data = raw.iloc[header_row + 1:] if header_row is not None else raw
+
+    freq = pd.to_numeric(data.iloc[:, 0], errors='coerce').values
+    vals = pd.to_numeric(data.iloc[:, 1], errors='coerce').values
+    mask = np.isfinite(freq) & np.isfinite(vals)
+    freq, vals = freq[mask], vals[mask]
+    if len(freq) == 0:
+        return None, None
+    order = np.argsort(freq)
+    return freq[order], vals[order]
+
+def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False, apply_cal=False, date_str=None, avg_ref=None, u_bound=None, l_bound=None):
     if not files:
         return None
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     specan_freq, specan_s12 = cal["specan"]
     base_freq, base_s21 = cal["base"]
     hat_freq, hat_s21 = cal["hat"]
+
+    # Pass/fail against a reference-average curve only kicks in when both a
+    # reference curve and bounds were supplied (Ambient NPD plots, when the
+    # user has picked a reference-average file in the GUI).
+    avg_freq, avg_vals = avg_ref if avg_ref else (None, None)
+    check_bounds = avg_freq is not None and u_bound is not None and l_bound is not None
+    failed_files = []
 
     plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(_OTA_COLORS)
@@ -716,6 +754,14 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
             if hat_freq is not None:
                 corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
 
+        if check_bounds:
+            avg_interp = np.interp(freq_smooth, avg_freq, avg_vals, left=np.nan, right=np.nan)
+            valid = np.isfinite(avg_interp)
+            upper = avg_interp[valid] + u_bound
+            lower = avg_interp[valid] - l_bound
+            if valid.any() and (np.any(corrected[valid] > upper) or np.any(corrected[valid] < lower)):
+                failed_files.append(os.path.basename(f))
+
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
         plotted += 1
 
@@ -723,16 +769,23 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         plt.close()
         return None
 
+    if check_bounds:
+        plt.plot(avg_freq, avg_vals, color='black', linewidth=2, linestyle='--', label='Reference Average')
+        plt.plot(avg_freq, avg_vals + u_bound, color='red', linewidth=1.2, linestyle='--', label='Upper Bound')
+        plt.plot(avg_freq, avg_vals - l_bound, color='red', linewidth=1.2, linestyle='--', label='Lower Bound')
+
     cal_suffix = "Calibrated" if apply_cal else "Raw"
     plt.grid(True)
     if plot_density:
-        plt.title(f"{date_str} Noise Power Density {title_suffix} ({cal_suffix})")
+        base_title = f"{date_str} Noise Power Density {title_suffix} ({cal_suffix})"
         plt.ylabel("NPD (dBm/Hz)")
         plt.ylim(_OTA_NPD_YLIM)
     else:
-        plt.title(f"{date_str} Noise Power {title_suffix} ({cal_suffix})")
+        base_title = f"{date_str} Noise Power {title_suffix} ({cal_suffix})"
         plt.ylabel("Noise Power (dBm)")
         plt.ylim(_OTA_NP_YLIM)
+    title = f"{base_title} — FAIL: {', '.join(failed_files)}" if failed_files else base_title
+    plt.title(title)
     plt.xlabel("Frequency (GHz)")
     plt.xlim(_OTA_XLIM)
     plt.axvline(x=freq_min, color='g')
@@ -747,7 +800,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     plt.subplots_adjust(bottom=0.45)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
-    return {"path": save_path, "status": "passed"}
+    return {"path": save_path, "status": "failed" if failed_files else "passed"}
 
 def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None):
     if not files:
@@ -794,13 +847,19 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     plt.close()
     return {"path": save_path, "status": "passed"}
 
-def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=False):
+def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=False, average_data_path="", u_bound_npd=None, l_bound_npd=None):
     generated = []
     base_folder = _ota_resolve_data_root(base_folder)
     if not base_folder or not os.path.isdir(base_folder):
         return generated
 
     date_str = datetime.now().strftime('%Y%m%d')
+
+    # Reference-average pass/fail only applies to Ambient NPD plots — the
+    # reference curve represents ambient-condition performance, not Cold/Hot.
+    avg_ref = _ota_load_avg_reference(average_data_path)
+    if avg_ref[0] is None:
+        avg_ref = None
 
     ambient = _ota_find_dir(base_folder, ["ambient"])
     cold = _ota_find_dir(base_folder, ["cold"])
@@ -835,7 +894,9 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder, ".csv")
         s21_files = _ota_get_files(folder, ".s2p")
-        p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str)
+        is_ambient = label.startswith("Ambient")
+        p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
+                             avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
         if p: generated.append(p)
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
@@ -845,7 +906,9 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder1, ".csv") + _ota_get_files(folder2, ".csv")
         s21_files = _ota_get_files(folder1, ".s2p") + _ota_get_files(folder2, ".s2p")
-        p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str)
+        is_ambient = label == "Ambient"
+        p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
+                             avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
         if p: generated.append(p)
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
@@ -942,7 +1005,8 @@ def generate_plots(params):
         # NPD Over Temp Array: folderA is the single root folder containing
         # Ambient/Cold/Hot measurement folders and a Cable Loss folder.
         apply_npd_cal = bool(params.get('apply_npd_cal', False))
-        generated_plots = generate_over_temp_array_plots(folderA, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=apply_npd_cal)
+        generated_plots = generate_over_temp_array_plots(folderA, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=apply_npd_cal,
+                                                           average_data_path=average_data_path, u_bound_npd=u_bound_npd, l_bound_npd=l_bound_npd)
 
     else:
         # Benchtop (Test 2 & 3)
