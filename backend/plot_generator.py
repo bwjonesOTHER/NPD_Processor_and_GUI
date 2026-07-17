@@ -549,12 +549,17 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
 # Ported from NPD_Over_Temp_Array_Plotter.py. Given a single root folder
 # containing Ambient/Cold/Hot measurement folders (each optionally paired
 # with a "...2" repeat run) plus a Cable Loss folder of SpecAn/Base/Hat
-# S2P calibration files, generates per-temperature NPD/S21 plots and
-# overlay comparisons between the two runs at each temperature.
+# S2P calibration files, generates per-temperature Noise Power / Noise
+# Power Density / S21 plots and overlay comparisons between the two runs
+# at each temperature.
+# CSV format (Siglent SSA export): instrument metadata rows, then
+# Freq(GHz), Raw Data (dBm at 10 kHz RBW), dBm/Hz.
 # ============================================================
 _OTA_COLORS = ["blue", "orange", "green", "red", "purple", "cyan", "magenta", "brown", "gold", "black"]
-_OTA_NPD_YLIM = (-130, -90)
+_OTA_NP_YLIM = (-130, -80)
+_OTA_NPD_YLIM = (-180, -120)
 _OTA_S21_YLIM = (-105, 5)
+_OTA_XLIM = (2.0, 5.0)
 
 def _ota_matches(name, keywords):
     lname = name.lower()
@@ -626,7 +631,17 @@ def _ota_load_cal(filepath, n_avg):
     freq, s21 = _ota_equal_len(freq, s21)
     return freq, s21
 
-def _ota_plot_npd(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder):
+def _ota_load_csv(filepath, col):
+    """Loads a Siglent NPD CSV, skipping instrument metadata rows.
+    col 1 = Raw Data (Noise Power, dBm at 10 kHz RBW), col 2 = dBm/Hz (NPD)."""
+    df = pd.read_csv(filepath, header=None, names=range(6), on_bad_lines='skip', encoding='latin1', engine='python')
+    num = df.apply(pd.to_numeric, errors='coerce')
+    freq = num.iloc[:, 0].values
+    val = num.iloc[:, col].values
+    mask = np.isfinite(freq) & np.isfinite(val)
+    return freq[mask], val[mask]
+
+def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False):
     if not files:
         return None
     spec_freq, spec_s21 = cal["spec"]
@@ -636,16 +651,15 @@ def _ota_plot_npd(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(_OTA_COLORS)
 
+    plotted = 0
     for f in files:
-        df = pd.read_csv(f).apply(pd.to_numeric, errors="coerce")
-        freq = df.iloc[:, 0].values
-        npd_raw = df.iloc[:, 1].values
-        freq = freq[np.isfinite(freq)]
-        npd_raw = npd_raw[np.isfinite(npd_raw)]
-        npd_smooth = _ota_smooth(npd_raw, n_avg)
-        freq_smooth = freq[:len(npd_smooth)]
+        freq, raw = _ota_load_csv(f, 2 if plot_density else 1)
+        if len(freq) == 0:
+            continue
+        smoothed = _ota_smooth(raw, n_avg)
+        freq_smooth = freq[:len(smoothed)]
 
-        corrected = npd_smooth
+        corrected = smoothed
         if spec_freq is not None:
             corrected = corrected + np.interp(freq_smooth, spec_freq, spec_s21)
         if base_freq is not None:
@@ -653,20 +667,34 @@ def _ota_plot_npd(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         if hat_freq is not None:
             corrected = corrected + np.interp(freq_smooth, hat_freq, hat_s21)
 
-        plt.plot(freq_smooth, corrected + 40, label=os.path.basename(f), color=next(color_cycle))
+        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
+        plotted += 1
+
+    if plotted == 0:
+        plt.close()
+        return None
 
     plt.grid(True)
-    plt.title(f"NPD {title_suffix}")
+    if plot_density:
+        plt.title(f"Noise Power Density {title_suffix}")
+        plt.ylabel("NPD (dBm/Hz)")
+        plt.ylim(_OTA_NPD_YLIM)
+    else:
+        plt.title(f"Noise Power {title_suffix}")
+        plt.ylabel("Noise Power (dBm)")
+        plt.ylim(_OTA_NP_YLIM)
     plt.xlabel("Frequency (GHz)")
-    plt.ylabel("Noise Power (dBm)")
-    plt.xlim(freq_min, freq_max)
-    plt.ylim(_OTA_NPD_YLIM)
-    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="8")
-    plt.subplots_adjust(right=0.7)
+    plt.xlim(_OTA_XLIM)
+    plt.axvline(x=freq_min, color='g')
+    plt.axvline(x=freq_max, color='g')
 
-    filename_safe_title = f"NPD_{title_suffix}".replace(" ", "_") + ".png"
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
+
+    prefix = "NPD" if plot_density else "NP"
+    filename_safe_title = f"{prefix}_{title_suffix}".replace(" ", "_") + ".png"
     save_path = os.path.join(output_folder, filename_safe_title)
-    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.45)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
     return {"path": save_path, "status": "passed"}
@@ -697,14 +725,17 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     plt.title(f"S21 {title_suffix}")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("S21 (dB)")
-    plt.xlim(freq_min, freq_max)
+    plt.xlim(_OTA_XLIM)
     plt.ylim(_OTA_S21_YLIM)
-    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="8")
-    plt.subplots_adjust(right=0.7)
+    plt.axvline(x=freq_min, color='g')
+    plt.axvline(x=freq_max, color='g')
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
 
     filename_safe_title = f"S21_{title_suffix}".replace(" ", "_") + ".png"
     save_path = os.path.join(output_folder, filename_safe_title)
-    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.45)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
     return {"path": save_path, "status": "passed"}
@@ -744,7 +775,9 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder, ".csv")
         s21_files = _ota_get_files(folder, ".s2p")
-        p = _ota_plot_npd(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder)
+        p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False)
+        if p: generated.append(p)
+        p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True)
         if p: generated.append(p)
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder)
         if p: generated.append(p)
@@ -754,7 +787,9 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder1, ".csv") + _ota_get_files(folder2, ".csv")
         s21_files = _ota_get_files(folder1, ".s2p") + _ota_get_files(folder2, ".s2p")
-        p = _ota_plot_npd(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder)
+        p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=False)
+        if p: generated.append(p)
+        p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True)
         if p: generated.append(p)
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder)
         if p: generated.append(p)

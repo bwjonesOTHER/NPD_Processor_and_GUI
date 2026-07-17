@@ -39,7 +39,7 @@ n_avg = 20
 freq_min = 2.0
 freq_max = 5.0
 
-npd_ylim = (-130, -90)
+npd_ylim = (-180, -120)
 s21_ylim = (-105, 5)
 
 show_plot = True
@@ -105,7 +105,7 @@ def plot_npd(files, title_suffix):
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
         corrected = npd_smooth + np.interp(freq_smooth, spec_freq, spec_s21) + np.interp(freq_smooth, base_freq, base_s21) + np.interp(freq_smooth, hat_freq, hat_s21)
-        plt.plot(freq_smooth, corrected+40, label=os.path.basename(f), color=next(color_cycle))
+        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
     plt.title(f"NPD {title_suffix}")
