@@ -52,7 +52,6 @@ function App() {
     l_bound_npd: 2,
     average_data_path: "",
     apply_npd_cal: false,
-    plot_npd: false,
   });
 
   useEffect(() => {
@@ -941,38 +940,21 @@ function App() {
                   </>
                 )}
                 {testType === 4 && (
-                  <>
-                    <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
-                      <label htmlFor="apply_npd_cal" className="toggle-row-label">
-                        Apply cable-loss calibration to NP/NPD
-                        <span className="toggle-row-hint">Unchecked = raw data as measured. S21 is always calibrated.</span>
-                      </label>
-                      <span className="toggle-switch">
-                        <input
-                          type="checkbox"
-                          id="apply_npd_cal"
-                          checked={!!plotParams.apply_npd_cal}
-                          onChange={(e) => setPlotParams(prev => ({ ...prev, apply_npd_cal: e.target.checked }))}
-                        />
-                        <span className="toggle-switch-track"></span>
-                      </span>
-                    </div>
-                    <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
-                      <label htmlFor="plot_npd" className="toggle-row-label">
-                        Also plot NPD (dBm/Hz)
-                        <span className="toggle-row-hint">Unchecked = only NP and S21 are plotted.</span>
-                      </label>
-                      <span className="toggle-switch">
-                        <input
-                          type="checkbox"
-                          id="plot_npd"
-                          checked={!!plotParams.plot_npd}
-                          onChange={(e) => setPlotParams(prev => ({ ...prev, plot_npd: e.target.checked }))}
-                        />
-                        <span className="toggle-switch-track"></span>
-                      </span>
-                    </div>
-                  </>
+                  <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
+                    <label htmlFor="apply_npd_cal" className="toggle-row-label">
+                      Apply cable-loss calibration to NPD
+                      <span className="toggle-row-hint">Unchecked = raw data as measured. S21 is always calibrated.</span>
+                    </label>
+                    <span className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        id="apply_npd_cal"
+                        checked={!!plotParams.apply_npd_cal}
+                        onChange={(e) => setPlotParams(prev => ({ ...prev, apply_npd_cal: e.target.checked }))}
+                      />
+                      <span className="toggle-switch-track"></span>
+                    </span>
+                  </div>
                 )}
               </div>
 

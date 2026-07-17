@@ -683,6 +683,8 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         return None
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     specan_freq, specan_s12 = cal["specan"]
+    base_freq, base_s21 = cal["base"]
+    hat_freq, hat_s21 = cal["hat"]
 
     plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(_OTA_COLORS)
@@ -695,18 +697,24 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         smoothed = _ota_smooth(raw, n_avg)
         freq_smooth = freq[:len(smoothed)]
 
-        # NP/NPD's signal chain routes through the SpecAn cable assembly, and
-        # that assembly had an amplifier inline when its pathloss file was
-        # made — so it's non-reciprocal: S21 is the amp's heavily-isolated
-        # reverse path (tens of dB of loss, not usable here), while S12 is
-        # the actual forward path the signal travels (a real gain figure;
-        # loaded in _ota_load_specan_cal). Refer the measurement back to the
-        # DUT plane by subtracting that gain back out (abs() makes this
-        # correct regardless of whether the S2P stores S12 as negative or as
-        # a positive figure).
+        # NP/NPD's full signal chain is DUT -> Base cable -> Hat cable ->
+        # SpecAn amplifier assembly -> analyzer, so all three cal files
+        # apply, not just SpecAn. SpecAn's assembly had an amplifier inline
+        # when its pathloss file was made — so it's non-reciprocal: S21 is
+        # the amp's heavily-isolated reverse path (not usable here), while
+        # S12 is the actual forward path the signal travels (a real gain
+        # figure; loaded in _ota_load_specan_cal) and gets subtracted back
+        # out. Base/Hat are passive cables in the same path, so — same as
+        # S21's correction — their loss gets added back (abs() makes this
+        # correct regardless of the S2P's sign convention).
         corrected = smoothed
-        if apply_cal and specan_freq is not None:
-            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
+        if apply_cal:
+            if specan_freq is not None:
+                corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
+            if base_freq is not None:
+                corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
+            if hat_freq is not None:
+                corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
         plotted += 1
@@ -786,7 +794,7 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     plt.close()
     return {"path": save_path, "status": "passed"}
 
-def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=False, plot_npd=False):
+def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=False):
     generated = []
     base_folder = _ota_resolve_data_root(base_folder)
     if not base_folder or not os.path.isdir(base_folder):
@@ -803,12 +811,10 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     cold2 = _ota_find_dir(cold, ["2"]) if cold else None
     hot2 = _ota_find_dir(hot, ["2"]) if hot else None
 
-    # Two separate calibration chains: NP/NPD is measured through the SpecAn
-    # cable assembly, which had an amplifier inline when it was characterized
-    # (so its figure is net gain — subtracted, not added; see
-    # _ota_plot_noise). S21 is measured directly through the passive
-    # Base/Hat cables (no amplifier, pure loss — added back; see
-    # _ota_plot_s21). Neither pair applies to the other's measurement.
+    # NP/NPD's chain runs through Base, Hat, and the SpecAn amplifier
+    # assembly, so all three cal files apply (see _ota_plot_noise). S21 is
+    # measured directly through the passive Base/Hat cables only — SpecAn
+    # doesn't apply there (see _ota_plot_s21).
     base_file = _ota_find_cal_file(cable, ["base"], must_exclude=["specan"])
     hat_file = _ota_find_cal_file(cable, ["hat"])
     specan_file = _ota_find_cal_file(cable, ["specan"])
@@ -829,11 +835,8 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder, ".csv")
         s21_files = _ota_get_files(folder, ".s2p")
-        p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False, apply_cal=apply_npd_cal, date_str=date_str)
+        p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str)
         if p: generated.append(p)
-        if plot_npd:
-            p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str)
-            if p: generated.append(p)
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
 
@@ -842,11 +845,8 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder1, ".csv") + _ota_get_files(folder2, ".csv")
         s21_files = _ota_get_files(folder1, ".s2p") + _ota_get_files(folder2, ".s2p")
-        p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=False, apply_cal=apply_npd_cal, date_str=date_str)
+        p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str)
         if p: generated.append(p)
-        if plot_npd:
-            p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str)
-            if p: generated.append(p)
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
 
@@ -942,8 +942,7 @@ def generate_plots(params):
         # NPD Over Temp Array: folderA is the single root folder containing
         # Ambient/Cold/Hot measurement folders and a Cable Loss folder.
         apply_npd_cal = bool(params.get('apply_npd_cal', False))
-        plot_npd = bool(params.get('plot_npd', False))
-        generated_plots = generate_over_temp_array_plots(folderA, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=apply_npd_cal, plot_npd=plot_npd)
+        generated_plots = generate_over_temp_array_plots(folderA, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=apply_npd_cal)
 
     else:
         # Benchtop (Test 2 & 3)
