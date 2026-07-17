@@ -1,7 +1,7 @@
 """
 plot_generator.py
 =================
-Centralized plot generation script for Tests 1, 2, and 3.
+Centralized plot generation script for Tests 1, 2, 3, and 4.
 Utilizes the modernized plotting logic to generate S-Parameter and NPD plots,
 applies calibration losses, computes Pass/Fail status, and returns a list of
 plot data dictionaries back to the Flask backend.
@@ -544,6 +544,224 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     
     return {"path": save_path, "status": "passed"}
 
+# ============================================================
+# TEST 4: NPD OVER TEMP ARRAY
+# Ported from NPD_Over_Temp_Array_Plotter.py. Given a single root folder
+# containing Ambient/Cold/Hot measurement folders (each optionally paired
+# with a "...2" repeat run) plus a Cable Loss folder of SpecAn/Base/Hat
+# S2P calibration files, generates per-temperature NPD/S21 plots and
+# overlay comparisons between the two runs at each temperature.
+# ============================================================
+_OTA_COLORS = ["blue", "orange", "green", "red", "purple", "cyan", "magenta", "brown", "gold", "black"]
+_OTA_NPD_YLIM = (-130, -90)
+_OTA_S21_YLIM = (-105, 5)
+
+def _ota_matches(name, keywords):
+    lname = name.lower()
+    return any(k in lname for k in keywords)
+
+def _ota_resolve_data_root(base_folder, max_descend=3):
+    """Skips past wrapper folders (e.g. upload staging dirs) to find the level containing Ambient/Cold/Hot/Cable Loss."""
+    current = base_folder
+    for _ in range(max_descend):
+        if not current or not os.path.isdir(current):
+            return current
+        try:
+            entries = [e for e in os.listdir(current) if os.path.isdir(os.path.join(current, e))]
+        except OSError:
+            return current
+        if any(_ota_matches(e, ("ambient", "cold", "hot", "cable")) for e in entries):
+            return current
+        if len(entries) == 1:
+            current = os.path.join(current, entries[0])
+            continue
+        return current
+    return current
+
+def _ota_find_dir(base, keywords):
+    if not base or not os.path.isdir(base):
+        return None
+    for name in sorted(os.listdir(base)):
+        full = os.path.join(base, name)
+        if os.path.isdir(full) and _ota_matches(name, keywords):
+            return full
+    return None
+
+def _ota_find_cal_file(folder, must_include, must_exclude=()):
+    if not folder or not os.path.isdir(folder):
+        return None
+    files = sorted(glob.glob(os.path.join(folder, "*.s2p")) + glob.glob(os.path.join(folder, "*.S2P")))
+    for f in files:
+        name = os.path.basename(f).lower()
+        if all(tok in name for tok in must_include) and not any(tok in name for tok in must_exclude):
+            return f
+    return None
+
+def _ota_get_files(folder, ext, limit=2):
+    if not folder or not os.path.isdir(folder):
+        return []
+    files = sorted(glob.glob(os.path.join(folder, f"*{ext}")) + glob.glob(os.path.join(folder, f"*{ext.upper()}")))
+    return files[:limit]
+
+def _ota_smooth(x, n_avg):
+    if n_avg <= 1 or len(x) < n_avg:
+        return x
+    return np.convolve(x, np.ones(n_avg) / n_avg, mode="valid")
+
+def _ota_load_s2p(filepath):
+    net = rf.Network(filepath)
+    freq = net.f / 1e9
+    s21 = net.s_db[:, 1, 0]
+    return freq, s21
+
+def _ota_equal_len(freq, val):
+    n = min(len(freq), len(val))
+    return freq[:n], val[:n]
+
+def _ota_load_cal(filepath, n_avg):
+    if not filepath or not os.path.isfile(filepath):
+        return None, None
+    freq, s21 = _ota_load_s2p(filepath)
+    s21 = _ota_smooth(s21, n_avg)
+    freq, s21 = _ota_equal_len(freq, s21)
+    return freq, s21
+
+def _ota_plot_npd(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder):
+    if not files:
+        return None
+    spec_freq, spec_s21 = cal["spec"]
+    base_freq, base_s21 = cal["base"]
+    hat_freq, hat_s21 = cal["hat"]
+
+    plt.figure(figsize=(8, 4), dpi=150)
+    color_cycle = iter(_OTA_COLORS)
+
+    for f in files:
+        df = pd.read_csv(f).apply(pd.to_numeric, errors="coerce")
+        freq = df.iloc[:, 0].values
+        npd_raw = df.iloc[:, 1].values
+        freq = freq[np.isfinite(freq)]
+        npd_raw = npd_raw[np.isfinite(npd_raw)]
+        npd_smooth = _ota_smooth(npd_raw, n_avg)
+        freq_smooth = freq[:len(npd_smooth)]
+
+        corrected = npd_smooth
+        if spec_freq is not None:
+            corrected = corrected + np.interp(freq_smooth, spec_freq, spec_s21)
+        if base_freq is not None:
+            corrected = corrected + np.interp(freq_smooth, base_freq, base_s21)
+        if hat_freq is not None:
+            corrected = corrected + np.interp(freq_smooth, hat_freq, hat_s21)
+
+        plt.plot(freq_smooth, corrected + 40, label=os.path.basename(f), color=next(color_cycle))
+
+    plt.grid(True)
+    plt.title(f"NPD {title_suffix}")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("Noise Power (dBm)")
+    plt.xlim(freq_min, freq_max)
+    plt.ylim(_OTA_NPD_YLIM)
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="8")
+    plt.subplots_adjust(right=0.7)
+
+    filename_safe_title = f"NPD_{title_suffix}".replace(" ", "_") + ".png"
+    save_path = os.path.join(output_folder, filename_safe_title)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    return {"path": save_path, "status": "passed"}
+
+def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder):
+    if not files:
+        return None
+    base_freq, base_s21 = cal["base"]
+    hat_freq, hat_s21 = cal["hat"]
+
+    plt.figure(figsize=(8, 4), dpi=150)
+    color_cycle = iter(_OTA_COLORS)
+
+    for f in files:
+        freq, s21 = _ota_load_s2p(f)
+        s21_smooth = _ota_smooth(s21, n_avg)
+        freq_smooth = freq[:len(s21_smooth)]
+
+        corrected = s21_smooth
+        if base_freq is not None:
+            corrected = corrected - np.interp(freq_smooth, base_freq, base_s21)
+        if hat_freq is not None:
+            corrected = corrected - np.interp(freq_smooth, hat_freq, hat_s21)
+
+        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
+
+    plt.grid(True)
+    plt.title(f"S21 {title_suffix}")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("S21 (dB)")
+    plt.xlim(freq_min, freq_max)
+    plt.ylim(_OTA_S21_YLIM)
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize="8")
+    plt.subplots_adjust(right=0.7)
+
+    filename_safe_title = f"S21_{title_suffix}".replace(" ", "_") + ".png"
+    save_path = os.path.join(output_folder, filename_safe_title)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    return {"path": save_path, "status": "passed"}
+
+def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder):
+    generated = []
+    base_folder = _ota_resolve_data_root(base_folder)
+    if not base_folder or not os.path.isdir(base_folder):
+        return generated
+
+    ambient = _ota_find_dir(base_folder, ["ambient"])
+    cold = _ota_find_dir(base_folder, ["cold"])
+    hot = _ota_find_dir(base_folder, ["hot"])
+    cable = _ota_find_dir(base_folder, ["cable"])
+
+    ambient2 = _ota_find_dir(ambient, ["2"]) if ambient else None
+    cold2 = _ota_find_dir(cold, ["2"]) if cold else None
+    hot2 = _ota_find_dir(hot, ["2"]) if hot else None
+
+    spec_file = _ota_find_cal_file(cable, ["specan"])
+    base_file = _ota_find_cal_file(cable, ["base"], must_exclude=["specan"])
+    hat_file = _ota_find_cal_file(cable, ["hat"])
+
+    cal = {
+        "spec": _ota_load_cal(spec_file, n_avg),
+        "base": _ota_load_cal(base_file, n_avg),
+        "hat": _ota_load_cal(hat_file, n_avg),
+    }
+
+    folder_specs = [
+        ("Ambient", ambient), ("Ambient2", ambient2),
+        ("Cold", cold), ("Cold2", cold2),
+        ("Hot", hot), ("Hot2", hot2),
+    ]
+    for label, folder in folder_specs:
+        if not folder:
+            continue
+        npd_files = _ota_get_files(folder, ".csv")
+        s21_files = _ota_get_files(folder, ".s2p")
+        p = _ota_plot_npd(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder)
+        if p: generated.append(p)
+        p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder)
+        if p: generated.append(p)
+
+    for label, folder1, folder2 in [("Ambient", ambient, ambient2), ("Cold", cold, cold2), ("Hot", hot, hot2)]:
+        if not folder1 or not folder2:
+            continue
+        npd_files = _ota_get_files(folder1, ".csv") + _ota_get_files(folder2, ".csv")
+        s21_files = _ota_get_files(folder1, ".s2p") + _ota_get_files(folder2, ".s2p")
+        p = _ota_plot_npd(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder)
+        if p: generated.append(p)
+        p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder)
+        if p: generated.append(p)
+
+    return generated
+
+
 def generate_plots(params):
     test_type = int(params.get('testType', 1))
     runs = params.get('runs', [])
@@ -628,7 +846,12 @@ def generate_plots(params):
         if dp1_den: generated_plots.append(dp1_den)
         dp2 = plot_temp_deltas(s21_averages, "S21", "S21 (dB)", output_folder, ax1_ylim=(-40, 40), ax2_ylim=(0, 30))
         if dp2: generated_plots.append(dp2)
-            
+
+    elif test_type == 4:
+        # NPD Over Temp Array: folderA is the single root folder containing
+        # Ambient/Cold/Hot measurement folders and a Cable Loss folder.
+        generated_plots = generate_over_temp_array_plots(folderA, freq_min, freq_max, n_avg, output_folder)
+
     else:
         # Benchtop (Test 2 & 3)
         sn = params.get('serial_number')

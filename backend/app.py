@@ -219,7 +219,13 @@ def submit_file_info():
         write_txt("SN.txt", sn)
         write_txt("path.txt", upload_path) # Overwrites path.txt with upload_path as in original code
         write_txt("upload_path.txt", upload_path)
-        
+
+    elif test == 4:
+        # Over Temp Array: base_path already points at the single root folder
+        # (either browsed directly, or the destination of a folder upload).
+        upload_path = base_path
+        write_txt("upload_path.txt", upload_path)
+
     return jsonify({"status": "success", "upload_path": upload_path})
 
 @app.route('/api/upload', methods=['POST'])
@@ -572,6 +578,12 @@ def api_generate_plots():
         run_b = read_txt("RunB_Path.txt")
         params['runs'] = [run for run in [run_a, run_b] if run]
         params['serial_number'] = read_txt("serialNumber.txt")
+
+    elif test == 4:
+        path = params.get('dataSource')
+        if not path:
+            path = read_txt("upload_path.txt") or read_txt("path.txt")
+        params['runs'] = [path] if path else []
 
     try:
         # Generate plots returns a list of dicts: [{'path': str, 'status': str}]

@@ -353,8 +353,8 @@ function App() {
 
   const handleTestTypeNext = (mode) => {
     setUploadMode(mode);
-    if (testType === 2) {
-      setCurrentStep(1); // Test 2 now ALWAYS uses Step 1
+    if (testType === 2 || testType === 4) {
+      setCurrentStep(1); // Test 2 and Test 4 now ALWAYS use Step 1
       return;
     }
     
@@ -420,6 +420,11 @@ function App() {
                   <h3>Full PMA Array Bench NPD</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Test 3</p>
                 </div>
+                <div className={`test-type-card ${testType === 4 ? 'selected' : ''}`} onClick={() => setTestType(4)}>
+                  <Activity size={32} color="var(--accent)" style={{ marginBottom: '1rem' }} />
+                  <h3>Over Temp Array</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Test 4</p>
+                </div>
               </div>
 
               <div className="btn-group" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', width: '100%' }}>
@@ -441,9 +446,9 @@ function App() {
               {uploadMode !== 'upload' && testType !== 1 && (
                 <>
                   <div className="form-group">
-                    <label>{testType === 2 ? 'BenchNPD Root Directory' : 'Base Source Path'}</label>
+                    <label>{testType === 2 ? 'BenchNPD Root Directory' : testType === 4 ? 'Test Folder (contains Hot/Ambient/Cold/Cable Loss)' : 'Base Source Path'}</label>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 ? 'Select BenchNPD root folder...' : 'Select a directory to read files from...'} style={{ flex: 1 }} />
+                      <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 ? 'Select BenchNPD root folder...' : testType === 4 ? 'Select the folder containing all temperature + cable loss data...' : 'Select a directory to read files from...'} style={{ flex: 1 }} />
                       <button onClick={async () => {
                         try {
                           const res = await fetch(`${API_BASE}/choose_directory`);
@@ -479,10 +484,40 @@ function App() {
                 </>
               )}
 
-              <div className="form-group">
-                <label>{testType === 2 ? 'LMO Number (e.g. 1234)' : 'LMO Number (####-##)'}</label>
-                <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
-              </div>
+              {uploadMode === 'upload' && testType === 4 && (
+                <div className="form-group">
+                  <label>Upload Test Folder (preserves Hot/Ambient/Cold/Cable Loss structure)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={isUploadingSource}
+                      onClick={() => document.getElementById('otaFolderInput').click()}
+                    >
+                      {isUploadingSource ? 'Uploading...' : 'Select Folder'}
+                    </button>
+                    <span style={{ fontSize: '0.875rem', color: formData.basePath ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {formData.basePath || 'No folder selected yet'}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    id="otaFolderInput"
+                    webkitdirectory="true"
+                    directory="true"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={handleDataSourceUpload}
+                  />
+                </div>
+              )}
+
+              {testType !== 4 && (
+                <div className="form-group">
+                  <label>{testType === 2 ? 'LMO Number (e.g. 1234)' : 'LMO Number (####-##)'}</label>
+                  <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
+                </div>
+              )}
 
               {testType === 1 && (
                 <>
@@ -547,6 +582,19 @@ function App() {
                       }
                     }} className="primary" style={{ background: 'var(--success)' }}>
                       {uploadMode === 'upload' ? 'Proceed to Upload' : 'Proceed to Configuration'} <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
+                    </button>
+                  ) : testType === 4 ? (
+                    <button onClick={async () => {
+                      if (!formData.basePath) {
+                        alert(uploadMode === 'upload'
+                          ? 'Please upload the test folder before continuing.'
+                          : 'Please select the test folder before continuing.');
+                        return;
+                      }
+                      const result = await submitFileInfo();
+                      if (result && result.success) setCurrentStep(4);
+                    }} className="primary" style={{ background: 'var(--success)' }}>
+                      Proceed to Configuration <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
                     </button>
                   ) : (
                     <>
@@ -826,53 +874,58 @@ function App() {
                   <label>Averaging (n_avg)</label>
                   <input type="number" step="1" min="1" name="n_avg" value={plotParams.n_avg} onChange={handlePlotParamChange} />
                 </div>
-                <div className="input-group">
-                  <label>Average Data File</label>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <input 
-                      type="text" 
-                      name="average_data_path" 
-                      value={plotParams.average_data_path} 
-                      onChange={handlePlotParamChange} 
-                      placeholder="Default average..." 
-                      style={{ flex: 1, minWidth: 0, padding: '0.5rem', fontSize: '0.8rem' }} 
-                    />
-                    <button 
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`${API_BASE}/choose_file`);
-                          const data = await res.json();
-                          if (data.success && data.path) {
-                            setPlotParams(prev => ({...prev, average_data_path: data.path}));
+                {testType !== 4 && (
+                  <div className="input-group">
+                    <label>Average Data File</label>
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      <input
+                        type="text"
+                        name="average_data_path"
+                        value={plotParams.average_data_path}
+                        onChange={handlePlotParamChange}
+                        placeholder="Default average..."
+                        style={{ flex: 1, minWidth: 0, padding: '0.5rem', fontSize: '0.8rem' }}
+                      />
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`${API_BASE}/choose_file`);
+                            const data = await res.json();
+                            if (data.success && data.path) {
+                              setPlotParams(prev => ({...prev, average_data_path: data.path}));
+                            }
+                          } catch (err) {
+                            console.error("Failed to choose file:", err);
                           }
-                        } catch (err) {
-                          console.error("Failed to choose file:", err);
-                        }
-                      }} 
-                      className="secondary" 
-                      style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}
-                    >
-                      Browse
-                    </button>
+                        }}
+                        className="secondary"
+                        style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}
+                      >
+                        Browse
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="input-group">
-                  <label>S21 Upper Bound Offset</label>
-                  <input type="number" step="0.1" name="u_bound_s21" value={plotParams.u_bound_s21} onChange={handlePlotParamChange} />
-                </div>
-                <div className="input-group">
-                  <label>S21 Lower Bound Offset</label>
-                  <input type="number" step="0.1" name="l_bound_s21" value={plotParams.l_bound_s21} onChange={handlePlotParamChange} />
-                </div>
-                <div className="input-group">
-                  <label>NPD Upper Bound Offset</label>
-                  <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
-                </div>
-                <div className="input-group">
-                  <label>NPD Lower Bound Offset</label>
-                  <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
-
-                </div>
+                )}
+                {testType !== 4 && (
+                  <>
+                    <div className="input-group">
+                      <label>S21 Upper Bound Offset</label>
+                      <input type="number" step="0.1" name="u_bound_s21" value={plotParams.u_bound_s21} onChange={handlePlotParamChange} />
+                    </div>
+                    <div className="input-group">
+                      <label>S21 Lower Bound Offset</label>
+                      <input type="number" step="0.1" name="l_bound_s21" value={plotParams.l_bound_s21} onChange={handlePlotParamChange} />
+                    </div>
+                    <div className="input-group">
+                      <label>NPD Upper Bound Offset</label>
+                      <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
+                    </div>
+                    <div className="input-group">
+                      <label>NPD Lower Bound Offset</label>
+                      <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
+                    </div>
+                  </>
+                )}
               </div>
 
 
@@ -915,7 +968,7 @@ function App() {
               <div className="btn-group" style={{ display: 'flex', gap: '1rem' }}>
                 <button 
                   className="secondary" 
-                  onClick={() => setCurrentStep(testType === 2 ? 2 : 3)}
+                  onClick={() => setCurrentStep(testType === 2 ? 2 : testType === 4 ? 1 : 3)}
                 >
                   Back
                 </button>
