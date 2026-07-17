@@ -14,6 +14,45 @@ backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
+# Auto-install any missing Python dependencies before importing them, so a
+# fresh checkout (or an environment where requirements.txt was never run)
+# doesn't fail with a bare ModuleNotFoundError/ImportError deep inside a
+# request handler. Only stdlib is used here since nothing else is guaranteed
+# to be installed yet.
+def _ensure_dependencies():
+    import importlib
+    # module name -> pip package name (only differ for flask-cors/scikit-rf)
+    required = {
+        'flask': 'Flask',
+        'flask_cors': 'flask-cors',
+        'numpy': 'numpy',
+        'pandas': 'pandas',
+        'matplotlib': 'matplotlib',
+        'skrf': 'scikit-rf',
+        'openpyxl': 'openpyxl',
+        'xlrd': 'xlrd',
+    }
+    missing = []
+    for module_name, pip_name in required.items():
+        try:
+            importlib.import_module(module_name)
+        except ImportError:
+            missing.append(pip_name)
+
+    if not missing:
+        return
+
+    print(f"[startup] Installing missing Python dependencies: {', '.join(missing)}")
+    try:
+        subprocess.run([sys.executable, '-m', 'pip', 'install', '-q'] + missing, check=True, timeout=600)
+        print("[startup] Dependency installation complete.")
+        importlib.invalidate_caches()
+    except Exception as e:
+        print(f"[startup] WARNING: automatic dependency installation failed: {e}")
+        print("[startup] Please run manually: pip install -r requirements.txt")
+
+_ensure_dependencies()
+
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
