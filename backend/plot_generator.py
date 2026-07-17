@@ -635,6 +635,12 @@ def _ota_load_s2p(filepath):
     s21 = net.s_db[:, 1, 0]
     return freq, s21
 
+def _ota_load_s12(filepath):
+    net = rf.Network(filepath)
+    freq = net.f / 1e9
+    s12 = net.s_db[:, 0, 1]
+    return freq, s12
+
 def _ota_equal_len(freq, val):
     n = min(len(freq), len(val))
     return freq[:n], val[:n]
@@ -646,6 +652,21 @@ def _ota_load_cal(filepath, n_avg):
     s21 = _ota_smooth(s21, n_avg)
     freq, s21 = _ota_equal_len(freq, s21)
     return freq, s21
+
+def _ota_load_specan_cal(filepath, n_avg):
+    # The SpecAn assembly has an amplifier inline, so it's non-reciprocal:
+    # S21 is its heavily-isolated reverse path (tens of dB of loss), while
+    # S12 is the actual forward path the NP/NPD signal travels through (the
+    # amplifier's real gain figure). Base/Hat are passive and reciprocal
+    # (S21 == S12), so only SpecAn needs this S12 read.
+    if not filepath or not os.path.isfile(filepath):
+        return None, None
+    net = rf.Network(filepath)
+    freq = net.f / 1e9
+    s12 = net.s_db[:, 0, 1]
+    s12 = _ota_smooth(s12, n_avg)
+    freq, s12 = _ota_equal_len(freq, s12)
+    return freq, s12
 
 def _ota_load_csv(filepath, col):
     """Loads a Siglent NPD CSV, skipping instrument metadata rows.
@@ -660,7 +681,7 @@ def _ota_load_csv(filepath, col):
 def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, plot_density=False, apply_cal=False):
     if not files:
         return None
-    specan_freq, specan_s21 = cal["specan"]
+    specan_freq, specan_s12 = cal["specan"]
 
     plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(_OTA_COLORS)
@@ -675,13 +696,16 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
 
         # NP/NPD's signal chain routes through the SpecAn cable assembly, and
         # that assembly had an amplifier inline when its pathloss file was
-        # made — so unlike a passive cable, the figure it reports is net
-        # GAIN, not loss. Refer the measurement back to the DUT plane by
-        # subtracting that gain back out (abs() makes this correct regardless
-        # of whether the S2P stores S21 as negative or as a positive figure).
+        # made — so it's non-reciprocal: S21 is the amp's heavily-isolated
+        # reverse path (tens of dB of loss, not usable here), while S12 is
+        # the actual forward path the signal travels (a real gain figure;
+        # loaded in _ota_load_specan_cal). Refer the measurement back to the
+        # DUT plane by subtracting that gain back out (abs() makes this
+        # correct regardless of whether the S2P stores S12 as negative or as
+        # a positive figure).
         corrected = smoothed
         if apply_cal and specan_freq is not None:
-            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
+            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
         plotted += 1
@@ -788,7 +812,7 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     cal = {
         "base": _ota_load_cal(base_file, n_avg),
         "hat": _ota_load_cal(hat_file, n_avg),
-        "specan": _ota_load_cal(specan_file, n_avg),
+        "specan": _ota_load_specan_cal(specan_file, n_avg),
     }
 
     folder_specs = [

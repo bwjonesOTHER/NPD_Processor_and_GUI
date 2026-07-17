@@ -92,6 +92,17 @@ def load_s2p(file):
     s21  = net.s_db[:, 1, 0]
     return freq, s21
 
+def load_s2p_s12(file):
+    # SPECAN has an amplifier inline, so it's non-reciprocal: S21 is its
+    # heavily-isolated reverse path (tens of dB of loss, not usable), while
+    # S12 is the actual forward path the NP/NPD signal travels through (a
+    # real gain figure). Base/Hat are passive and reciprocal (S21 == S12),
+    # so only SPECAN needs this S12 read.
+    net = rf.Network(file)
+    freq = net.f / 1e9
+    s12 = net.s_db[:, 0, 1]
+    return freq, s12
+
 def enforce_equal_length(freq, s21):
     min_len = min(len(freq), len(s21))
     return freq[:min_len], s21[:min_len]
@@ -106,12 +117,13 @@ def plot_npd(files, title_suffix):
 
     # NP/NPD's chain routes through the SpecAn cable assembly, and that
     # assembly had an amplifier inline when its pathloss file was made — so
-    # unlike Base/Hat (passive, pure loss), SpecAn's figure is net GAIN and
-    # must be subtracted back out, not added. Base/Hat don't apply here
-    # (they calibrate S21 instead; see plot_s21).
-    specan_freq, specan_s21 = load_s2p(SPECAN)
-    specan_s21 = smooth(specan_s21)
-    specan_freq, specan_s21 = enforce_equal_length(specan_freq, specan_s21)
+    # unlike Base/Hat (passive, pure loss), SpecAn's real signal-path figure
+    # (S12, not S21 — see load_s2p_s12) is net GAIN and must be subtracted
+    # back out, not added. Base/Hat don't apply here (they calibrate S21
+    # instead; see plot_s21).
+    specan_freq, specan_s12 = load_s2p_s12(SPECAN)
+    specan_s12 = smooth(specan_s12)
+    specan_freq, specan_s12 = enforce_equal_length(specan_freq, specan_s12)
 
     plt.figure(figsize=(12, 6))
     color_cycle = iter(my_colors)
@@ -126,7 +138,7 @@ def plot_npd(files, title_suffix):
         freq_smooth = freq[:len(npd_smooth)]
         corrected = npd_smooth
         if APPLY_NPD_CAL:
-            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
+            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
@@ -209,12 +221,13 @@ def overlay_temperature(temp_name, folder1, folder2):
     files = get_csv(folder1) + get_csv(folder2)
 
     # NP/NPD's chain routes through the SpecAn cable assembly, which had an
-    # amplifier inline when its pathloss file was made — so its figure is
-    # net GAIN and must be subtracted back out, not added like Base/Hat.
-    # Base/Hat calibrate S21 instead (see the S21 overlay below).
-    specan_freq, specan_s21 = load_s2p(SPECAN)
-    specan_s21 = smooth(specan_s21)
-    specan_freq, specan_s21 = enforce_equal_length(specan_freq, specan_s21)
+    # amplifier inline when its pathloss file was made — so its real
+    # signal-path figure (S12, not S21 — see load_s2p_s12) is net GAIN and
+    # must be subtracted back out, not added like Base/Hat. Base/Hat
+    # calibrate S21 instead (see the S21 overlay below).
+    specan_freq, specan_s12 = load_s2p_s12(SPECAN)
+    specan_s12 = smooth(specan_s12)
+    specan_freq, specan_s12 = enforce_equal_length(specan_freq, specan_s12)
 
     plt.figure(figsize=(12, 6))
     color_cycle = iter(my_colors)
@@ -229,7 +242,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         freq_smooth = freq[:len(npd_smooth)]
         corrected = npd_smooth
         if APPLY_NPD_CAL:
-            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
+            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
