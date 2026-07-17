@@ -175,3 +175,26 @@ input:focus, select:focus {
   border-radius: 12px;
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 }
+
+/* Clickable plot thumbnail with hover overlay to inspect the full-size image */
+.plot-thumb {
+  position: relative;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.plot-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.plot-thumb:hover .plot-thumb-overlay {
+  opacity: 1;
+}

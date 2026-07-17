@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, Activity, Download, UploadCloud, XCircle, Save, Folder } from 'lucide-react';
+import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, ChevronLeft, Activity, Download, UploadCloud, XCircle, Save, Folder, X, Maximize2 } from 'lucide-react';
 import JSZip from 'jszip';
 import './App.css';
 
@@ -21,6 +21,7 @@ function App() {
   const [isUploadingSource, setIsUploadingSource] = useState(false);
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(null);
   
   const [uploadMode, setUploadMode] = useState(null); // 'access' or 'upload'
   
@@ -50,6 +51,7 @@ function App() {
     u_bound_npd: 2,
     l_bound_npd: 2,
     average_data_path: "",
+    apply_npd_cal: false,
   });
 
   useEffect(() => {
@@ -88,6 +90,17 @@ function App() {
   const [numRunsInput, setNumRunsInput] = useState('2');
   const [uploadingRun, setUploadingRun] = useState(false);
   const test1RunsInputRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setSelectedIndex(null);
+      else if (e.key === 'ArrowRight') setSelectedIndex(i => (i + 1) % images.length);
+      else if (e.key === 'ArrowLeft') setSelectedIndex(i => (i - 1 + images.length) % images.length);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedIndex, images.length]);
 
 
 
@@ -926,6 +939,20 @@ function App() {
                     </div>
                   </>
                 )}
+                {testType === 4 && (
+                  <div className="input-group" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      id="apply_npd_cal"
+                      checked={!!plotParams.apply_npd_cal}
+                      onChange={(e) => setPlotParams(prev => ({ ...prev, apply_npd_cal: e.target.checked }))}
+                      style={{ width: 'auto' }}
+                    />
+                    <label htmlFor="apply_npd_cal" style={{ margin: 0, cursor: 'pointer' }}>
+                      Apply cable-loss calibration to NP/NPD (unchecked = raw data as measured; S21 is always calibrated)
+                    </label>
+                  </div>
+                )}
               </div>
 
 
@@ -955,7 +982,16 @@ function App() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                     {images.map((img, idx) => (
                       <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                        <img src={img.data} alt={img.filename} className={img.status === 'passed' ? 'plot-pass' : img.status === 'failed' ? 'plot-fail' : ''} style={{ width: '100%', height: 'auto', borderRadius: '4px' }} />
+                        <div
+                          className="plot-thumb"
+                          onClick={() => setSelectedIndex(idx)}
+                          title="Click to inspect"
+                        >
+                          <img src={img.data} alt={img.filename} className={img.status === 'passed' ? 'plot-pass' : img.status === 'failed' ? 'plot-fail' : ''} style={{ width: '100%', height: 'auto', borderRadius: '4px', display: 'block' }} />
+                          <div className="plot-thumb-overlay">
+                            <Maximize2 size={28} color="#fff" />
+                          </div>
+                        </div>
                         <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                           {img.filename}
                         </div>
@@ -1032,6 +1068,71 @@ function App() {
             <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
               <button className="secondary" onClick={() => setShowLmoModal(false)}>Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-size Plot Viewer Modal */}
+      {selectedIndex !== null && images[selectedIndex] && (
+        <div
+          onClick={() => setSelectedIndex(null)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 10000,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: '2rem', cursor: 'zoom-out'
+          }}
+        >
+          <button
+            onClick={() => setSelectedIndex(null)}
+            aria-label="Close"
+            style={{
+              position: 'absolute', top: '1.5rem', right: '1.5rem',
+              background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%',
+              width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#fff'
+            }}
+          >
+            <X size={22} />
+          </button>
+
+          {images.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setSelectedIndex(i => (i - 1 + images.length) % images.length); }}
+              aria-label="Previous plot"
+              style={{
+                position: 'absolute', top: '50%', left: '1.5rem', transform: 'translateY(-50%)',
+                background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%',
+                width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: '#fff'
+              }}
+            >
+              <ChevronLeft size={28} />
+            </button>
+          )}
+          {images.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setSelectedIndex(i => (i + 1) % images.length); }}
+              aria-label="Next plot"
+              style={{
+                position: 'absolute', top: '50%', right: '1.5rem', transform: 'translateY(-50%)',
+                background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%',
+                width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: '#fff'
+              }}
+            >
+              <ChevronRight size={28} />
+            </button>
+          )}
+
+          <img
+            src={images[selectedIndex].data}
+            alt={images[selectedIndex].filename}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '8px', cursor: 'default', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}
+          />
+          <div style={{ marginTop: '1rem', color: '#fff', fontSize: '1rem', textAlign: 'center' }}>
+            {images[selectedIndex].filename} ({selectedIndex + 1} / {images.length})
           </div>
         </div>
       )}

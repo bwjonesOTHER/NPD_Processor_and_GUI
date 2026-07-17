@@ -44,6 +44,11 @@ s21_ylim = (-105, 5)
 
 show_plot = True
 
+# NP/NPD are plotted raw by default (no cable-loss correction). Flip this to
+# True to apply the Base + Hat cable-loss cal to NP/NPD too. S21 always
+# stays calibrated regardless of this flag.
+APPLY_NPD_CAL = False
+
 my_colors = [
     "blue", "orange", "green", "red", "purple",
     "cyan", "magenta", "brown", "gold", "black"
@@ -54,13 +59,29 @@ def smooth(x):
         return x
     return np.convolve(x, np.ones(n_avg)/n_avg, mode="valid")
 
+def _dedupe_pri_red(files, limit=2):
+    # De-dupe: on case-insensitive filesystems (Windows), "*.csv" and "*.CSV"
+    # both match the same file, so combining the two globs returns it twice.
+    seen = set()
+    deduped = []
+    for f in sorted(files):
+        key = os.path.normcase(os.path.abspath(f))
+        if key not in seen:
+            seen.add(key)
+            deduped.append(f)
+    # Prefer one Pri file + one Red file (the two redundant chains) over
+    # picking the first two matches, which could both land on the same chain.
+    pri = [f for f in deduped if "pri" in os.path.basename(f).lower()]
+    red = [f for f in deduped if "red" in os.path.basename(f).lower()]
+    if pri and red:
+        return [pri[0], red[0]]
+    return deduped[:limit]
+
 def get_csv(folder):
-    files = sorted(glob(os.path.join(folder, "*.csv")))
-    return files[:2]
+    return _dedupe_pri_red(glob(os.path.join(folder, "*.csv")))
 
 def get_s2p(folder):
-    files = sorted(glob(os.path.join(folder, "*.s2p"))) + sorted(glob(os.path.join(folder, "*.S2P")))
-    return files[:2]
+    return _dedupe_pri_red(glob(os.path.join(folder, "*.s2p")) + glob(os.path.join(folder, "*.S2P")))
 
 def load_s2p(file):
     net = rf.Network(file)
@@ -102,11 +123,13 @@ def plot_npd(files, title_suffix):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth + np.abs(np.interp(freq_smooth, base_freq, base_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
+        corrected = npd_smooth
+        if APPLY_NPD_CAL:
+            corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"NPD {title_suffix}")
+    plt.title(f"NPD {title_suffix} ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("Noise Power (dBm)")
     plt.xlim(freq_min, freq_max)
@@ -204,11 +227,13 @@ def overlay_temperature(temp_name, folder1, folder2):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth + np.abs(np.interp(freq_smooth, hat_freq, hat_s21)) + np.abs(np.interp(freq_smooth, base_freq, base_s21))
+        corrected = npd_smooth
+        if APPLY_NPD_CAL:
+            corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21)) + np.abs(np.interp(freq_smooth, base_freq, base_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"NPD OVERLAY — {temp_name} & {temp_name}2")
+    plt.title(f"NPD OVERLAY — {temp_name} & {temp_name}2 ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("Noise Power (dBm)")
     plt.xlim(freq_min, freq_max)
