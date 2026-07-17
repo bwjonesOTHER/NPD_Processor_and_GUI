@@ -754,8 +754,6 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         return None
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     specan_freq, specan_s12 = cal["specan"]
-    base_freq, base_s21 = cal["base"]
-    hat_freq, hat_s21 = cal["hat"]
 
     # Pass/fail against a reference-average curve only kicks in when both a
     # reference curve and bounds were supplied (Ambient NPD plots, when the
@@ -775,24 +773,17 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         smoothed = _ota_smooth(raw, n_avg)
         freq_smooth = freq[:len(smoothed)]
 
-        # NP/NPD's full signal chain is DUT -> Base cable -> Hat cable ->
-        # SpecAn amplifier assembly -> analyzer, so all three cal files
-        # apply, not just SpecAn. SpecAn's assembly had an amplifier inline
-        # when its pathloss file was made — so it's non-reciprocal: S21 is
-        # the amp's heavily-isolated reverse path (not usable here), while
-        # S12 is the actual forward path the signal travels (a real gain
-        # figure; loaded in _ota_load_specan_cal) and gets subtracted back
-        # out. Base/Hat are passive cables in the same path, so — same as
-        # S21's correction — their loss gets added back (abs() makes this
-        # correct regardless of the S2P's sign convention).
+        # NP/NPD only needs the SpecAn cal file — Base/Hat don't apply to it
+        # (they calibrate S21 instead; see _ota_plot_s21). SpecAn's assembly
+        # had an amplifier inline when its pathloss file was made — so it's
+        # non-reciprocal: S21 is the amp's heavily-isolated reverse path
+        # (not usable here), while S12 is the actual forward path the
+        # signal travels (a real gain figure; loaded in
+        # _ota_load_specan_cal) and gets subtracted back out (abs() makes
+        # this correct regardless of the S2P's sign convention).
         corrected = smoothed
-        if apply_cal:
-            if specan_freq is not None:
-                corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
-            if base_freq is not None:
-                corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
-            if hat_freq is not None:
-                corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
+        if apply_cal and specan_freq is not None:
+            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
 
         if check_bounds:
             avg_interp = np.interp(freq_smooth, avg_freq, avg_vals, left=np.nan, right=np.nan)
@@ -911,10 +902,10 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     cold2 = _ota_find_dir(cold, ["2"]) if cold else None
     hot2 = _ota_find_dir(hot, ["2"]) if hot else None
 
-    # NP/NPD's chain runs through Base, Hat, and the SpecAn amplifier
-    # assembly, so all three cal files apply (see _ota_plot_noise). S21 is
-    # measured directly through the passive Base/Hat cables only — SpecAn
-    # doesn't apply there (see _ota_plot_s21).
+    # Two separate calibration chains: NP/NPD only needs the SpecAn cal file
+    # (see _ota_plot_noise). S21 is measured directly through the passive
+    # Base/Hat cables only — SpecAn doesn't apply there (see
+    # _ota_plot_s21). Neither pair applies to the other's measurement.
     base_file = _ota_find_cal_file(cable, ["base"], must_exclude=["specan"])
     hat_file = _ota_find_cal_file(cable, ["hat"])
     specan_file = _ota_find_cal_file(cable, ["specan"])

@@ -118,23 +118,14 @@ def plot_npd(files, title_suffix):
         print(f"No NPD files for {title_suffix}")
         return
 
-    # NP/NPD's full chain is DUT -> Base cable -> Hat cable -> SpecAn
-    # amplifier assembly -> analyzer, so all three cal files apply, not just
-    # SpecAn. SpecAn's assembly had an amplifier inline when its pathloss
-    # file was made — so it's non-reciprocal: its real signal-path figure
-    # (S12, not S21 — see load_s2p_s12) is net GAIN and gets subtracted back
-    # out. Base/Hat are passive cables in the same path, so — same as
-    # plot_s21's correction — their loss gets added back.
+    # NP/NPD only needs the SpecAn cal file — Base/Hat don't apply to it
+    # (they calibrate S21 instead; see plot_s21). SpecAn's assembly had an
+    # amplifier inline when its pathloss file was made — so it's
+    # non-reciprocal: its real signal-path figure (S12, not S21 — see
+    # load_s2p_s12) is net GAIN and gets subtracted back out.
     specan_freq, specan_s12 = load_s2p_s12(SPECAN)
     specan_s12 = smooth(specan_s12)
     specan_freq, specan_s12 = enforce_equal_length(specan_freq, specan_s12)
-
-    base_freq, base_s21 = load_s2p(BASE)
-    hat_freq, hat_s21 = load_s2p(HAT)
-    base_s21 = smooth(base_s21)
-    hat_s21 = smooth(hat_s21)
-    base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
-    hat_freq, hat_s21 = enforce_equal_length(hat_freq, hat_s21)
 
     plt.figure(figsize=(12, 6))
     color_cycle = iter(my_colors)
@@ -231,21 +222,13 @@ def overlay_temperature(temp_name, folder1, folder2):
 
     files = get_csv(folder1) + get_csv(folder2)
 
-    # NP/NPD's full chain is DUT -> Base cable -> Hat cable -> SpecAn
-    # amplifier assembly -> analyzer, so all three cal files apply. SpecAn's
-    # real signal-path figure (S12, not S21 — see load_s2p_s12) is net GAIN
-    # and gets subtracted back out. Base/Hat are passive cables in the same
-    # path, so their loss gets added back (same as the S21 overlay below).
+    # NP/NPD only needs the SpecAn cal file — Base/Hat don't apply to it
+    # (they calibrate S21 instead; see the S21 overlay below). SpecAn's real
+    # signal-path figure (S12, not S21 — see load_s2p_s12) is net GAIN and
+    # gets subtracted back out.
     specan_freq, specan_s12 = load_s2p_s12(SPECAN)
     specan_s12 = smooth(specan_s12)
     specan_freq, specan_s12 = enforce_equal_length(specan_freq, specan_s12)
-
-    base_freq, base_s21 = load_s2p(BASE)
-    hat_freq, hat_s21 = load_s2p(HAT)
-    base_s21 = smooth(base_s21)
-    hat_s21 = smooth(hat_s21)
-    base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
-    hat_freq, hat_s21 = enforce_equal_length(hat_freq, hat_s21)
 
     plt.figure(figsize=(12, 6))
     color_cycle = iter(my_colors)
@@ -261,8 +244,6 @@ def overlay_temperature(temp_name, folder1, folder2):
         corrected = npd_smooth
         if APPLY_NPD_CAL:
             corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
-            corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
-            corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
