@@ -1,8 +1,0 @@
-
---- TEST 3 DEBUG ---
-search_dirA: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-main (69)\NPD_Processor_and_GUI-main\uploads\Test3\Run_1_8.953A
-search_dirB: C:\Users\thomas.moore\Downloads\NPD_Processor_and_GUI-main (69)\NPD_Processor_and_GUI-main\uploads\Test3\Run2_9.362A
-sn: 
-test_type: 3
-sparA len: 0
-npdA len: 0
