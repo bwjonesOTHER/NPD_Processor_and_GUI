@@ -387,7 +387,7 @@ function App() {
   ];
 
   return (
-    <div className="container">
+    <div className="container" style={images.length > 0 ? { maxWidth: 'min(1800px, 96vw)' } : undefined}>
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.6.0.2 Dingo</div>
@@ -982,9 +982,9 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
                     {images.map((img, idx) => (
-                      <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
                         <div
                           className="plot-thumb"
                           onClick={() => setSelectedIndex(idx)}
