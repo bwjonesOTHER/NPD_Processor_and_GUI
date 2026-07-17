@@ -52,6 +52,9 @@ show_plot = True
 # stays calibrated regardless of this flag.
 APPLY_NPD_CAL = False
 
+# Date prefix stamped on every plot title/filename.
+DATE_STR = datetime.now().strftime('%Y%m%d')
+
 my_colors = [
     "blue", "orange", "green", "red", "purple",
     "cyan", "magenta", "brown", "gold", "black"
@@ -142,7 +145,7 @@ def plot_npd(files, title_suffix):
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"NPD {title_suffix} ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
+    plt.title(f"{DATE_STR} NPD {title_suffix} ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("Noise Power (dBm)")
     plt.xlim(freq_min, freq_max)
@@ -159,7 +162,7 @@ def plot_npd(files, title_suffix):
 
     plt.tight_layout()
 
-    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_NPD_{title_suffix}.png"))
+    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_{title_suffix}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
     print("Saved:", out)
 
@@ -192,7 +195,7 @@ def plot_s21(files, title_suffix):
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"S21 {title_suffix}")
+    plt.title(f"{DATE_STR} S21 {title_suffix}")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("S21 (dB)")
     plt.xlim(freq_min, freq_max)
@@ -209,7 +212,7 @@ def plot_s21(files, title_suffix):
 
     plt.tight_layout()
 
-    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_S21_{title_suffix}.png"))
+    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_{title_suffix}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
     print("Saved:", out)
 
@@ -246,7 +249,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"NPD OVERLAY — {temp_name} & {temp_name}2 ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
+    plt.title(f"{DATE_STR} NPD OVERLAY — {temp_name} & {temp_name}2 ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("Noise Power (dBm)")
     plt.xlim(freq_min, freq_max)
@@ -263,7 +266,7 @@ def overlay_temperature(temp_name, folder1, folder2):
 
     plt.tight_layout()
 
-    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_NPD_OVERLAY_{temp_name}.png"))
+    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_OVERLAY_{temp_name}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
     print("Saved:", out)
 
@@ -292,7 +295,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"S21 OVERLAY — {temp_name} & {temp_name}2")
+    plt.title(f"{DATE_STR} S21 OVERLAY — {temp_name} & {temp_name}2")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("S21 (dB)")
     plt.xlim(freq_min, freq_max)
@@ -309,7 +312,7 @@ def overlay_temperature(temp_name, folder1, folder2):
 
     plt.tight_layout()
 
-    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_S21_OVERLAY_{temp_name}.png"))
+    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_OVERLAY_{temp_name}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
     print("Saved:", out)
 
