@@ -659,15 +659,17 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         smoothed = _ota_smooth(raw, n_avg)
         freq_smooth = freq[:len(smoothed)]
 
-        # Cable-loss cal: pathloss S21 is negative, so subtracting it adds the
-        # loss back and refers the measurement to the DUT plane. No other offsets.
+        # Cable-loss cal: always add back the magnitude of each cable's loss to
+        # refer the measurement to the DUT plane. abs() makes this correct
+        # regardless of whether the pathloss S2P stores S21 as negative
+        # (standard convention) or as a positive loss value. No other offsets.
         corrected = smoothed
         if spec_freq is not None:
-            corrected = corrected - np.interp(freq_smooth, spec_freq, spec_s21)
+            corrected = corrected + np.abs(np.interp(freq_smooth, spec_freq, spec_s21))
         if base_freq is not None:
-            corrected = corrected - np.interp(freq_smooth, base_freq, base_s21)
+            corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
         if hat_freq is not None:
-            corrected = corrected - np.interp(freq_smooth, hat_freq, hat_s21)
+            corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
         plotted += 1
@@ -715,11 +717,12 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         s21_smooth = _ota_smooth(s21, n_avg)
         freq_smooth = freq[:len(s21_smooth)]
 
+        # Same convention-agnostic cable-loss add-back as the NP/NPD plots.
         corrected = s21_smooth
         if base_freq is not None:
-            corrected = corrected - np.interp(freq_smooth, base_freq, base_s21)
+            corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
         if hat_freq is not None:
-            corrected = corrected - np.interp(freq_smooth, hat_freq, hat_s21)
+            corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 

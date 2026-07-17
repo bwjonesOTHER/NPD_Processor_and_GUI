@@ -104,7 +104,7 @@ def plot_npd(files, title_suffix):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth - np.interp(freq_smooth, spec_freq, spec_s21) - np.interp(freq_smooth, base_freq, base_s21) - np.interp(freq_smooth, hat_freq, hat_s21)
+        corrected = npd_smooth + np.abs(np.interp(freq_smooth, spec_freq, spec_s21)) + np.abs(np.interp(freq_smooth, base_freq, base_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
@@ -154,7 +154,7 @@ def plot_s21(files, title_suffix):
         freq, s21 = load_s2p(f)
         s21_smooth = smooth(s21)
         freq_smooth = freq[:len(s21_smooth)]
-        corrected = s21_smooth - np.interp(freq_smooth, base_freq, base_s21) - np.interp(freq_smooth, hat_freq, hat_s21)
+        corrected = s21_smooth + np.abs(np.interp(freq_smooth, base_freq, base_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
@@ -210,7 +210,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         npd_raw = npd_raw[np.isfinite(npd_raw)]
         npd_smooth = smooth(npd_raw)
         freq_smooth = freq[:len(npd_smooth)]
-        corrected = npd_smooth - np.interp(freq_smooth, spec_freq, spec_s21) - np.interp(freq_smooth, hat_freq, hat_s21) - np.interp(freq_smooth, base_freq, base_s21)
+        corrected = npd_smooth + np.abs(np.interp(freq_smooth, spec_freq, spec_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21)) + np.abs(np.interp(freq_smooth, base_freq, base_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
@@ -256,7 +256,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         freq, s21 = load_s2p(f)
         s21_smooth = smooth(s21)
         freq_smooth = freq[:len(s21_smooth)]
-        corrected = s21_smooth - np.interp(freq_smooth, base_freq, base_s21) - np.interp(freq_smooth, hat_freq, hat_s21)
+        corrected = s21_smooth + np.abs(np.interp(freq_smooth, base_freq, base_s21)) + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
