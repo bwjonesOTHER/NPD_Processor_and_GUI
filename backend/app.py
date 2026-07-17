@@ -228,6 +228,26 @@ def submit_file_info():
 
     return jsonify({"status": "success", "upload_path": upload_path})
 
+@app.route('/api/upload_reference_file', methods=['POST'])
+def upload_reference_file():
+    """Endpoint to upload a single reference file (e.g. the Ambient NPD
+    averaged-data .xlsx/.csv) directly from the browser's file picker, so it
+    works regardless of whether the browser and backend are on the same
+    machine — unlike the OS-native folder/file browse dialogs."""
+    if 'file' not in request.files:
+        return jsonify({"success": False, "error": "No file part"}), 400
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({"success": False, "error": "No file selected"}), 400
+    if not file.filename.lower().endswith(('.xlsx', '.xls', '.csv')):
+        return jsonify({"success": False, "error": "Expected a .xlsx, .xls, or .csv file"}), 400
+
+    dest_folder = os.path.join(os.getcwd(), 'uploads', 'reference_files')
+    os.makedirs(dest_folder, exist_ok=True)
+    filepath = os.path.join(dest_folder, file.filename)
+    file.save(filepath)
+    return jsonify({"success": True, "path": filepath, "filename": file.filename})
+
 @app.route('/api/upload', methods=['POST'])
 def upload_files():
     """Endpoint to handle generic file uploads."""

@@ -19,6 +19,7 @@ function App() {
   const [isConnected, setIsConnected] = useState(true); // Always true now since we removed SharePoint
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploadingSource, setIsUploadingSource] = useState(false);
+  const [isUploadingRefFile, setIsUploadingRefFile] = useState(false);
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   const [warnings, setWarnings] = useState([]);
@@ -280,6 +281,30 @@ function App() {
       alert("Upload error: " + err.message);
     } finally {
       setIsUploadingSource(false);
+      e.target.value = ''; // Reset input
+    }
+  };
+
+  const handleReferenceFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploadingRefFile(true);
+    try {
+      const data = new FormData();
+      data.append('file', file);
+      const res = await fetch(`${API_BASE}/upload_reference_file`, { method: 'POST', body: data });
+      const json = await res.json();
+      if (json.success && json.path) {
+        setPlotParams(prev => ({ ...prev, average_data_path: json.path }));
+      } else {
+        alert("Upload error: " + (json.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload error: " + err.message);
+    } finally {
+      setIsUploadingRefFile(false);
       e.target.value = ''; // Reset input
     }
   };
@@ -902,36 +927,29 @@ function App() {
                 </div>
                 <div className="input-group">
                   <label>{testType === 4 ? 'Ambient NPD Reference Average File' : 'Average Data File'}</label>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <input
-                      type="text"
-                      name="average_data_path"
-                      value={plotParams.average_data_path}
-                      onChange={handlePlotParamChange}
-                      placeholder={testType === 4 ? 'Optional — enables pass/fail on Ambient NPD...' : 'Default average...'}
-                      style={{ flex: 1, minWidth: 0, padding: '0.5rem', fontSize: '0.8rem' }}
-                    />
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(`${API_BASE}/choose_file`);
-                          const data = await res.json();
-                          if (data.success && data.path) {
-                            setPlotParams(prev => ({...prev, average_data_path: data.path}));
-                          } else if (!data.success && data.error && data.error !== "No file selected") {
-                            alert("Error opening file picker: " + data.error);
-                          }
-                        } catch (err) {
-                          console.error("Failed to choose file:", err);
-                          alert("Error opening file picker: " + err.message);
-                        }
-                      }}
+                      type="button"
                       className="secondary"
-                      style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}
+                      disabled={isUploadingRefFile}
+                      onClick={() => document.getElementById('referenceFileInput').click()}
+                      style={{ padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
                     >
-                      Browse
+                      {isUploadingRefFile ? 'Uploading...' : 'Upload File'}
                     </button>
+                    <span style={{ fontSize: '0.8rem', color: plotParams.average_data_path ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {plotParams.average_data_path
+                        ? plotParams.average_data_path.split(/[\\/]/).pop()
+                        : (testType === 4 ? 'Optional — enables pass/fail on Ambient NPD' : 'No file selected')}
+                    </span>
                   </div>
+                  <input
+                    type="file"
+                    id="referenceFileInput"
+                    accept=".xlsx,.xls,.csv"
+                    style={{ display: 'none' }}
+                    onChange={handleReferenceFileUpload}
+                  />
                 </div>
                 {testType !== 4 && (
                   <>
