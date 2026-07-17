@@ -557,7 +557,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
 # ============================================================
 _OTA_COLORS = ["blue", "orange", "green", "red", "purple", "cyan", "magenta", "brown", "gold", "black"]
 _OTA_NP_YLIM = (-130, -80)
-_OTA_NPD_YLIM = (-180, -120)
+_OTA_NPD_YLIM = (-170, -120)
 _OTA_S21_YLIM = (-105, 5)
 _OTA_XLIM = (2.0, 5.0)
 
@@ -775,9 +775,12 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     cold2 = _ota_find_dir(cold, ["2"]) if cold else None
     hot2 = _ota_find_dir(hot, ["2"]) if hot else None
 
-    # SpecAnBaseCableAssy is excluded: its S21 is non-reciprocal (S21 != S12)
-    # and tens of dB larger than the physical Base/Hat cables, so it isn't a
-    # cable-loss file. Only the two physical cables (Base, Hat) are applied.
+    # SpecAnBaseCableAssy is excluded: it was measured with an amplifier in
+    # line (on, for best SNR during that cal run), so its S21 is non-reciprocal
+    # (S21 != S12) and tens of dB larger than the physical Base/Hat cables —
+    # it's an amplifier+cable gain figure, not a pathloss figure, so it isn't
+    # a valid cable-loss correction. Only the two physical cables (Base, Hat)
+    # are applied.
     base_file = _ota_find_cal_file(cable, ["base"], must_exclude=["specan"])
     hat_file = _ota_find_cal_file(cable, ["hat"])
 

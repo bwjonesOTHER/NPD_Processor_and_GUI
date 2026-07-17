@@ -940,17 +940,20 @@ function App() {
                   </>
                 )}
                 {testType === 4 && (
-                  <div className="input-group" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      id="apply_npd_cal"
-                      checked={!!plotParams.apply_npd_cal}
-                      onChange={(e) => setPlotParams(prev => ({ ...prev, apply_npd_cal: e.target.checked }))}
-                      style={{ width: 'auto' }}
-                    />
-                    <label htmlFor="apply_npd_cal" style={{ margin: 0, cursor: 'pointer' }}>
-                      Apply cable-loss calibration to NP/NPD (unchecked = raw data as measured; S21 is always calibrated)
+                  <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
+                    <label htmlFor="apply_npd_cal" className="toggle-row-label">
+                      Apply cable-loss calibration to NP/NPD
+                      <span className="toggle-row-hint">Unchecked = raw data as measured. S21 is always calibrated.</span>
                     </label>
+                    <span className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        id="apply_npd_cal"
+                        checked={!!plotParams.apply_npd_cal}
+                        onChange={(e) => setPlotParams(prev => ({ ...prev, apply_npd_cal: e.target.checked }))}
+                      />
+                      <span className="toggle-switch-track"></span>
+                    </span>
                   </div>
                 )}
               </div>

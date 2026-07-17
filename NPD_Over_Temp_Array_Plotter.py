@@ -30,6 +30,8 @@ HOT      = win_long(MAIN + r"\Hot Measurements")
 HOT2     = win_long(HOT + r"\HOT2")
 CABLE    = win_long(MAIN + r"\Cable Loss")
 
+# Not used for cal correction — measured with an amplifier in line, so it's
+# an amplifier+cable gain figure rather than a pure pathloss figure.
 SPECAN = win_long(os.path.join(CABLE, "20260713_SpecAnBaseCableAssy_pathloss.s2p"))
 BASE   = win_long(os.path.join(CABLE, "20260713_BaseCableAssy_pathloss.s2p"))
 HAT    = win_long(os.path.join(CABLE, "20260713_HatCableAssy_pathloss.s2p"))
@@ -101,8 +103,11 @@ def plot_npd(files, title_suffix):
         print(f"No NPD files for {title_suffix}")
         return
 
-    # SPECAN excluded: its S21 is non-reciprocal and tens of dB larger than
-    # the physical Base/Hat cables, so it isn't a cable-loss file.
+    # SPECAN excluded: it was measured with an amplifier in line (on, for
+    # best SNR during that cal run), so its S21 is non-reciprocal and tens of
+    # dB larger than the physical Base/Hat cables — it's an amplifier+cable
+    # gain figure, not a pathloss figure, so it isn't a valid cable-loss
+    # correction.
     base_freq, base_s21 = load_s2p(BASE)
     hat_freq, hat_s21 = load_s2p(HAT)
 
