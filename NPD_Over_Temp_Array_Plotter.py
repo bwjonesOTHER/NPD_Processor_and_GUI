@@ -1,0 +1,308 @@
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import skrf as rf
+from glob import glob
+from datetime import datetime
+
+def win_long(path):
+    if os.name == "nt":
+        ap = os.path.abspath(path)
+        if not ap.startswith("\\\\?\\"):
+            ap = "\\\\?\\" + ap
+        return ap
+    return path
+
+MAIN = win_long(
+    r"C:\Users\brannon.jones\Desktop\Fake Sharepoint\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\Test Hat\SN0001_LMO1157-1-59-7"
+)
+
+# NEW: Output directory for all plots
+OUTDIR = win_long(os.path.join(MAIN, "ENG_review"))
+os.makedirs(OUTDIR, exist_ok=True)
+
+AMBIENT  = win_long(MAIN + r"\Ambient Measurements")
+AMBIENT2 = win_long(AMBIENT + r"\AMB 2")
+COLD     = win_long(MAIN + r"\Cold Measurements")
+COLD2    = win_long(COLD + r"\Cold 2")
+HOT      = win_long(MAIN + r"\Hot Measurements")
+HOT2     = win_long(HOT + r"\HOT2")
+CABLE    = win_long(MAIN + r"\Cable Loss")
+
+SPECAN = win_long(os.path.join(CABLE, "20260713_SpecAnBaseCableAssy_pathloss.s2p"))
+BASE   = win_long(os.path.join(CABLE, "20260713_BaseCableAssy_pathloss.s2p"))
+HAT    = win_long(os.path.join(CABLE, "20260713_HatCableAssy_pathloss.s2p"))
+
+n_avg = 20
+
+freq_min = 2.0
+freq_max = 5.0
+
+npd_ylim = (-130, -90)
+s21_ylim = (-105, 5)
+
+show_plot = True
+
+my_colors = [
+    "blue", "orange", "green", "red", "purple",
+    "cyan", "magenta", "brown", "gold", "black"
+]
+
+def smooth(x):
+    if len(x) < n_avg:
+        return x
+    return np.convolve(x, np.ones(n_avg)/n_avg, mode="valid")
+
+def get_csv(folder):
+    files = sorted(glob(os.path.join(folder, "*.csv")))
+    return files[:2]
+
+def get_s2p(folder):
+    files = sorted(glob(os.path.join(folder, "*.s2p"))) + sorted(glob(os.path.join(folder, "*.S2P")))
+    return files[:2]
+
+def load_s2p(file):
+    net = rf.Network(file)
+    freq = net.f / 1e9
+    s21  = net.s_db[:, 1, 0]
+    return freq, s21
+
+def enforce_equal_length(freq, s21):
+    min_len = min(len(freq), len(s21))
+    return freq[:min_len], s21[:min_len]
+
+# ============================================================
+# NPD PLOT
+# ============================================================
+def plot_npd(files, title_suffix):
+    if not files:
+        print(f"No NPD files for {title_suffix}")
+        return
+
+    spec_freq, spec_s21 = load_s2p(SPECAN)
+    spec_s21 = smooth(spec_s21)
+    spec_freq, spec_s21 = enforce_equal_length(spec_freq, spec_s21)
+
+    base_freq, base_s21 = load_s2p(BASE)
+    hat_freq, hat_s21 = load_s2p(HAT)
+
+    base_s21 = smooth(base_s21)
+    hat_s21 = smooth(hat_s21)
+
+    base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
+    hat_freq, hat_s21 = enforce_equal_length(hat_freq, hat_s21)
+
+    plt.figure(figsize=(12, 6))
+    color_cycle = iter(my_colors)
+
+    for f in files:
+        df = pd.read_csv(f).apply(pd.to_numeric, errors="coerce")
+        freq = df.iloc[:, 0].values
+        npd_raw = df.iloc[:, 1].values
+        freq = freq[np.isfinite(freq)]
+        npd_raw = npd_raw[np.isfinite(npd_raw)]
+        npd_smooth = smooth(npd_raw)
+        freq_smooth = freq[:len(npd_smooth)]
+        corrected = npd_smooth + np.interp(freq_smooth, spec_freq, spec_s21) + np.interp(freq_smooth, base_freq, base_s21) + np.interp(freq_smooth, hat_freq, hat_s21)
+        plt.plot(freq_smooth, corrected+40, label=os.path.basename(f), color=next(color_cycle))
+
+    plt.grid(True)
+    plt.title(f"NPD {title_suffix}")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("Noise Power (dBm)")
+    plt.xlim(freq_min, freq_max)
+    plt.ylim(npd_ylim)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.15),
+        ncol=1
+    )
+
+    plt.tight_layout()
+
+    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_NPD_{title_suffix}.png"))
+    plt.savefig(out, dpi=300, bbox_inches="tight")
+    print("Saved:", out)
+
+
+# ============================================================
+# S21 PLOT
+# ============================================================
+def plot_s21(files, title_suffix):
+    if not files:
+        print(f"No S21 files for {title_suffix}")
+        return
+
+    base_freq, base_s21 = load_s2p(BASE)
+    hat_freq,  hat_s21  = load_s2p(HAT)
+
+    base_s21 = smooth(base_s21)
+    hat_s21  = smooth(hat_s21)
+
+    base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
+    hat_freq,  hat_s21  = enforce_equal_length(hat_freq, hat_s21)
+
+    plt.figure(figsize=(12, 6))
+    color_cycle = iter(my_colors)
+
+    for f in files:
+        freq, s21 = load_s2p(f)
+        s21_smooth = smooth(s21)
+        freq_smooth = freq[:len(s21_smooth)]
+        corrected = s21_smooth - np.interp(freq_smooth, base_freq, base_s21) - np.interp(freq_smooth, hat_freq, hat_s21)
+        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
+
+    plt.grid(True)
+    plt.title(f"S21 {title_suffix}")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("S21 (dB)")
+    plt.xlim(freq_min, freq_max)
+    plt.ylim(s21_ylim)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.15),
+        ncol=1
+    )
+
+    plt.tight_layout()
+
+    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_S21_{title_suffix}.png"))
+    plt.savefig(out, dpi=300, bbox_inches="tight")
+    print("Saved:", out)
+
+# ============================================================
+# OVERLAY PLOTS
+# ============================================================
+def overlay_temperature(temp_name, folder1, folder2):
+
+    files = get_csv(folder1) + get_csv(folder2)
+
+    spec_freq, spec_s21 = load_s2p(SPECAN)
+    spec_s21 = smooth(spec_s21)
+    spec_freq, spec_s21 = enforce_equal_length(spec_freq, spec_s21)
+
+    base_freq, base_s21 = load_s2p(BASE)
+    hat_freq, hat_s21 = load_s2p(HAT)
+
+    base_s21 = smooth(base_s21)
+    hat_s21 = smooth(hat_s21)
+
+    base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
+    hat_freq, hat_s21 = enforce_equal_length(hat_freq, hat_s21)
+
+    plt.figure(figsize=(12, 6))
+    color_cycle = iter(my_colors)
+
+    for f in files:
+        df = pd.read_csv(f).apply(pd.to_numeric, errors="coerce")
+        freq = df.iloc[:, 0].values
+        npd_raw = df.iloc[:, 1].values
+        freq = freq[np.isfinite(freq)]
+        npd_raw = npd_raw[np.isfinite(npd_raw)]
+        npd_smooth = smooth(npd_raw)
+        freq_smooth = freq[:len(npd_smooth)]
+        corrected = npd_smooth + np.interp(freq_smooth, spec_freq, spec_s21) + np.interp(freq_smooth, hat_freq, hat_s21) + np.interp(freq_smooth, base_freq, base_s21)
+        plt.plot(freq_smooth, corrected+40, label=os.path.basename(f), color=next(color_cycle))
+
+    plt.grid(True)
+    plt.title(f"NPD OVERLAY — {temp_name} & {temp_name}2")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("Noise Power (dBm)")
+    plt.xlim(freq_min, freq_max)
+    plt.ylim(npd_ylim)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.15),
+        ncol=1
+    )
+
+    plt.tight_layout()
+
+    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_NPD_OVERLAY_{temp_name}.png"))
+    plt.savefig(out, dpi=300, bbox_inches="tight")
+    print("Saved:", out)
+
+    # ---------------------
+    # S21 overlay
+    # ---------------------
+    files_s2p = get_s2p(folder1) + get_s2p(folder2)
+
+    base_freq, base_s21 = load_s2p(BASE)
+    hat_freq, hat_s21 = load_s2p(HAT)
+
+    base_s21 = smooth(base_s21)
+    hat_s21 = smooth(hat_s21)
+
+    base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
+    hat_freq, hat_s21 = enforce_equal_length(hat_freq, hat_s21)
+
+    plt.figure(figsize=(12, 6))
+    color_cycle = iter(my_colors)
+
+    for f in files_s2p:
+        freq, s21 = load_s2p(f)
+        s21_smooth = smooth(s21)
+        freq_smooth = freq[:len(s21_smooth)]
+        corrected = s21_smooth - np.interp(freq_smooth, base_freq, base_s21) - np.interp(freq_smooth, hat_freq, hat_s21)
+        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
+
+    plt.grid(True)
+    plt.title(f"S21 OVERLAY — {temp_name} & {temp_name}2")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("S21 (dB)")
+    plt.xlim(freq_min, freq_max)
+    plt.ylim(s21_ylim)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.15),
+        ncol=1
+    )
+
+    plt.tight_layout()
+
+    out = win_long(os.path.join(OUTDIR, f"{datetime.now().strftime('%Y%m%d')}_S21_OVERLAY_{temp_name}.png"))
+    plt.savefig(out, dpi=300, bbox_inches="tight")
+    print("Saved:", out)
+
+# ============================================================
+# MAIN DRIVER
+# ============================================================
+def process_all():
+    folders = [
+        ("Ambient", AMBIENT),
+        ("Ambient2", AMBIENT2),
+        ("Cold", COLD),
+        ("Cold2", COLD2),
+        ("Hot", HOT),
+        ("Hot2", HOT2)
+    ]
+
+    for label, folder in folders:
+        print(f"\n=== Processing: {label} ===")
+        plot_npd(get_csv(folder), label)
+        plot_s21(get_s2p(folder), label)
+
+    overlay_temperature("Ambient", AMBIENT, AMBIENT2)
+    overlay_temperature("Cold", COLD, COLD2)
+    overlay_temperature("Hot", HOT, HOT2)
+
+
+if __name__ == "__main__":
+    process_all()
