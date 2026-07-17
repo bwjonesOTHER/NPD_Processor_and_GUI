@@ -150,8 +150,6 @@ def plot_npd(files, title_suffix):
         corrected = npd_smooth
         if APPLY_NPD_CAL:
             corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
-            corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
-            corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
