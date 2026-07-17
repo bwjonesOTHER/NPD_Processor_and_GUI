@@ -673,14 +673,15 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         smoothed = _ota_smooth(raw, n_avg)
         freq_smooth = freq[:len(smoothed)]
 
-        # NP/NPD's signal chain routes through the SpecAn cable assembly (amp
-        # in line), so that assembly's own pathloss figure — not Base/Hat —
-        # is what refers the measurement back to the DUT plane. abs() makes
-        # this correct regardless of whether the pathloss S2P stores S21 as
-        # negative (standard convention) or as a positive loss value.
+        # NP/NPD's signal chain routes through the SpecAn cable assembly, and
+        # that assembly had an amplifier inline when its pathloss file was
+        # made — so unlike a passive cable, the figure it reports is net
+        # GAIN, not loss. Refer the measurement back to the DUT plane by
+        # subtracting that gain back out (abs() makes this correct regardless
+        # of whether the S2P stores S21 as negative or as a positive figure).
         corrected = smoothed
         if apply_cal and specan_freq is not None:
-            corrected = corrected + np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
+            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
         plotted += 1
@@ -775,10 +776,11 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     hot2 = _ota_find_dir(hot, ["2"]) if hot else None
 
     # Two separate calibration chains: NP/NPD is measured through the SpecAn
-    # cable assembly (amplifier in line), so SpecAn's own pathloss figure
-    # calibrates NP/NPD. S21 is measured directly through the Base/Hat
-    # cables (no amplifier), so Base/Hat calibrate S21. Neither pair applies
-    # to the other's measurement — see _ota_plot_noise / _ota_plot_s21.
+    # cable assembly, which had an amplifier inline when it was characterized
+    # (so its figure is net gain — subtracted, not added; see
+    # _ota_plot_noise). S21 is measured directly through the passive
+    # Base/Hat cables (no amplifier, pure loss — added back; see
+    # _ota_plot_s21). Neither pair applies to the other's measurement.
     base_file = _ota_find_cal_file(cable, ["base"], must_exclude=["specan"])
     hat_file = _ota_find_cal_file(cable, ["hat"])
     specan_file = _ota_find_cal_file(cable, ["specan"])

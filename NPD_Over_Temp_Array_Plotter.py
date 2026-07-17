@@ -30,8 +30,9 @@ HOT      = win_long(MAIN + r"\Hot Measurements")
 HOT2     = win_long(HOT + r"\HOT2")
 CABLE    = win_long(MAIN + r"\Cable Loss")
 
-# SPECAN calibrates NP/NPD (its chain has an amplifier in line); BASE/HAT
-# calibrate S21 only — see plot_npd/overlay_temperature vs. plot_s21.
+# SPECAN calibrates NP/NPD (its chain has an amplifier in line, so its
+# figure is net gain and gets subtracted, not added); BASE/HAT calibrate
+# S21 only — see plot_npd/overlay_temperature vs. plot_s21.
 SPECAN = win_long(os.path.join(CABLE, "20260713_SpecAnBaseCableAssy_pathloss.s2p"))
 BASE   = win_long(os.path.join(CABLE, "20260713_BaseCableAssy_pathloss.s2p"))
 HAT    = win_long(os.path.join(CABLE, "20260713_HatCableAssy_pathloss.s2p"))
@@ -103,9 +104,11 @@ def plot_npd(files, title_suffix):
         print(f"No NPD files for {title_suffix}")
         return
 
-    # NP/NPD's chain routes through the SpecAn cable assembly (amplifier in
-    # line), so SpecAn's own pathloss figure calibrates NP/NPD — Base/Hat
-    # don't apply here (they calibrate S21 instead; see plot_s21).
+    # NP/NPD's chain routes through the SpecAn cable assembly, and that
+    # assembly had an amplifier inline when its pathloss file was made — so
+    # unlike Base/Hat (passive, pure loss), SpecAn's figure is net GAIN and
+    # must be subtracted back out, not added. Base/Hat don't apply here
+    # (they calibrate S21 instead; see plot_s21).
     specan_freq, specan_s21 = load_s2p(SPECAN)
     specan_s21 = smooth(specan_s21)
     specan_freq, specan_s21 = enforce_equal_length(specan_freq, specan_s21)
@@ -123,7 +126,7 @@ def plot_npd(files, title_suffix):
         freq_smooth = freq[:len(npd_smooth)]
         corrected = npd_smooth
         if APPLY_NPD_CAL:
-            corrected = corrected + np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
+            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
@@ -205,8 +208,10 @@ def overlay_temperature(temp_name, folder1, folder2):
 
     files = get_csv(folder1) + get_csv(folder2)
 
-    # NP/NPD's chain routes through the SpecAn cable assembly (amplifier in
-    # line); Base/Hat calibrate S21 instead (see the S21 overlay below).
+    # NP/NPD's chain routes through the SpecAn cable assembly, which had an
+    # amplifier inline when its pathloss file was made — so its figure is
+    # net GAIN and must be subtracted back out, not added like Base/Hat.
+    # Base/Hat calibrate S21 instead (see the S21 overlay below).
     specan_freq, specan_s21 = load_s2p(SPECAN)
     specan_s21 = smooth(specan_s21)
     specan_freq, specan_s21 = enforce_equal_length(specan_freq, specan_s21)
@@ -224,7 +229,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         freq_smooth = freq[:len(npd_smooth)]
         corrected = npd_smooth
         if APPLY_NPD_CAL:
-            corrected = corrected + np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
+            corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s21))
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
