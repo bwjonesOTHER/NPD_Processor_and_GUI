@@ -817,8 +817,9 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         plt.close()
         return None
 
-    if check_bounds:
+    if avg_freq is not None:
         plt.plot(avg_freq, avg_vals, color='black', linewidth=2, linestyle='--', label='Reference Average')
+    if check_bounds:
         plt.plot(avg_freq, avg_vals + u_bound, color='red', linewidth=1.2, linestyle='--', label='Upper Bound')
         plt.plot(avg_freq, avg_vals - l_bound, color='red', linewidth=1.2, linestyle='--', label='Lower Bound')
 
@@ -888,8 +889,9 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
-    if check_bounds:
+    if avg_freq is not None:
         plt.plot(avg_freq, avg_vals, color='black', linewidth=2, linestyle='--', label='Reference Average')
+    if check_bounds:
         plt.plot(avg_freq, avg_vals + u_bound, color='red', linewidth=1.2, linestyle='--', label='Upper Bound')
         plt.plot(avg_freq, avg_vals - l_bound, color='red', linewidth=1.2, linestyle='--', label='Lower Bound')
 
