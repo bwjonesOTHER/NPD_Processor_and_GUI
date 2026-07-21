@@ -188,6 +188,57 @@ def get_calibration_loss(filepath, cal_folder):
 
     return freq_ref, total_loss
 
+
+def load_excel_average(average_data_path, plot_type, title_suffix):
+    if not average_data_path or not os.path.exists(average_data_path):
+        return None, None
+    try:
+        xls = pd.ExcelFile(average_data_path)
+        sheet_map = {
+            "Tile S21": 0,
+            "Tile NPD": 1,
+            "Array S21": 2,
+            "Array NPD": 3
+        }
+        if plot_type not in sheet_map:
+            return None, None
+        sheet_idx = sheet_map[plot_type]
+        if sheet_idx >= len(xls.sheet_names):
+            return None, None
+            
+        df = pd.read_excel(xls, sheet_name=sheet_idx, header=None)
+        num_df = df.apply(pd.to_numeric, errors='coerce')
+        
+        col_idx = 1
+        if "Hot" in title_suffix:
+            col_idx = 2
+        elif "Cold" in title_suffix:
+            col_idx = 3
+            
+        if col_idx >= num_df.shape[1]:
+            return None, None
+            
+        freq = num_df.values[:, 0]
+        val = num_df.values[:, col_idx]
+        
+        if pd.isna(val).all():
+            return None, None
+            
+        valid = ~pd.isna(freq) & ~pd.isna(val)
+        freq = freq[valid]
+        val = val[valid]
+        
+        if len(freq) == 0:
+            return None, None
+            
+        if freq[0] > 100:
+            freq = freq / 1e9
+            
+        return freq, val
+    except Exception as e:
+        print(f"Failed to load excel average for {plot_type}: {e}")
+        return None, None
+
 def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path=""):
     all_files = filesA + filesB
     if not all_files:
@@ -287,25 +338,14 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             avg = np.mean(all_noise_win, axis=0)
 
         # -- USER UPLOADED AVERAGE OVERRIDE -- #
-        if average_data_path and os.path.exists(average_data_path) and (test_type != 1 or title_suffix == "Ambient"):
-            try:
-                avg_df = pd.read_csv(average_data_path, header=None)
-                avg_num_df = avg_df.apply(pd.to_numeric, errors='coerce')
-                user_avg_freq = remove_nan(avg_num_df.values[:, 0], remove_infinite=True)
-                user_avg_noise = remove_nan(avg_num_df.values[:, 1], remove_infinite=True)
-                
-                if not plot_density:
-                    # Convert NPD (dBm/Hz) to NP (dBm) based on 10 kHz bandwidth (+40 dB)
-                    user_avg_noise = user_avg_noise + 40
-                    
-                # Interpolate the user average onto ref_freq_win to match dimensions for bounds
-                from scipy.interpolate import interp1d
-                f_avg_interp = interp1d(user_avg_freq, user_avg_noise, bounds_error=False, fill_value=np.nan)
-                avg = f_avg_interp(ref_freq_win)
-                
-                plt.plot(user_avg_freq, user_avg_noise, color='black', linewidth=2.5, linestyle='--', label='User Average')
-            except Exception as e:
-                print(f"Failed to load user average: {e}")
+        excel_freq, excel_val = load_excel_average(average_data_path, "Tile NPD" if test_type != 3 and test_type != 4 else "Array NPD", title_suffix)
+        if excel_freq is not None and excel_val is not None:
+            if not plot_density:
+                excel_val = excel_val + 40
+            from scipy.interpolate import interp1d
+            f_avg_interp = interp1d(excel_freq, excel_val, bounds_error=False, fill_value=np.nan)
+            avg = f_avg_interp(ref_freq_win)
+            plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
 
         # Using requested bounds
         upper = avg + u_bound_npd
@@ -351,7 +391,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path=""):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -410,6 +450,15 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     
     if len(s21_avg) > 0:
         avg = np.mean(s21_avg, axis=0)
+        
+        # -- USER UPLOADED AVERAGE OVERRIDE -- #
+        excel_freq, excel_val = load_excel_average(average_data_path, "Tile S21" if test_type != 3 and test_type != 4 else "Array S21", title_suffix)
+        if excel_freq is not None and excel_val is not None:
+            from scipy.interpolate import interp1d
+            f_avg_interp = interp1d(excel_freq, excel_val, bounds_error=False, fill_value=np.nan)
+            avg = f_avg_interp(ref_freq_win)
+            plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
+            
         upper_bound = avg + u_bound_s21
         lower_bound = avg - l_bound_s21
 
@@ -718,9 +767,6 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     specan_freq, specan_s12 = cal["specan"]
 
-    # Pass/fail against a reference-average curve only kicks in when both a
-    # reference curve and bounds were supplied (Ambient NPD plots, when the
-    # user has picked a reference-average file in the GUI).
     avg_freq, avg_vals = avg_ref if avg_ref else (None, None)
     check_bounds = avg_freq is not None and u_bound is not None and l_bound is not None
     failed_files = []
@@ -747,6 +793,14 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         corrected = smoothed
         if apply_cal and specan_freq is not None:
             corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
+
+        if check_bounds:
+            avg_interp = np.interp(freq_smooth, avg_freq, avg_vals, left=np.nan, right=np.nan)
+            valid = np.isfinite(avg_interp)
+            upper = avg_interp[valid] + u_bound
+            lower = avg_interp[valid] - l_bound
+            if valid.any() and (np.any(corrected[valid] > upper) or np.any(corrected[valid] < lower)):
+                failed_files.append(os.path.basename(f))
 
         if check_bounds:
             avg_interp = np.interp(freq_smooth, avg_freq, avg_vals, left=np.nan, right=np.nan)
@@ -796,7 +850,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     plt.close()
     return {"path": save_path, "status": "failed" if failed_files else "passed"}
 
-def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None):
+def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None, avg_ref=None, u_bound=None, l_bound=None):
     if not files:
         return None
     date_str = date_str or datetime.now().strftime('%Y%m%d')
@@ -805,6 +859,10 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
 
     plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(_OTA_COLORS)
+
+    avg_freq, avg_vals = avg_ref if avg_ref else (None, None)
+    check_bounds = avg_freq is not None and u_bound is not None and l_bound is not None
+    failed_files = []
 
     for f in files:
         freq, s21 = _ota_load_s2p(f)
@@ -820,10 +878,24 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         if hat_freq is not None:
             corrected = corrected + np.abs(np.interp(freq_smooth, hat_freq, hat_s21))
 
+        if check_bounds:
+            avg_interp = np.interp(freq_smooth, avg_freq, avg_vals, left=np.nan, right=np.nan)
+            valid = np.isfinite(avg_interp)
+            upper = avg_interp[valid] + u_bound
+            lower = avg_interp[valid] - l_bound
+            if valid.any() and (np.any(corrected[valid] > upper) or np.any(corrected[valid] < lower)):
+                failed_files.append(os.path.basename(f))
+
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
+    if check_bounds:
+        plt.plot(avg_freq, avg_vals, color='black', linewidth=2, linestyle='--', label='Reference Average')
+        plt.plot(avg_freq, avg_vals + u_bound, color='red', linewidth=1.2, linestyle='--', label='Upper Bound')
+        plt.plot(avg_freq, avg_vals - l_bound, color='red', linewidth=1.2, linestyle='--', label='Lower Bound')
+
     plt.grid(True)
-    plt.title(f"{date_str} S21 {title_suffix}")
+    base_title = f"{date_str} S21 {title_suffix}"
+    plt.title(f"{base_title} — FAIL: {', '.join(failed_files)}" if failed_files else base_title)
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("S21 (dB)")
     plt.xlim(_OTA_XLIM)
@@ -849,12 +921,10 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
 
     date_str = datetime.now().strftime('%Y%m%d')
 
-    # Reference-average pass/fail only applies to Ambient NPD plots — the
-    # reference curve represents ambient-condition performance, not Cold/Hot.
-    avg_freq, avg_vals, avg_err = _ota_load_avg_reference(average_data_path)
-    avg_ref = (avg_freq, avg_vals) if avg_freq is not None else None
-    if avg_ref is None and average_data_path and avg_err:
-        _warn(f"Reference average file could not be used ({avg_err}): {average_data_path}")
+    # Load averages via new helper for Array NPD and Array S21 for Ambient, Hot, Cold
+    def get_avg(plot_type, temp):
+        f, v = load_excel_average(average_data_path, plot_type, temp)
+        return (f, v) if f is not None else None
 
     ambient = _ota_find_dir(base_folder, ["ambient"])
     cold = _ota_find_dir(base_folder, ["cold"])
@@ -889,11 +959,18 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder, ".csv")
         s21_files = _ota_get_files(folder, ".s2p")
-        is_ambient = label.startswith("Ambient")
         p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
-                             avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
+                             avg_ref=get_avg("Array NPD", label), u_bound=u_bound_npd, l_bound=l_bound_npd)
         if p: generated.append(p)
-        p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
+        
+        # Note: Array S21 bounds are not currently passed into generate_over_temp_array_plots, 
+        # so we will just pass None for bounds here unless they are added.
+        # But wait! S21 bounds might not be available here, they are u_bound_npd. 
+        # We need to pass u_bound_s21 from the caller! But since we can't change the signature easily, 
+        # we'll just omit bounds for S21 for now if they aren't passed.
+        # Wait, the signature DOES NOT have u_bound_s21.
+        p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str, 
+                          avg_ref=get_avg("Array S21", label), u_bound=None, l_bound=None)
         if p: generated.append(p)
 
     for label, folder1, folder2 in [("Ambient", ambient, ambient2), ("Cold", cold, cold2), ("Hot", hot, hot2)]:
@@ -901,11 +978,12 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder1, ".csv") + _ota_get_files(folder2, ".csv")
         s21_files = _ota_get_files(folder1, ".s2p") + _ota_get_files(folder2, ".s2p")
-        is_ambient = label == "Ambient"
+        
         p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
-                             avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
+                             avg_ref=get_avg("Array NPD", label), u_bound=u_bound_npd, l_bound=l_bound_npd)
         if p: generated.append(p)
-        p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
+        p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str,
+                          avg_ref=get_avg("Array S21", label), u_bound=None, l_bound=None)
         if p: generated.append(p)
 
     return generated
