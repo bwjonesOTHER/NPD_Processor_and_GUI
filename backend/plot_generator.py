@@ -89,7 +89,7 @@ def find_cal_file(folders, cap_num, cal_type):
 
     return None
 
-def get_calibration_loss(filepath, cal_folder, serial_number=None):
+def get_calibration_loss(filepath, cal_folder):
     search_dirs = []
     if cal_folder and os.path.isdir(cal_folder):
         search_dirs.append(cal_folder)
@@ -108,19 +108,17 @@ def get_calibration_loss(filepath, cal_folder, serial_number=None):
     cal_files_to_load = []
 
     # Two situations: (A) the Base/Hat/Bulkhead cal files sit alongside the
-    # run data in its own Cap_XX folder, or (B) they live in a separate
-    # folder organized by serial number. Both are handled the same way:
-    # find_cal_file() matches a cal file either by "SN####" in its own
-    # filename or by "Cap_##" in its containing path, so passing whichever
-    # identifying number we have — the Cap number pulled from this file's
-    # own path, or else the run's serial number — covers both situations
-    # without needing to know which one actually applies.
-    cap_match = re.search(r'cap[_\s]?(\d+)', filepath, re.IGNORECASE)
+    # run data in its own Cap_XX folder, or (B) they live in a separate,
+    # shared cal folder where each file is instead tagged with its Cap
+    # number directly (e.g. "BaseSN7Cable_..." for Cap_07). Either way, the
+    # identifying number is the Cap number — NOT the tile's own serial
+    # number, which is a completely different, unrelated number (a tile's
+    # serial number and its Cap-slot cable's tag can be in overlapping
+    # ranges purely by coincidence). find_cal_file() matches a cal file by
+    # that number appearing either in its own filename or in its containing
+    # path, so it covers both situations once we know the Cap number.
+    cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
-    if ident_num is None and serial_number:
-        sn_digits = re.sub(r'\D', '', str(serial_number))
-        if sn_digits:
-            ident_num = sn_digits
 
     if ident_num is not None:
         for cal_type in ("Base", "Hat", "Bulkhead"):
@@ -128,26 +126,25 @@ def get_calibration_loss(filepath, cal_folder, serial_number=None):
             if f:
                 cal_files_to_load.append(f)
 
-    if not cal_files_to_load:
-        # No Cap/serial number could be identified for this file (or none of
-        # the three matched it) — fall back to grabbing one Base/Hat/Bulkhead
-        # file by name alone, but only from dirs scoped to this specific run
-        # (its own folder or that folder's parent). A shared cal_folder is
-        # deliberately excluded here: with no identifying number to match
-        # against, it could hold cal files for other serial numbers/caps, and
-        # guessing wrong is worse than finding nothing.
-        fallback_dirs = [d for d in search_dirs if d != cal_folder]
-        for s_dir in fallback_dirs:
-            for root, _, files in os.walk(s_dir):
-                for f in files:
-                    if not f.lower().endswith('.s2p'):
-                        continue
-                    name = f.lower()
-                    for key in ("base", "hat", "bulkhead"):
-                        if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
-                            cal_files_to_load.append(os.path.join(root, f))
-            if cal_files_to_load:
-                break
+    if not cal_files_to_load and run_folder and os.path.isdir(run_folder):
+        # No Cap number could be identified for this file — fall back to
+        # grabbing one Base/Hat/Bulkhead file by name alone, but ONLY from
+        # the file's own immediate folder, non-recursively. Anything broader
+        # (the shared cal_folder, the run's parent folder, which may have
+        # sibling Cap_## folders) risks silently grabbing another cap's cal
+        # file with no way to tell they don't match; finding nothing is
+        # safer than guessing wrong.
+        try:
+            immediate_files = os.listdir(run_folder)
+        except OSError:
+            immediate_files = []
+        for f in immediate_files:
+            if not f.lower().endswith('.s2p'):
+                continue
+            name = f.lower()
+            for key in ("base", "hat", "bulkhead"):
+                if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
+                    cal_files_to_load.append(os.path.join(run_folder, f))
 
     debug_path = os.path.expanduser("~/Desktop/debug_cal_loss.txt")
     try:
@@ -191,7 +188,7 @@ def get_calibration_loss(filepath, cal_folder, serial_number=None):
 
     return freq_ref, total_loss
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path="", serial_number=None):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path=""):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -217,7 +214,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder, serial_number)
+            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
 
             # Apply Calibration
             if freq_cal is not None:
@@ -354,7 +351,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, serial_number=None):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -373,7 +370,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         freq_cal, total_loss_db = None, None
         if test_type != 1 and apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder, serial_number)
+            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder)
 
         s21_corr = raw_s21
         if freq_cal is not None:
@@ -1169,10 +1166,10 @@ def generate_plots(params):
             f.write(f"npdA: {npdA}\n")
 
         
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=test_type, average_data_path=average_data_path, serial_number=sn)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=test_type, average_data_path=average_data_path)
         if p1: generated_plots.append(p1)
 
-        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=True, serial_number=sn)
+        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=True)
         if p2: generated_plots.append(p2)
 
     return generated_plots
