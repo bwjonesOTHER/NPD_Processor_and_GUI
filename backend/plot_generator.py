@@ -62,106 +62,91 @@ def find_cal_file(folders, cap_num, cal_type):
         cap_num_int = int(cap_num)
     except (ValueError, TypeError):
         return None
-        
+
     for folder in folders:
         for root, dirs, files in os.walk(folder):
             for file in files:
                 if not file.lower().endswith('.s2p'):
                     continue
                 if cal_type_lower in file.lower():
-                    # Extract number after SN
+                    # Extract number after SN in the file's own name
                     match = re.search(r'sn0*(\d+)', file.lower())
                     sn_match = False
                     if match:
                         if int(match.group(1)) == cap_num_int:
                             sn_match = True
-                            
-                    # Check path for cap folder
+
+                    # Check the full path (covers both situations: cal files
+                    # sitting in a "Cap_##" folder alongside the run data, or
+                    # in a separate cal folder organized by "SN####"
+                    # subfolders). Negative lookahead for a trailing digit so
+                    # "cap_1"/"sn1" don't also match inside "cap_10"/"sn10".
                     path_lower = os.path.join(root, file).lower()
-                    folder_match = False
-                    if f"cap_0{cap_num_int}" in path_lower or f"cap_{cap_num_int}" in path_lower:
-                        folder_match = True
-                        
+                    folder_match = bool(re.search(rf'(?:cap[_\s]?|sn)0*{cap_num_int}(?!\d)', path_lower))
+
                     if sn_match or folder_match:
                         return os.path.join(root, file)
-                    
+
     return None
 
-def get_calibration_loss(filepath, cal_folder, chain_override=None):
+def get_calibration_loss(filepath, cal_folder, serial_number=None):
     search_dirs = []
     if cal_folder and os.path.isdir(cal_folder):
         search_dirs.append(cal_folder)
-        
+
     run_folder = os.path.dirname(filepath)
     if run_folder and os.path.isdir(run_folder):
         search_dirs.append(run_folder)
-        
+
     parent_run_folder = os.path.dirname(run_folder)
     if parent_run_folder and os.path.isdir(parent_run_folder):
         search_dirs.append(parent_run_folder)
-        
+
     if not search_dirs:
         return None, None
-        
+
     cal_files_to_load = []
-    
-    # 1. Cap_XX Search (for Test 1)
-    cap_num = None
-    for n in ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]:
-        if f"Cap_{n}" in filepath:
-            cap_num = n
-            break
-            
-    
-    if cap_num is not None:
-        base_file = find_cal_file(search_dirs, cap_num, "Base")
-        if base_file: cal_files_to_load.append(base_file)
-        
-        bulkhead_file = find_cal_file(search_dirs, cap_num, "Bulkhead")
-        if bulkhead_file: cal_files_to_load.append(bulkhead_file)
-        
-        # SpecA
-        found = False
-        for s_dir in search_dirs:
-            for root, _, files in os.walk(s_dir):
-                for file in files:
-                    if 'speca' in file.lower() and file.lower().endswith('.s2p'):
-                        cal_files_to_load.append(os.path.join(root, file))
-                        found = True
-                        break
-                if found: break
-            if found: break
-            
-    else:
-        # 2. Benchtop Search (Fallback)
-        filepath_upper = filepath.upper()
-        if chain_override:
-            chain_type = chain_override
-        else:
-            chain_type = "Pri" if "PRI" in filepath_upper else "Red" if "RED" in filepath_upper else None
-        
-        for s_dir in search_dirs:
+
+    # Two situations: (A) the Base/Hat/Bulkhead cal files sit alongside the
+    # run data in its own Cap_XX folder, or (B) they live in a separate
+    # folder organized by serial number. Both are handled the same way:
+    # find_cal_file() matches a cal file either by "SN####" in its own
+    # filename or by "Cap_##" in its containing path, so passing whichever
+    # identifying number we have — the Cap number pulled from this file's
+    # own path, or else the run's serial number — covers both situations
+    # without needing to know which one actually applies.
+    cap_match = re.search(r'cap[_\s]?(\d+)', filepath, re.IGNORECASE)
+    ident_num = cap_match.group(1) if cap_match else None
+    if ident_num is None and serial_number:
+        sn_digits = re.sub(r'\D', '', str(serial_number))
+        if sn_digits:
+            ident_num = sn_digits
+
+    if ident_num is not None:
+        for cal_type in ("Base", "Hat", "Bulkhead"):
+            f = find_cal_file(search_dirs, ident_num, cal_type)
+            if f:
+                cal_files_to_load.append(f)
+
+    if not cal_files_to_load:
+        # No Cap/serial number could be identified for this file (or none of
+        # the three matched it) — fall back to grabbing one Base/Hat/Bulkhead
+        # file by name alone, but only from dirs scoped to this specific run
+        # (its own folder or that folder's parent). A shared cal_folder is
+        # deliberately excluded here: with no identifying number to match
+        # against, it could hold cal files for other serial numbers/caps, and
+        # guessing wrong is worse than finding nothing.
+        fallback_dirs = [d for d in search_dirs if d != cal_folder]
+        for s_dir in fallback_dirs:
             for root, _, files in os.walk(s_dir):
                 for f in files:
+                    if not f.lower().endswith('.s2p'):
+                        continue
                     name = f.lower()
-                    if not name.endswith(".s2p"): continue
-                    
-                    if chain_type == "Pri" and "pathloss_base" in name and not any("pathloss_base" in os.path.basename(p).lower() for p in cal_files_to_load):
-                        cal_files_to_load.append(os.path.join(root, f))
-                    elif chain_type == "Red" and "pathloss_cap" in name and not any("pathloss_cap" in os.path.basename(p).lower() for p in cal_files_to_load):
-                        cal_files_to_load.append(os.path.join(root, f))
-                    elif chain_type is None and "pathloss_base" in name and not any("pathloss_base" in os.path.basename(p).lower() for p in cal_files_to_load):
-                        cal_files_to_load.append(os.path.join(root, f))
-                        
-                    if "speca" in name and not any("speca" in os.path.basename(p).lower() for p in cal_files_to_load):  # Matches specan or speca
-                        cal_files_to_load.append(os.path.join(root, f))
-                        
-                    if chain_type == "Pri" and name.startswith("pri") and "bulkhead" not in name and not any(os.path.basename(p).lower().startswith("pri") for p in cal_files_to_load):
-                        cal_files_to_load.append(os.path.join(root, f))
-                    elif chain_type == "Red" and name.startswith("red") and "bulkhead" not in name and not any(os.path.basename(p).lower().startswith("red") for p in cal_files_to_load):
-                        cal_files_to_load.append(os.path.join(root, f))
+                    for key in ("base", "hat", "bulkhead"):
+                        if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
+                            cal_files_to_load.append(os.path.join(root, f))
             if cal_files_to_load:
-                cal_files_to_load = list(set(cal_files_to_load))
                 break
 
     debug_path = os.path.expanduser("~/Desktop/debug_cal_loss.txt")
@@ -206,19 +191,10 @@ def get_calibration_loss(filepath, cal_folder, chain_override=None):
 
     return freq_ref, total_loss
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path=""):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path="", serial_number=None):
     all_files = filesA + filesB
     if not all_files:
         return None
-
-    common_chain = None
-    for f in all_files:
-        if "PRI" in f.upper():
-            common_chain = "Pri"
-            break
-        elif "RED" in f.upper():
-            common_chain = "Red"
-            break
 
     plt.figure(figsize=(8, 4), dpi=150)
     all_noise = []
@@ -241,12 +217,10 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder, common_chain)
-            is_runA = file in filesA
-            should_apply_cal = apply_cal
-                
+            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder, serial_number)
+
             # Apply Calibration
-            if freq_cal is not None and should_apply_cal:
+            if freq_cal is not None:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
             
@@ -380,25 +354,16 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, serial_number=None):
     all_files = filesA + filesB
     if not all_files:
         return None
-
-    common_chain = None
-    for f in all_files:
-        if "PRI" in f.upper():
-            common_chain = "Pri"
-            break
-        elif "RED" in f.upper():
-            common_chain = "Red"
-            break
 
     avg_collection = []
     all_s21_full = []
     file_coll = []
     plt.figure(figsize=(7, 4), dpi=150)
-    
+
     ref_freq_ghz = None
     for fpath in all_files:
         net = rf.Network(fpath)
@@ -408,13 +373,14 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         freq_cal, total_loss_db = None, None
         if test_type != 1 and apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder, common_chain)
-        
-        is_runA = fpath in filesA
+            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder, serial_number)
+
         s21_corr = raw_s21
+        if freq_cal is not None:
+            s21_corr = raw_s21 + np.interp(freq_ghz, freq_cal, total_loss_db)
 
         plt.plot(freq_ghz, s21_corr, label=f'{serial[-21:-4:1]}')
-        
+
         start_idx = np.searchsorted(freq_ghz, freq_min)
         end_idx = np.searchsorted(freq_ghz, freq_max)
         
@@ -1203,10 +1169,10 @@ def generate_plots(params):
             f.write(f"npdA: {npdA}\n")
 
         
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=test_type, average_data_path=average_data_path)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=test_type, average_data_path=average_data_path, serial_number=sn)
         if p1: generated_plots.append(p1)
-        
-        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=True)
+
+        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=True, serial_number=sn)
         if p2: generated_plots.append(p2)
 
     return generated_plots
