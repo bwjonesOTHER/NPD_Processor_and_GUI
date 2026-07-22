@@ -120,16 +120,29 @@ def get_calibration_loss(filepath, cal_folder):
     # serial number and its Cap-slot cable's tag can be in overlapping
     # ranges purely by coincidence). find_cal_file() matches a cal file by
     # that number appearing either in its own filename or in its containing
-    # path, so it covers both situations once we know the Cap number.
+    # path, so it covers both situations once we know the Cap number
     is_npd = filepath.lower().endswith('.csv')
-    # S21 uses Base, Hat, Bulkhead.
-    # NPD uses Base, Bulkhead, SpecA.
-    cal_types = ("Base", "Bulkhead", "SpecA") if is_npd else ("Base", "Hat", "Bulkhead")
+    is_benchtop = "benchtop" in filepath.lower() or "post" in filepath.lower() or "pre" in filepath.lower()
+    
+    if is_npd:
+        cal_types = ("Base", "Bulkhead", "SpecA")
+    else:
+        if is_benchtop:
+            cal_types = ("Base", "Cap", "Bulkhead")
+        else:
+            cal_types = ("Base", "Hat", "Bulkhead")
 
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
 
+    cal_files_to_load = []
+    found_base_bulk = False
+
     for cal_type in cal_types:
+        # Skip Bulkhead if the Base cable already includes Bulkhead loss (e.g. BaseBulk)
+        if cal_type == "Bulkhead" and found_base_bulk:
+            continue
+            
         f = None
         if ident_num is not None:
             f = find_cal_file(search_dirs, ident_num, cal_type)
@@ -158,6 +171,8 @@ def get_calibration_loss(filepath, cal_folder):
                             break
                             
         if f:
+            if cal_type == "Base" and "bulk" in os.path.basename(f).lower():
+                found_base_bulk = True
             cal_files_to_load.append(f)
 
     # Always generate debug output
