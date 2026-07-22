@@ -1026,11 +1026,16 @@ def generate_plots(params):
         npd_averages = {}
         s21_averages = {}
         for name, tag in temp_tags:
-            npdA = search_files(folderA, f"NPD{tag}") if tag else search_files(folderA, "NPD")
-            npdB = search_files(folderB, f"NPD{tag}") if tag else search_files(folderB, "NPD")
-            
-            sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
-            sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
+            if tag:
+                npdA = search_files(folderA, f"NPD{tag}")
+                npdB = search_files(folderB, f"NPD{tag}")
+                sparA = search_files(folderA, f"VSWR{tag}")
+                sparB = search_files(folderB, f"VSWR{tag}")
+            else:
+                npdA = [f for f in search_files(folderA, "NPD") if "ambient" not in f.lower()]
+                npdB = [f for f in search_files(folderB, "NPD") if "ambient" not in f.lower()]
+                sparA = [f for f in search_files(folderA, "VSWR") if "ambient" not in f.lower()]
+                sparB = [f for f in search_files(folderB, "VSWR") if "ambient" not in f.lower()]
                 
             p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path)
             if p1: 
