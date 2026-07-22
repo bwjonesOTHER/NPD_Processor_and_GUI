@@ -1225,7 +1225,7 @@ def generate_plots(params):
             f.write(f"npdA: {npdA}\n")
 
         
-        apply_bench_cal = True if test_type == 3 else False
+        apply_bench_cal = True if (test_type == 2 or test_type == 3) else False
         p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal, test_type=test_type, average_data_path=average_data_path)
         if p1: generated_plots.append(p1)
 
