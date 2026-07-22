@@ -101,6 +101,10 @@ def get_calibration_loss(filepath, cal_folder):
     parent_run_folder = os.path.dirname(run_folder)
     if parent_run_folder and os.path.isdir(parent_run_folder):
         search_dirs.append(parent_run_folder)
+        
+    grandparent_run_folder = os.path.dirname(parent_run_folder)
+    if grandparent_run_folder and os.path.isdir(grandparent_run_folder):
+        search_dirs.append(grandparent_run_folder)
 
     if not search_dirs:
         return None, None
@@ -139,10 +143,12 @@ def get_calibration_loss(filepath, cal_folder):
                         if not file.lower().endswith('.s2p'):
                             continue
                         name = file.lower()
+                        name_norm = name.replace(" ", "").replace("_", "")
+                        cal_norm = cal_type.lower().replace(" ", "")
                         # Must exclude 'speca' when looking for 'base'
-                        if cal_type.lower() == "base" and "speca" in name:
+                        if cal_norm == "base" and "speca" in name_norm:
                             continue
-                        if cal_type.lower() in name and not any(cal_type.lower() in os.path.basename(p).lower() for p in cal_files_to_load):
+                        if cal_norm in name_norm and not any(cal_norm in os.path.basename(p).lower().replace(" ", "").replace("_", "") for p in cal_files_to_load):
                             f = os.path.join(root, file)
                             break
                             
