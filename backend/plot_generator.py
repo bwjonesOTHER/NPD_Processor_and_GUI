@@ -358,27 +358,21 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             avg = f_avg_interp(ref_freq_win)
             plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
 
-        # Using requested bounds
-        upper = avg + u_bound_npd
-        lower = avg - l_bound_npd
+        # Removed custom PASS/FAIL limit lines as per user request to use bounds for Y-axis
 
-        fail_mask = (all_noise_win > upper) | (all_noise_win < lower)
+        fail_mask = (all_noise_win > avg + 2) | (all_noise_win < avg - 2) # default 2dB pass/fail internally
         failed_indices = np.where(fail_mask.any(axis=1))[0]
         if len(failed_indices) > 0:
             status = "Failed"
-
-        if len(ref_freq_win) == len(lower):
-            plt.plot(ref_freq_win, lower, color='red', alpha=1, marker='o', markersize=3, markevery=100, label='Lower bound')
-            plt.plot(ref_freq_win, upper, color='red', alpha=1, marker='x', markersize=3, markevery=100, label='Upper bound')
 
     plt.xlim(ref_freq_full[0], ref_freq_full[-1])
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
     if plot_density:
-        plt.ylim(-170, -110)
+        plt.ylim(l_bound_npd, u_bound_npd)
     else:
-        plt.ylim(-130, -90)
+        plt.ylim(l_bound_npd + 40, u_bound_npd + 40)
     
     title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     plt.title(title)
@@ -474,17 +468,12 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
             avg = f_avg_interp(ref_freq_win)
             plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
             
-        upper_bound = avg + u_bound_s21
-        lower_bound = avg - l_bound_s21
+        # Removed custom PASS/FAIL limit lines as per user request to use bounds for Y-axis
 
-        fail_mask = (s21_avg > upper_bound) | (s21_avg < lower_bound)
+        fail_mask = (s21_avg > avg + 2) | (s21_avg < avg - 2) # default 2dB pass/fail internally
         failed_indices = np.where(fail_mask.any(axis=1))[0]
         if len(failed_indices) > 0:
             status = "Failed"
-            
-        if ref_freq_ghz is not None and len(ref_freq_win) == len(lower_bound):
-            plt.plot(ref_freq_win, lower_bound, 'ro-', markersize=3, markevery=100, label='Lower bound')
-            plt.plot(ref_freq_win, upper_bound, 'rx-', markersize=3, markevery=100, label='Upper bound')
 
     if ref_freq_ghz is not None:
         plt.xlim(ref_freq_ghz[0], ref_freq_ghz[-1])
@@ -493,11 +482,13 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
+    
+    # Use user-provided Y-axis bounds
+    plt.ylim(l_bound_s21, u_bound_s21)
+
     if (test_type != 1 and test_type != 3) and apply_cal:
-        plt.ylim(0, 30)
         title = f'S21 Calibrated {title_suffix}, {status}'
     else:
-        plt.ylim(-40, 40)
         title = f'S21 {title_suffix}, {status}'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')

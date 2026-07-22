@@ -219,7 +219,7 @@
 }
 
 .modal-content {
-  background-color: var(--bg-surface);
+  background-color: #1e1e24; /* Solid opaque background */
   border-radius: 12px;
   padding: 1.5rem;
   width: 100%;
