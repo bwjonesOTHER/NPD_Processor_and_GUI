@@ -227,10 +227,11 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     all_labels = []
     all_freqs = []
 
-    def load_np_data(file):
+    def load_np_data(file, current_cal_folder):
         df_all = pd.read_csv(file, on_bad_lines='skip', encoding='latin1', engine='python', names=range(10))
         num_df = df_all.apply(pd.to_numeric, errors='coerce')
         freq = remove_nan(num_df.values[:, 0], remove_infinite=True)
+
         if plot_density:
             try:
                 noise = remove_nan(num_df.values[:, 2], remove_infinite=True)
@@ -242,7 +243,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, cal_folder)
+            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder)
 
             # Apply Calibration
             if freq_cal is not None:
@@ -257,7 +258,9 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     ref_freq_full = None
     for file in all_files:
         serial = extract_serial(file)
-        freq, noise = load_np_data(file)
+        
+        file_cal_folder = cal_folder if file in filesB else ""
+        freq, noise = load_np_data(file, file_cal_folder)
         if len(freq) == 0:
             continue
             
@@ -385,9 +388,13 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         raw_s21 = net.s_db[:, 1, 0]
         serial = extract_serial(fpath)
 
+        # For filesA (Thermal), use Test 1 behavior (empty cal_folder so it searches run_folder)
+        # For filesB (Benchtop), use the provided cal_folder
+        file_cal_folder = cal_folder if fpath in filesB else ""
+
         freq_cal, total_loss_db = None, None
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder)
+            freq_cal, total_loss_db = get_calibration_loss(fpath, file_cal_folder)
 
         s21_corr = raw_s21
         if freq_cal is not None:
