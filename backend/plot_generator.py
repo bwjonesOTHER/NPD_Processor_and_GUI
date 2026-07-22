@@ -126,25 +126,16 @@ def get_calibration_loss(filepath, cal_folder):
             if f:
                 cal_files_to_load.append(f)
 
-    if not cal_files_to_load and run_folder and os.path.isdir(run_folder):
-        # No Cap number could be identified for this file — fall back to
-        # grabbing one Base/Hat/Bulkhead file by name alone, but ONLY from
-        # the file's own immediate folder, non-recursively. Anything broader
-        # (the shared cal_folder, the run's parent folder, which may have
-        # sibling Cap_## folders) risks silently grabbing another cap's cal
-        # file with no way to tell they don't match; finding nothing is
-        # safer than guessing wrong.
-        try:
-            immediate_files = os.listdir(run_folder)
-        except OSError:
-            immediate_files = []
-        for f in immediate_files:
-            if not f.lower().endswith('.s2p'):
-                continue
-            name = f.lower()
-            for key in ("base", "hat", "bulkhead"):
-                if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
-                    cal_files_to_load.append(os.path.join(run_folder, f))
+    if not cal_files_to_load:
+        for sdir in search_dirs:
+            for root, dirs, files in os.walk(sdir):
+                for f in files:
+                    if not f.lower().endswith('.s2p'):
+                        continue
+                    name = f.lower()
+                    for key in ("base", "hat", "bulkhead"):
+                        if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
+                            cal_files_to_load.append(os.path.join(root, f))
 
     debug_path = os.path.expanduser("~/Desktop/debug_cal_loss.txt")
     try:
