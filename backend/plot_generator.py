@@ -118,8 +118,8 @@ def get_calibration_loss(filepath, cal_folder):
     # that number appearing either in its own filename or in its containing
     # path, so it covers both situations once we know the Cap number.
     is_npd = filepath.lower().endswith('.csv')
-    # S21 uses Base, Hat, Bulkhead. NPD uses Base, Bulkhead, SpecAn.
-    cal_types = ("Base", "Bulkhead", "SpecAn") if is_npd else ("Base", "Hat", "Bulkhead")
+    # S21 uses Base, Hat, Bulkhead. NPD uses Base, Bulkhead, SpecA.
+    cal_types = ("Base", "Bulkhead", "SpecA") if is_npd else ("Base", "Hat", "Bulkhead")
 
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
@@ -138,8 +138,8 @@ def get_calibration_loss(filepath, cal_folder):
                         continue
                     name = f.lower()
                     for key in cal_types:
-                        # Must exclude 'specan' when looking for 'base' if both exist, to avoid grabbing 'SpecAnBase' for 'Base'
-                        if key.lower() == "base" and "specan" in name:
+                        # Must exclude 'speca' when looking for 'base' if both exist, to avoid grabbing 'SpecABase' for 'Base'
+                        if key.lower() == "base" and "speca" in name:
                             continue
                         if key.lower() in name and not any(key.lower() in os.path.basename(p).lower() for p in cal_files_to_load):
                             cal_files_to_load.append(os.path.join(root, f))
@@ -147,8 +147,11 @@ def get_calibration_loss(filepath, cal_folder):
     if not cal_files_to_load:
         return None, None
         
-    # Generate a debug file on the Desktop so the user can verify exactly which cal files were loaded
-    debug_path = os.path.expanduser("~/Desktop/calibration_debug_used_files.txt")
+    # Generate a debug file in the root directory so the user can verify exactly which cal files were loaded
+    debug_path = os.path.join(os.path.dirname(os.getcwd()), "calibration_debug_used_files.txt")
+    if not os.path.exists(os.path.dirname(os.getcwd())):
+        debug_path = os.path.join(os.getcwd(), "calibration_debug_used_files.txt")
+        
     try:
         with open(debug_path, "a") as f:
             f.write(f"\n--- Cal for {filepath} ---\n")
