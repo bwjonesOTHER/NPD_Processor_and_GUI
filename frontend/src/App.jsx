@@ -49,10 +49,10 @@ function App() {
     freq_max: 4.1,
     reqS11Val: -10,
     n_avg: 20,
-    u_bound_s21: 2,
-    l_bound_s21: 2,
-    u_bound_npd: 2,
-    l_bound_npd: 2,
+    u_bound_npd: -110,
+    l_bound_npd: -170,
+    u_bound_s21: 5,
+    l_bound_s21: -105,
     average_data_path: "",
     apply_npd_cal: false,
   });
@@ -1008,16 +1008,18 @@ function App() {
 
               {images.length > 0 && (
                 <div style={{ marginTop: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ margin: 0 }}>Generated Plots ({images.length})</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
+                    <div>
+                      <button onClick={() => setShowPlotProps(true)} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--accent)', marginBottom: '0.5rem' }}>
+                        <Settings size={16} />
+                        Plot Properties
+                      </button>
+                      <h3 style={{ margin: 0 }}>Generated Plots ({images.length})</h3>
+                    </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                       <button onClick={handleSavePlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--success)' }}>
                         <Save size={16} />
                         Save Plots to Destination
-                      </button>
-                      <button onClick={() => setShowPlotProps(true)} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--accent)' }}>
-                        <Settings size={16} />
-                        Plot Properties
                       </button>
                       <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
                         <Download size={16} />
