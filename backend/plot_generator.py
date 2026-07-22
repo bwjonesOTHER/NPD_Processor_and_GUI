@@ -93,49 +93,33 @@ def get_calibration_loss(filepath, cal_folder):
     is_npd = filepath.lower().endswith('.csv')
     is_benchtop = "benchtop" in filepath.lower() or "post" in filepath.lower() or "pre" in filepath.lower()
 
-    search_dirs = []
-    if cal_folder and os.path.isdir(cal_folder):
-        search_dirs.append(cal_folder)
-        
-    if not is_benchtop:
-        run_folder = os.path.dirname(filepath)
-        if run_folder and os.path.isdir(run_folder):
-            search_dirs.append(run_folder)
+    cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
+    ident_num = cap_match.group(1) if cap_match else None
 
-        parent_run_folder = os.path.dirname(run_folder)
-        if parent_run_folder and os.path.isdir(parent_run_folder):
-            search_dirs.append(parent_run_folder)
-            
-        grandparent_run_folder = os.path.dirname(parent_run_folder)
-        if grandparent_run_folder and os.path.isdir(grandparent_run_folder):
-            search_dirs.append(grandparent_run_folder)
-
-    if not search_dirs:
-        return None, None
-
-    cal_files_to_load = []
-
-    # Two situations: (A) the Base/Hat/Bulkhead cal files sit alongside the
-    # run data in its own Cap_XX folder, or (B) they live in a separate,
-    # shared cal folder where each file is instead tagged with its Cap
-    # number directly (e.g. "BaseSN7Cable_..." for Cap_07). Either way, the
-    # identifying number is the Cap number — NOT the tile's own serial
-    # number, which is a completely different, unrelated number (a tile's
-    # serial number and its Cap-slot cable's tag can be in overlapping
-    # ranges purely by coincidence). find_cal_file() matches a cal file by
-    # that number appearing either in its own filename or in its containing
-    # path, so it covers both situations once we know the Cap number
-    
     if is_npd:
         cal_types = ("Base", "Bulkhead", "SpecA")
     else:
-        if is_benchtop:
+        # Only use Cap for Tile Benchtop (which has a Cap number). Arrays use Hat.
+        if is_benchtop and ident_num is not None:
             cal_types = ("Base", "Cap", "Bulkhead")
         else:
             cal_types = ("Base", "Hat", "Bulkhead")
 
-    cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
-    ident_num = cap_match.group(1) if cap_match else None
+    search_dirs = []
+    if cal_folder and os.path.isdir(cal_folder):
+        search_dirs.append(cal_folder)
+        
+    run_folder = os.path.dirname(filepath)
+    if run_folder and os.path.isdir(run_folder):
+        search_dirs.append(run_folder)
+
+    parent_run_folder = os.path.dirname(run_folder)
+    if parent_run_folder and os.path.isdir(parent_run_folder):
+        search_dirs.append(parent_run_folder)
+        
+    grandparent_run_folder = os.path.dirname(parent_run_folder)
+    if grandparent_run_folder and os.path.isdir(grandparent_run_folder):
+        search_dirs.append(grandparent_run_folder)
 
     cal_files_to_load = []
     found_base_bulk = False
@@ -1239,11 +1223,17 @@ def generate_plots(params):
             if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_ambient", sn)
             if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_25C", sn)
         else: # test_type == 3
-            sparA = search_files(search_dirA, ".s2p", sn)
-            if not sparA and sn: sparA = search_files(search_dirA, ".s2p", "")
+            def is_trace(f):
+                fname = os.path.basename(f).lower()
+                return not any(c in fname for c in ["base", "hat", "cap_", "bulkhead", "specan", "pathloss"])
             
-            npdA = search_files(search_dirA, ".csv", sn)
-            if not npdA and sn: npdA = search_files(search_dirA, ".csv", "")
+            raw_sparA = search_files(search_dirA, ".s2p", sn)
+            if not raw_sparA and sn: raw_sparA = search_files(search_dirA, ".s2p", "")
+            sparA = [f for f in raw_sparA if is_trace(f)]
+            
+            raw_npdA = search_files(search_dirA, ".csv", sn)
+            if not raw_npdA and sn: raw_npdA = search_files(search_dirA, ".csv", "")
+            npdA = [f for f in raw_npdA if is_trace(f)]
         
         # If Thermal files are in a root folder without Area subfolders, filter by PMA Area in the filename
         if pma and search_dirA == temp: # only filter if we didn't successfully drill down into a PMA folder
@@ -1270,10 +1260,14 @@ def generate_plots(params):
         def filter_benchtop(files):
             import os
             # Only check the filename and immediate parent directory, not the entire path which might coincidentally contain 'npdovertemp'
-            return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()] if test_type == 2 else files
+            return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
             
-        raw_sparB = search_files(search_dirB, ".s2p", sn)
-        if not raw_sparB and sn: raw_sparB = search_files(search_dirB, ".s2p", "")
+        def is_trace(f):
+            fname = os.path.basename(f).lower()
+            return not any(c in fname for c in ["base", "hat", "cap_", "bulkhead", "specan", "pathloss"])
+            
+        raw_sparB = [f for f in search_files(search_dirB, ".s2p", sn) if is_trace(f)]
+        if not raw_sparB and sn: raw_sparB = [f for f in search_files(search_dirB, ".s2p", "") if is_trace(f)]
         sparB_filt = [f for f in raw_sparB if "vswr" in os.path.basename(f).lower()]
         sparB = filter_benchtop(sparB_filt if sparB_filt else raw_sparB)
         
