@@ -137,15 +137,10 @@ def get_calibration_loss(filepath, cal_folder):
                         if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
                             cal_files_to_load.append(os.path.join(root, f))
 
-    debug_path = os.path.expanduser("~/Desktop/debug_cal_loss.txt")
-    try:
-        with open(debug_path, "a") as f:
-            f.write(f"\n--- Cal for {filepath} ---\n")
-            f.write(f"cal_folder: {cal_folder}\n")
-            f.write(f"search_dirs: {search_dirs}\n")
-            f.write(f"cal_files_to_load: {cal_files_to_load}\n")
-    except:
-        pass
+    print(f"\n--- Cal for {filepath} ---")
+    print(f"cal_folder: {cal_folder}")
+    print(f"search_dirs: {search_dirs}")
+    print(f"cal_files_to_load: {cal_files_to_load}")
 
     if not cal_files_to_load:
         return None, None
