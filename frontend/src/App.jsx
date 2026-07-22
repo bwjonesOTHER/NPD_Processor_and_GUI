@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, ChevronLeft, Activity, Download, UploadCloud, XCircle, Save, Folder, X, Maximize2 } from 'lucide-react';
+import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, ChevronLeft, Activity, Download, UploadCloud, XCircle, Save, Folder, X, Maximize2, Settings } from 'lucide-react';
 import JSZip from 'jszip';
 import './App.css';
 
@@ -43,6 +43,7 @@ function App() {
     exactLmoFolder: '',
   });
 
+  const [showPlotProps, setShowPlotProps] = useState(false);
   const [plotParams, setPlotParams] = useState({
     freq_min: 2.7,
     freq_max: 4.1,
@@ -1014,6 +1015,10 @@ function App() {
                         <Save size={16} />
                         Save Plots to Destination
                       </button>
+                      <button onClick={() => setShowPlotProps(true)} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--accent)' }}>
+                        <Settings size={16} />
+                        Plot Properties
+                      </button>
                       <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
                         <Download size={16} />
                         Export All Plots (.zip)
@@ -1039,6 +1044,43 @@ function App() {
                       </div>
                     ))}
                   </div>
+                  
+                  {showPlotProps && (
+                    <div className="modal-overlay" onClick={() => setShowPlotProps(false)}>
+                      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <h3 style={{ margin: 0 }}>Plot Properties</h3>
+                          <button className="icon-button" onClick={() => setShowPlotProps(false)}><X size={20} /></button>
+                        </div>
+                        
+                        <div className="param-group">
+                          <label>NPD Upper Bound (dBm/Hz)</label>
+                          <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
+                        </div>
+                        <div className="param-group">
+                          <label>NPD Lower Bound (dBm/Hz)</label>
+                          <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
+                        </div>
+                        
+                        <div className="param-group">
+                          <label>S21 Upper Bound (dB)</label>
+                          <input type="number" step="0.1" name="u_bound_s21" value={plotParams.u_bound_s21} onChange={handlePlotParamChange} />
+                        </div>
+                        <div className="param-group">
+                          <label>S21 Lower Bound (dB)</label>
+                          <input type="number" step="0.1" name="l_bound_s21" value={plotParams.l_bound_s21} onChange={handlePlotParamChange} />
+                        </div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem', gap: '0.5rem' }}>
+                          <button onClick={() => setShowPlotProps(false)} className="btn-secondary">Close</button>
+                          <button onClick={() => { setShowPlotProps(false); startProcessing(); }} className="btn-primary" disabled={isProcessing}>
+                            {isProcessing ? <Activity size={16} className="animate-spin" /> : <Play size={16} />}
+                            Apply & Re-plot
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
