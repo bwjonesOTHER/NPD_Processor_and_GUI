@@ -378,7 +378,10 @@ function App() {
     setImages([]);
 
     try {
-      const activeParams = overrideParams || plotParams;
+      // Prevent passing the React SyntheticEvent as overrideParams
+      const isEvent = overrideParams && overrideParams.nativeEvent;
+      const activeParams = (overrideParams && !isEvent) ? overrideParams : plotParams;
+      
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
