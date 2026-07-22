@@ -137,11 +137,6 @@ def get_calibration_loss(filepath, cal_folder):
                         if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
                             cal_files_to_load.append(os.path.join(root, f))
 
-    print(f"\n--- Cal for {filepath} ---")
-    print(f"cal_folder: {cal_folder}")
-    print(f"search_dirs: {search_dirs}")
-    print(f"cal_files_to_load: {cal_files_to_load}")
-
     if not cal_files_to_load:
         return None, None
         
@@ -177,11 +172,8 @@ def get_calibration_loss(filepath, cal_folder):
 
 def load_excel_average(average_data_path, plot_type, title_suffix):
     if not average_data_path or not os.path.exists(average_data_path):
-        print(f"No average data path provided or file doesn't exist: {average_data_path}")
         return None, None
     try:
-        print(f"Attempting to load Excel file: {average_data_path}")
-        print(f"Plot Type: {plot_type}, Temp Suffix: {title_suffix}")
         xls = pd.ExcelFile(average_data_path)
         sheet_map = {
             "Tile S21": 0,
@@ -190,15 +182,12 @@ def load_excel_average(average_data_path, plot_type, title_suffix):
             "Array NPD": 3
         }
         if plot_type not in sheet_map:
-            print(f"Plot type '{plot_type}' not found in sheet map.")
             return None, None
         sheet_idx = sheet_map[plot_type]
         if sheet_idx >= len(xls.sheet_names):
-            print(f"Sheet index {sheet_idx} out of range (only {len(xls.sheet_names)} sheets).")
             return None, None
             
         df = pd.read_excel(xls, sheet_name=sheet_idx, header=None)
-        num_df = df.apply(pd.to_numeric, errors='coerce')
         
         col_idx = 1
         if "Hot" in title_suffix:
@@ -206,36 +195,25 @@ def load_excel_average(average_data_path, plot_type, title_suffix):
         elif "Cold" in title_suffix:
             col_idx = 3
             
-        print(f"Reading Sheet {sheet_idx} (Col {col_idx} for Temp: {title_suffix})")
-        print(f"Dataframe shape: {num_df.shape}")
-        
-        if col_idx >= num_df.shape[1]:
-            print(f"Column index {col_idx} is out of bounds for sheet with {num_df.shape[1]} columns.")
+        if df.shape[1] <= col_idx:
             return None, None
             
+        num_df = df.apply(pd.to_numeric, errors='coerce')
         freq = num_df.values[:, 0]
         val = num_df.values[:, col_idx]
         
-        if pd.isna(val).all():
-            print(f"All values in column {col_idx} are NaN. Skipping.")
-            return None, None
-            
         valid = ~pd.isna(freq) & ~pd.isna(val)
         freq = freq[valid]
         val = val[valid]
-        print(f"Successfully extracted {len(freq)} valid rows after filtering NaNs.")
         
         if len(freq) == 0:
-            print("No valid rows left after filtering. Perhaps columns contain non-numeric data?")
             return None, None
             
         if freq[0] > 100:
-            print(f"First freq ({freq[0]}) > 100, assuming Hz and dividing by 1e9.")
             freq = freq / 1e9
             
         return freq, val
     except Exception as e:
-        print(f"Failed to load excel average for {plot_type}: {e}")
         return None, None
 
 def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path=""):
