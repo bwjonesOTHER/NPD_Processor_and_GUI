@@ -90,10 +90,14 @@ def find_cal_file(folders, cap_num, cal_type):
     return None
 
 def get_calibration_loss(filepath, cal_folder):
+    is_npd = filepath.lower().endswith('.csv')
+    is_benchtop = "benchtop" in filepath.lower() or "post" in filepath.lower() or "pre" in filepath.lower()
+
     search_dirs = []
     if cal_folder and os.path.isdir(cal_folder):
         search_dirs.append(cal_folder)
-    else:
+        
+    if not is_benchtop:
         run_folder = os.path.dirname(filepath)
         if run_folder and os.path.isdir(run_folder):
             search_dirs.append(run_folder)
@@ -121,8 +125,6 @@ def get_calibration_loss(filepath, cal_folder):
     # ranges purely by coincidence). find_cal_file() matches a cal file by
     # that number appearing either in its own filename or in its containing
     # path, so it covers both situations once we know the Cap number
-    is_npd = filepath.lower().endswith('.csv')
-    is_benchtop = "benchtop" in filepath.lower() or "post" in filepath.lower() or "pre" in filepath.lower()
     
     if is_npd:
         cal_types = ("Base", "Bulkhead", "SpecA")
