@@ -1018,11 +1018,11 @@ function App() {
                 <div style={{ marginTop: '2rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
                     <div>
-                      <button onClick={() => setShowPlotProps(true)} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--accent)', marginBottom: '0.5rem' }}>
+                      <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>Generated Plots ({images.length})</h3>
+                      <button onClick={() => setShowPlotProps(true)} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--accent)' }}>
                         <Settings size={16} />
                         Plot Properties
                       </button>
-                      <h3 style={{ margin: 0 }}>Generated Plots ({images.length})</h3>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                       <button onClick={handleSavePlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--success)' }}>
