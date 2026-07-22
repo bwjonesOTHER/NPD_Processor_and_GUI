@@ -139,6 +139,10 @@ def get_calibration_loss(filepath, cal_folder):
                 if f: break
                 for root, dirs, files in os.walk(sdir):
                     if f: break
+                    
+                    # Sort files: prioritize files starting with a number, and sort descending (newest first)
+                    files.sort(key=lambda x: (1 if x and x[0].isdigit() else 0, x), reverse=True)
+                    
                     for file in files:
                         if not file.lower().endswith('.s2p'):
                             continue
