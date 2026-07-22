@@ -122,8 +122,9 @@ def get_calibration_loss(filepath, cal_folder):
     # that number appearing either in its own filename or in its containing
     # path, so it covers both situations once we know the Cap number.
     is_npd = filepath.lower().endswith('.csv')
-    # S21 uses Base, Hat, Bulkhead. NPD uses Base, Bulkhead, SpecA.
-    cal_types = ("Base", "Bulkhead", "SpecA") if is_npd else ("Base", "Hat", "Bulkhead")
+    # S21 uses Base, Hat, Bulkhead, and sometimes Cap (for benchtop). 
+    # NPD uses Base, Bulkhead, SpecA, and sometimes Cap (for benchtop).
+    cal_types = ("Base", "Bulkhead", "Cap", "SpecA") if is_npd else ("Base", "Hat", "Cap", "Bulkhead")
 
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
@@ -159,10 +160,7 @@ def get_calibration_loss(filepath, cal_folder):
         if f:
             cal_files_to_load.append(f)
 
-    if not cal_files_to_load:
-        return None, None
-        
-    # Generate a debug file in the root directory so the user can verify exactly which cal files were loaded
+    # Always generate debug output
     debug_path = os.path.join(os.path.dirname(os.getcwd()), "calibration_debug_used_files.txt")
     if not os.path.exists(os.path.dirname(os.getcwd())):
         debug_path = os.path.join(os.getcwd(), "calibration_debug_used_files.txt")
@@ -170,8 +168,11 @@ def get_calibration_loss(filepath, cal_folder):
     try:
         with open(debug_path, "a") as f:
             f.write(f"\n--- Cal for {filepath} ---\n")
-            for c in cal_files_to_load:
-                f.write(f"  - {c}\n")
+            if not cal_files_to_load:
+                f.write("  - NO CAL FILES FOUND\n")
+            else:
+                for c in cal_files_to_load:
+                    f.write(f"  - {c}\n")
     except:
         pass
         
@@ -201,6 +202,9 @@ def get_calibration_loss(filepath, cal_folder):
             f.write(f"total_loss_db (mean): {np.mean(total_loss) if total_loss is not None else 'None'}\n")
     except:
         pass
+
+    if not cal_files_to_load:
+        return None, None
 
     return freq_ref, total_loss
 
