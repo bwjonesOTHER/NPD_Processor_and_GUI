@@ -1026,28 +1026,25 @@ def generate_plots(params):
         npd_averages = {}
         s21_averages = {}
         for name, tag in temp_tags:
-            if tag:
-                npdA = search_files(folderA, f"NPD{tag}")
-                npdB = search_files(folderB, f"NPD{tag}")
-                sparA = search_files(folderA, f"VSWR{tag}")
-                sparB = search_files(folderB, f"VSWR{tag}")
-            else:
-                npdA = [f for f in search_files(folderA, "NPD") if "ambient" not in f.lower()]
-                npdB = [f for f in search_files(folderB, "NPD") if "ambient" not in f.lower()]
-                sparA = [f for f in search_files(folderA, "VSWR") if "ambient" not in f.lower()]
-                sparB = [f for f in search_files(folderB, "VSWR") if "ambient" not in f.lower()]
+            npdA = search_files(folderA, f"NPD{tag}") if tag else search_files(folderA, "NPD")
+            npdB = search_files(folderB, f"NPD{tag}") if tag else search_files(folderB, "NPD")
+            
+            sparA = search_files(folderA, f"VSWR{tag}") if tag else search_files(folderA, "VSWR")
+            sparB = search_files(folderB, f"VSWR{tag}") if tag else search_files(folderB, "VSWR")
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path)
+            average_data_path_to_use = average_data_path if name != "All Temps" else ""
+                
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path_to_use)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path_to_use)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
-            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path)
+            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path_to_use)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
