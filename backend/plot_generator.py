@@ -117,11 +117,15 @@ def get_calibration_loss(filepath, cal_folder):
     # ranges purely by coincidence). find_cal_file() matches a cal file by
     # that number appearing either in its own filename or in its containing
     # path, so it covers both situations once we know the Cap number.
+    is_npd = filepath.lower().endswith('.csv')
+    # S21 uses Base, Hat, Bulkhead. NPD uses Base, Bulkhead, SpecAn.
+    cal_types = ("Base", "Bulkhead", "SpecAn") if is_npd else ("Base", "Hat", "Bulkhead")
+
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
 
     if ident_num is not None:
-        for cal_type in ("Base", "Hat", "Bulkhead"):
+        for cal_type in cal_types:
             f = find_cal_file(search_dirs, ident_num, cal_type)
             if f:
                 cal_files_to_load.append(f)
@@ -133,12 +137,25 @@ def get_calibration_loss(filepath, cal_folder):
                     if not f.lower().endswith('.s2p'):
                         continue
                     name = f.lower()
-                    for key in ("base", "hat", "bulkhead"):
-                        if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
+                    for key in cal_types:
+                        # Must exclude 'specan' when looking for 'base' if both exist, to avoid grabbing 'SpecAnBase' for 'Base'
+                        if key.lower() == "base" and "specan" in name:
+                            continue
+                        if key.lower() in name and not any(key.lower() in os.path.basename(p).lower() for p in cal_files_to_load):
                             cal_files_to_load.append(os.path.join(root, f))
 
     if not cal_files_to_load:
         return None, None
+        
+    # Generate a debug file on the Desktop so the user can verify exactly which cal files were loaded
+    debug_path = os.path.expanduser("~/Desktop/calibration_debug_used_files.txt")
+    try:
+        with open(debug_path, "a") as f:
+            f.write(f"\n--- Cal for {filepath} ---\n")
+            for c in cal_files_to_load:
+                f.write(f"  - {c}\n")
+    except:
+        pass
         
     freq_ref = None
     total_loss = None
