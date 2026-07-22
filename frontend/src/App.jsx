@@ -49,10 +49,14 @@ function App() {
     freq_max: 4.1,
     reqS11Val: -10,
     n_avg: 20,
-    u_bound_npd: -110,
-    l_bound_npd: -170,
-    u_bound_s21: 5,
-    l_bound_s21: -105,
+    u_bound_s21: 2,
+    l_bound_s21: 2,
+    u_bound_npd: 2,
+    l_bound_npd: 2,
+    y_upper_s21: 5,
+    y_lower_s21: -105,
+    y_upper_npd: -110,
+    y_lower_npd: -170,
     average_data_path: "",
     apply_npd_cal: false,
   });
@@ -367,17 +371,18 @@ function App() {
     }
   };
 
-  const startProcessing = async () => {
+  const startProcessing = async (overrideParams = null) => {
     setIsProcessing(true);
     setError('');
     setWarnings([]);
     setImages([]);
 
     try {
+      const activeParams = overrideParams || plotParams;
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...plotParams, outputFolder: "", dataSource: formData.basePath, calFolder: formData.calPath })
+        body: JSON.stringify({ ...activeParams, outputFolder: "", dataSource: formData.basePath, calFolder: formData.calPath })
       });
 
       const data = await res.json();
@@ -1051,33 +1056,44 @@ function App() {
                     <div className="modal-overlay" onClick={() => setShowPlotProps(false)}>
                       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                          <h3 style={{ margin: 0 }}>Plot Properties</h3>
+                          <h3 style={{ margin: 0 }}>Plot Properties (Y-Axis Limits)</h3>
                           <button className="icon-button" onClick={() => setShowPlotProps(false)}><X size={20} /></button>
                         </div>
                         
                         <div className="param-group">
                           <label>NPD Upper Bound (dBm/Hz)</label>
-                          <input type="number" step="0.1" name="u_bound_npd" value={plotParams.u_bound_npd} onChange={handlePlotParamChange} />
+                          <input type="number" step="0.1" name="y_upper_npd" defaultValue={plotParams.y_upper_npd} id="modal_y_upper_npd" />
                         </div>
                         <div className="param-group">
                           <label>NPD Lower Bound (dBm/Hz)</label>
-                          <input type="number" step="0.1" name="l_bound_npd" value={plotParams.l_bound_npd} onChange={handlePlotParamChange} />
+                          <input type="number" step="0.1" name="y_lower_npd" defaultValue={plotParams.y_lower_npd} id="modal_y_lower_npd" />
                         </div>
                         
                         <div className="param-group">
                           <label>S21 Upper Bound (dB)</label>
-                          <input type="number" step="0.1" name="u_bound_s21" value={plotParams.u_bound_s21} onChange={handlePlotParamChange} />
+                          <input type="number" step="0.1" name="y_upper_s21" defaultValue={plotParams.y_upper_s21} id="modal_y_upper_s21" />
                         </div>
                         <div className="param-group">
                           <label>S21 Lower Bound (dB)</label>
-                          <input type="number" step="0.1" name="l_bound_s21" value={plotParams.l_bound_s21} onChange={handlePlotParamChange} />
+                          <input type="number" step="0.1" name="y_lower_s21" defaultValue={plotParams.y_lower_s21} id="modal_y_lower_s21" />
                         </div>
                         
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem', gap: '0.5rem' }}>
                           <button onClick={() => setShowPlotProps(false)} className="btn-secondary">Close</button>
-                          <button onClick={() => { setShowPlotProps(false); startProcessing(); }} className="btn-primary" disabled={isProcessing}>
-                            {isProcessing ? <Activity size={16} className="animate-spin" /> : <Play size={16} />}
-                            Apply & Re-plot
+                          <button onClick={() => { 
+                            const newParams = {
+                              ...plotParams,
+                              y_upper_npd: parseFloat(document.getElementById('modal_y_upper_npd').value),
+                              y_lower_npd: parseFloat(document.getElementById('modal_y_lower_npd').value),
+                              y_upper_s21: parseFloat(document.getElementById('modal_y_upper_s21').value),
+                              y_lower_s21: parseFloat(document.getElementById('modal_y_lower_s21').value)
+                            };
+                            setPlotParams(newParams);
+                            setShowPlotProps(false); 
+                            startProcessing(newParams); 
+                          }} className="btn-primary" disabled={isProcessing}>
+                            {isProcessing ? <Activity size={16} className="animate-spin" /> : <Save size={16} />}
+                            Save & Re-plot
                           </button>
                         </div>
                       </div>

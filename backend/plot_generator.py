@@ -358,21 +358,33 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             avg = f_avg_interp(ref_freq_win)
             plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
 
-        # Removed custom PASS/FAIL limit lines as per user request to use bounds for Y-axis
+        # Using requested bounds
+        upper = avg + u_bound_npd
+        lower = avg - l_bound_npd
 
-        fail_mask = (all_noise_win > avg + 2) | (all_noise_win < avg - 2) # default 2dB pass/fail internally
+        fail_mask = (all_noise_win > upper) | (all_noise_win < lower)
         failed_indices = np.where(fail_mask.any(axis=1))[0]
         if len(failed_indices) > 0:
             status = "Failed"
+
+        if len(ref_freq_win) == len(lower):
+            plt.plot(ref_freq_win, lower, color='red', alpha=1, marker='o', markersize=3, markevery=100, label='Lower bound')
+            plt.plot(ref_freq_win, upper, color='red', alpha=1, marker='x', markersize=3, markevery=100, label='Upper bound')
 
     plt.xlim(ref_freq_full[0], ref_freq_full[-1])
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
-    if plot_density:
-        plt.ylim(l_bound_npd, u_bound_npd)
+    if y_upper_npd is not None and y_lower_npd is not None:
+        if plot_density:
+            plt.ylim(y_lower_npd, y_upper_npd)
+        else:
+            plt.ylim(y_lower_npd + 40, y_upper_npd + 40)
     else:
-        plt.ylim(l_bound_npd + 40, u_bound_npd + 40)
+        if plot_density:
+            plt.ylim(-170, -110)
+        else:
+            plt.ylim(-130, -90)
     
     title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     plt.title(title)
@@ -468,12 +480,17 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
             avg = f_avg_interp(ref_freq_win)
             plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
             
-        # Removed custom PASS/FAIL limit lines as per user request to use bounds for Y-axis
+        upper_bound = avg + u_bound_s21
+        lower_bound = avg - l_bound_s21
 
-        fail_mask = (s21_avg > avg + 2) | (s21_avg < avg - 2) # default 2dB pass/fail internally
+        fail_mask = (s21_avg > upper_bound) | (s21_avg < lower_bound)
         failed_indices = np.where(fail_mask.any(axis=1))[0]
         if len(failed_indices) > 0:
             status = "Failed"
+            
+        if ref_freq_ghz is not None and len(ref_freq_win) == len(lower_bound):
+            plt.plot(ref_freq_win, lower_bound, 'ro-', markersize=3, markevery=100, label='Lower bound')
+            plt.plot(ref_freq_win, upper_bound, 'rx-', markersize=3, markevery=100, label='Upper bound')
 
     if ref_freq_ghz is not None:
         plt.xlim(ref_freq_ghz[0], ref_freq_ghz[-1])
@@ -482,14 +499,14 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     plt.axvline(x=freq_min, color='g')
     plt.axvline(x=freq_max, color='g')
     plt.grid(True)
-    
-    # Use user-provided Y-axis bounds
-    plt.ylim(l_bound_s21, u_bound_s21)
-
-    if (test_type != 1 and test_type != 3) and apply_cal:
-        title = f'S21 Calibrated {title_suffix}, {status}'
+    if y_upper_s21 is not None and y_lower_s21 is not None:
+        plt.ylim(y_lower_s21, y_upper_s21)
+    elif (test_type != 1 and test_type != 3) and apply_cal:
+        plt.ylim(0, 30)
     else:
-        title = f'S21 {title_suffix}, {status}'
+        plt.ylim(-40, 40)
+        
+    title = f'S21 Calibrated {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'S21 {title_suffix}, {status}'
     plt.title(title)
     plt.xlabel('Frequency (GHz)')
     plt.ylabel('S21 (dB)')
@@ -1019,6 +1036,10 @@ def generate_plots(params):
     l_bound_s21 = float(params.get('l_bound_s21', 2))
     u_bound_npd = float(params.get('u_bound_npd', 2))
     l_bound_npd = float(params.get('l_bound_npd', 2))
+    y_upper_s21 = float(params.get('y_upper_s21')) if params.get('y_upper_s21') is not None else None
+    y_lower_s21 = float(params.get('y_lower_s21')) if params.get('y_lower_s21') is not None else None
+    y_upper_npd = float(params.get('y_upper_npd')) if params.get('y_upper_npd') is not None else None
+    y_lower_npd = float(params.get('y_lower_npd')) if params.get('y_lower_npd') is not None else None
     output_folder = params.get('outputFolder', '/tmp')
     average_data_path = params.get('average_data_path', '')
 
@@ -1063,17 +1084,17 @@ def generate_plots(params):
                 
             average_data_path_to_use = average_data_path if name != "All Temps" else ""
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path_to_use)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path_to_use)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
-            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path_to_use)
+            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
@@ -1255,10 +1276,10 @@ def generate_plots(params):
 
         
         apply_bench_cal = True if (test_type == 2 or test_type == 3) else False
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal, test_type=test_type, average_data_path=average_data_path)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal, test_type=test_type, average_data_path=average_data_path, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
         if p1: generated_plots.append(p1)
 
-        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal, average_data_path=average_data_path)
+        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21)
         if p2: generated_plots.append(p2)
 
     return generated_plots
