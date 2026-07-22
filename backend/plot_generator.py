@@ -124,25 +124,30 @@ def get_calibration_loss(filepath, cal_folder):
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
 
-    if ident_num is not None:
-        for cal_type in cal_types:
+    for cal_type in cal_types:
+        f = None
+        if ident_num is not None:
             f = find_cal_file(search_dirs, ident_num, cal_type)
-            if f:
-                cal_files_to_load.append(f)
-
-    if not cal_files_to_load:
-        for sdir in search_dirs:
-            for root, dirs, files in os.walk(sdir):
-                for f in files:
-                    if not f.lower().endswith('.s2p'):
-                        continue
-                    name = f.lower()
-                    for key in cal_types:
-                        # Must exclude 'speca' when looking for 'base' if both exist, to avoid grabbing 'SpecABase' for 'Base'
-                        if key.lower() == "base" and "speca" in name:
+            
+        if not f:
+            # Fallback: if not found by strict cap_num, just find ANY file containing this cal_type
+            for sdir in search_dirs:
+                if f: break
+                for root, dirs, files in os.walk(sdir):
+                    if f: break
+                    for file in files:
+                        if not file.lower().endswith('.s2p'):
                             continue
-                        if key.lower() in name and not any(key.lower() in os.path.basename(p).lower() for p in cal_files_to_load):
-                            cal_files_to_load.append(os.path.join(root, f))
+                        name = file.lower()
+                        # Must exclude 'speca' when looking for 'base'
+                        if cal_type.lower() == "base" and "speca" in name:
+                            continue
+                        if cal_type.lower() in name and not any(cal_type.lower() in os.path.basename(p).lower() for p in cal_files_to_load):
+                            f = os.path.join(root, file)
+                            break
+                            
+        if f:
+            cal_files_to_load.append(f)
 
     if not cal_files_to_load:
         return None, None
