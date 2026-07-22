@@ -766,7 +766,7 @@ function App() {
                         {testType === 3 ? "(Upload folders in order: Run A, then Run B, then Calibration)" : "(Click multiple times to add more runs!)"}
                       </p>}
                     </div>
-                    {testType === 1 ? (
+                    {uploadMode === 'upload' ? (
                       <input 
                         type="file" 
                         webkitdirectory="true" 

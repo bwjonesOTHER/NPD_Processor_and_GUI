@@ -642,6 +642,10 @@ def api_generate_plots():
         run_b = read_txt("RunB_Path.txt")
         params['runs'] = [run for run in [run_a, run_b] if run]
         params['serial_number'] = read_txt("serialNumber.txt")
+        
+        cal_path = read_txt("Cal_Path.txt")
+        if cal_path and not params.get('calFolder'):
+            params['calFolder'] = cal_path
 
     elif test == 4:
         path = params.get('dataSource')
