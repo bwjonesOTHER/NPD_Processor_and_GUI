@@ -122,9 +122,9 @@ def get_calibration_loss(filepath, cal_folder):
     # that number appearing either in its own filename or in its containing
     # path, so it covers both situations once we know the Cap number.
     is_npd = filepath.lower().endswith('.csv')
-    # S21 uses Base, Hat, Bulkhead, and sometimes Cap (for benchtop). 
+    # S21 uses Base, Hat, Bulkhead.
     # NPD uses Base, Bulkhead, SpecA.
-    cal_types = ("Base", "Bulkhead", "SpecA") if is_npd else ("Base", "Hat", "Cap", "Bulkhead")
+    cal_types = ("Base", "Bulkhead", "SpecA") if is_npd else ("Base", "Hat", "Bulkhead")
 
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
