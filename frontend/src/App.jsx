@@ -53,8 +53,8 @@ function App() {
     l_bound_s21: 2,
     u_bound_npd: 2,
     l_bound_npd: 2,
-    y_upper_s21: 5,
-    y_lower_s21: -105,
+    y_upper_s21: 40,
+    y_lower_s21: -40,
     y_upper_npd: -110,
     y_lower_npd: -170,
     average_data_path: "",
@@ -1074,11 +1074,11 @@ function App() {
                         
                         <div className="param-group">
                           <label>S21 Upper Bound (dB)</label>
-                          <input type="number" step="0.1" name="y_upper_s21" defaultValue={plotParams.y_upper_s21} id="modal_y_upper_s21" />
+                          <input type="number" step="0.1" name="y_upper_s21" defaultValue={plotParams.y_upper_s21 || 40} id="modal_y_upper_s21" />
                         </div>
                         <div className="param-group">
                           <label>S21 Lower Bound (dB)</label>
-                          <input type="number" step="0.1" name="y_lower_s21" defaultValue={plotParams.y_lower_s21} id="modal_y_lower_s21" />
+                          <input type="number" step="0.1" name="y_lower_s21" defaultValue={plotParams.y_lower_s21 || -40} id="modal_y_lower_s21" />
                         </div>
                         
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem', gap: '0.5rem' }}>
