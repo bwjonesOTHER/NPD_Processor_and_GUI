@@ -422,7 +422,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         serial = extract_serial(fpath)
 
         freq_cal, total_loss_db = None, None
-        if test_type != 1 and apply_cal:
+        if apply_cal:
             freq_cal, total_loss_db = get_calibration_loss(fpath, cal_folder)
 
         s21_corr = raw_s21
