@@ -247,7 +247,7 @@ def load_excel_average(average_data_path, plot_type, title_suffix):
     except Exception as e:
         return None, None
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path=""):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path="", y_upper_npd=None, y_lower_npd=None):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -408,7 +408,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path=""):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None):
     all_files = filesA + filesB
     if not all_files:
         return None
