@@ -93,18 +93,18 @@ def get_calibration_loss(filepath, cal_folder):
     search_dirs = []
     if cal_folder and os.path.isdir(cal_folder):
         search_dirs.append(cal_folder)
+    else:
+        run_folder = os.path.dirname(filepath)
+        if run_folder and os.path.isdir(run_folder):
+            search_dirs.append(run_folder)
 
-    run_folder = os.path.dirname(filepath)
-    if run_folder and os.path.isdir(run_folder):
-        search_dirs.append(run_folder)
-
-    parent_run_folder = os.path.dirname(run_folder)
-    if parent_run_folder and os.path.isdir(parent_run_folder):
-        search_dirs.append(parent_run_folder)
-        
-    grandparent_run_folder = os.path.dirname(parent_run_folder)
-    if grandparent_run_folder and os.path.isdir(grandparent_run_folder):
-        search_dirs.append(grandparent_run_folder)
+        parent_run_folder = os.path.dirname(run_folder)
+        if parent_run_folder and os.path.isdir(parent_run_folder):
+            search_dirs.append(parent_run_folder)
+            
+        grandparent_run_folder = os.path.dirname(parent_run_folder)
+        if grandparent_run_folder and os.path.isdir(grandparent_run_folder):
+            search_dirs.append(grandparent_run_folder)
 
     if not search_dirs:
         return None, None
@@ -122,9 +122,9 @@ def get_calibration_loss(filepath, cal_folder):
     # that number appearing either in its own filename or in its containing
     # path, so it covers both situations once we know the Cap number.
     is_npd = filepath.lower().endswith('.csv')
-    # S21 uses Base, Hat, Bulkhead. 
+    # S21 uses Base, Hat, Bulkhead, and sometimes Cap (for benchtop). 
     # NPD uses Base, Bulkhead, SpecA.
-    cal_types = ("Base", "Bulkhead", "SpecA") if is_npd else ("Base", "Hat", "Bulkhead")
+    cal_types = ("Base", "Bulkhead", "SpecA") if is_npd else ("Base", "Hat", "Cap", "Bulkhead")
 
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
