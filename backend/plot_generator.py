@@ -1148,7 +1148,7 @@ def generate_plots(params):
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=apply_npd_cal, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
