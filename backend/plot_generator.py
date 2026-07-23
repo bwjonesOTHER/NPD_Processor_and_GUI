@@ -199,7 +199,14 @@ def get_calibration_loss(filepath, cal_folder):
         try:
             net = rf.Network(f)
             freq_ghz = net.f / 1e9
-            loss_db = -net.s_db[:, 1, 0]
+            
+            # SpecA is an amplifier. It has gain (e.g. +20 dB). Its "loss" should be -20 dB.
+            # Cables are passive. Their S21 is usually negative (e.g. -2 dB). Their "loss" should be +2 dB.
+            # If a cable is saved as Insertion Loss (e.g. +2 dB), we still want +2 dB.
+            if "speca" in f.lower():
+                loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
+            else:
+                loss_db = np.abs(net.s_db[:, 1, 0]) # abs(-2) = 2, abs(+2) = 2
             
             
             if freq_ref is None:
