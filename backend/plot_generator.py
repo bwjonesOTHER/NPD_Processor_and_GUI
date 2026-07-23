@@ -89,9 +89,9 @@ def find_cal_file(folders, cap_num, cal_type):
 
     return None
 
-def get_calibration_loss(filepath, cal_folder):
+def get_calibration_loss(filepath, cal_folder, test_type=1):
     is_npd = filepath.lower().endswith('.csv')
-    is_benchtop = "benchtop" in filepath.lower() or "post" in filepath.lower() or "pre" in filepath.lower()
+    is_benchtop = test_type == 2 or test_type == 3
 
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
@@ -329,7 +329,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder)
+            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type)
 
             # Apply Calibration
             if freq_cal is not None:
@@ -486,7 +486,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         freq_cal, total_loss_db = None, None
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(fpath, file_cal_folder)
+            freq_cal, total_loss_db = get_calibration_loss(fpath, file_cal_folder, test_type)
 
         s21_corr = raw_s21
         if freq_cal is not None:
