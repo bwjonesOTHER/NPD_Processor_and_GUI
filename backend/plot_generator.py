@@ -165,8 +165,17 @@ def get_calibration_loss(filepath, cal_folder):
                         name_norm = name.replace(" ", "").replace("_", "")
                         
                         # EXCLUSION: Never grab a data trace as a calibration cable
-                        if any(x in name_norm for x in ["vswr", "ambient", "hot", "cold", "25c", "pri", "red", "sec", "nfdirect"]):
+                        if any(x in name_norm for x in ["vswr", "ambient", "hot", "cold", "25c", "pri", "nfdirect"]):
                             continue
+                        
+                        # Only exclude red/sec if it's explicitly 'red' or 'sec' separated by underscore/dash or end of string, to avoid 'basecable' (sec) or 'measured' (red)
+                        if "sec" in name and not ("second" in name or "basecable" in name_norm):
+                            # if it's secondary data trace it usually has _sec or sec_
+                            if "_sec" in name or "sec_" in name or name.endswith("sec.s2p") or "sec." in name:
+                                continue
+                        if "red" in name and not ("measured" in name):
+                            if "_red" in name or "red_" in name or name.endswith("red.s2p") or "red." in name:
+                                continue
                             
                         # If filepath is the exact same file (just different extension), skip it
                         if os.path.splitext(os.path.basename(file))[0].lower() == os.path.splitext(os.path.basename(filepath))[0].lower():
