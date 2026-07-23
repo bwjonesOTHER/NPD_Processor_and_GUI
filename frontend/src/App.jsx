@@ -766,15 +766,14 @@ function App() {
                         {testType === 3 ? "(Upload folders in order: Run A, then Run B, then Calibration)" : "(Click multiple times to add more runs!)"}
                       </p>}
                     </div>
-                    {uploadMode === 'upload' ? (
-                      <input 
-                        type="file" 
-                        webkitdirectory="true" 
-                        directory="true"
-                        multiple={true}
-                        ref={test1RunsInputRef} 
-                        style={{ display: 'none' }} 
-                        onChange={async (e) => {
+                    <input 
+                      type="file" 
+                      webkitdirectory="true" 
+                      directory="true"
+                      multiple={true}
+                      ref={test1RunsInputRef} 
+                      style={{ display: 'none' }} 
+                      onChange={async (e) => {
                           if (!e.target.files || e.target.files.length === 0) return;
                           setUploadingRun(true);
                           const filesArray = filterValidFiles(e.target.files);
@@ -837,30 +836,6 @@ function App() {
                           setUploadingRun(false);
                         }} 
                       />
-                    ) : (
-                      <button 
-                        style={{ display: 'none' }} 
-                        ref={test1RunsInputRef}
-                        onClick={async () => {
-                          setUploadingRun(true);
-                          try {
-                            const res = await fetch(`${API_BASE}/choose_directory`);
-                            const data = await res.json();
-                            if (data.success && data.path) {
-                              const validRuns = runs.filter(r => r !== '');
-                              setRuns([...validRuns, data.path]);
-                              setRunNames(prev => [...prev, data.path.split(/[\\/]/).pop()]);
-                            } else if (!data.success && data.error && data.error !== "No directory selected") {
-                              alert("Error opening directory picker: " + data.error);
-                            }
-                          } catch (err) {
-                            alert(`Error selecting folder: ${err.message}`);
-                          } finally {
-                            setUploadingRun(false);
-                          }
-                        }}
-                      />
-                    )}
                   </div>
 
                   {runs.filter(r => r !== '').length > 0 && (

@@ -1328,11 +1328,12 @@ def generate_plots(params):
             f.write(f"npdA: {npdA}\n")
 
         
-        apply_bench_cal = True if (test_type == 2 or test_type == 3) else False
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal, test_type=test_type, average_data_path=average_data_path, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
+        apply_bench_cal_npd = True if test_type == 2 else False
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal_npd, test_type=test_type, average_data_path=average_data_path, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
         if p1: generated_plots.append(p1)
 
-        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21)
+        apply_bench_cal_s21 = True if (test_type == 2 or test_type == 3) else False
+        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal_s21, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21)
         if p2: generated_plots.append(p2)
 
     return generated_plots
