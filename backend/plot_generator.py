@@ -164,28 +164,32 @@ def get_calibration_loss(filepath, cal_folder):
                         name = file.lower()
                         name_norm = name.replace(" ", "").replace("_", "")
                         
-                        # EXCLUSION: Never grab a data trace as a calibration cable
-                        if any(x in name_norm for x in ["vswr", "ambient", "hot", "cold", "25c", "pri", "nfdirect"]):
-                            continue
-                        
-                        # Only exclude red/sec if it's explicitly 'red' or 'sec' separated by underscore/dash or end of string, to avoid 'basecable' (sec) or 'measured' (red)
-                        if "sec" in name and not ("second" in name or "basecable" in name_norm):
-                            # if it's secondary data trace it usually has _sec or sec_
-                            if "_sec" in name or "sec_" in name or name.endswith("sec.s2p") or "sec." in name:
-                                continue
-                        if "red" in name and not ("measured" in name):
-                            if "_red" in name or "red_" in name or name.endswith("red.s2p") or "red." in name:
-                                continue
-                            
-                        # If filepath is the exact same file (just different extension), skip it
-                        if os.path.splitext(os.path.basename(file))[0].lower() == os.path.splitext(os.path.basename(filepath))[0].lower():
-                            continue
-
                         cal_norm = cal_type.lower().replace(" ", "")
-                        # Must exclude 'speca' when looking for 'base'
-                        if cal_norm == "base" and "speca" in name_norm:
+                        
+                        is_excluded_data = any(x in name_norm for x in ["vswr", "ambient", "hot", "cold", "25c", "pri", "nfdirect"])
+                        is_excluded_sec = "sec" in name and not ("second" in name or "basecable" in name_norm) and ("_sec" in name or "sec_" in name or name.endswith("sec.s2p") or "sec." in name)
+                        is_excluded_red = "red" in name and not ("measured" in name) and ("_red" in name or "red_" in name or name.endswith("red.s2p") or "red." in name)
+                        is_same_file = os.path.splitext(os.path.basename(file))[0].lower() == os.path.splitext(os.path.basename(filepath))[0].lower()
+                        is_base_speca_exclude = (cal_norm == "base" and "speca" in name_norm)
+                        
+                        has_cal_norm = cal_norm in name_norm
+                        already_loaded = any(cal_norm in os.path.basename(p).lower().replace(" ", "").replace("_", "") for p in cal_files_to_load)
+                        
+                        if cal_type == "SpecA":
+                            try:
+                                with open("debug_cal_loss.txt", "a") as df:
+                                    df.write(f"  [SpecA eval] {name}\n")
+                                    df.write(f"    is_excluded_data: {is_excluded_data}\n")
+                                    df.write(f"    is_excluded_sec: {is_excluded_sec}\n")
+                                    df.write(f"    is_excluded_red: {is_excluded_red}\n")
+                                    df.write(f"    has_cal_norm: {has_cal_norm}\n")
+                                    df.write(f"    already_loaded: {already_loaded}\n")
+                            except: pass
+
+                        if is_excluded_data or is_excluded_sec or is_excluded_red or is_same_file or is_base_speca_exclude:
                             continue
-                        if cal_norm in name_norm and not any(cal_norm in os.path.basename(p).lower().replace(" ", "").replace("_", "") for p in cal_files_to_load):
+                            
+                        if has_cal_norm and not already_loaded:
                             f = os.path.join(root, file)
                             break
                             
