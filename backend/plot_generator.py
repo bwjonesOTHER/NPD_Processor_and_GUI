@@ -1223,17 +1223,19 @@ def generate_plots(params):
             if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_ambient", sn)
             if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_25C", sn)
         else: # test_type == 3
-            def is_trace(f):
-                fname = os.path.basename(f).lower()
-                return not any(c in fname for c in ["base", "hat", "cap_", "bulkhead", "specan", "pathloss"])
-            
+            def filter_benchtop(files):
+                import os
+                return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
+                
             raw_sparA = search_files(search_dirA, ".s2p", sn)
             if not raw_sparA and sn: raw_sparA = search_files(search_dirA, ".s2p", "")
-            sparA = [f for f in raw_sparA if is_trace(f)]
+            sparA_filt = [f for f in raw_sparA if "vswr" in os.path.basename(f).lower()]
+            sparA = filter_benchtop(sparA_filt if sparA_filt else raw_sparA)
             
             raw_npdA = search_files(search_dirA, ".csv", sn)
             if not raw_npdA and sn: raw_npdA = search_files(search_dirA, ".csv", "")
-            npdA = [f for f in raw_npdA if is_trace(f)]
+            npdA_filt = [f for f in raw_npdA if "nfdirect" in os.path.basename(f).lower() or "npd" in os.path.basename(f).lower()]
+            npdA = filter_benchtop(npdA_filt if npdA_filt else raw_npdA)
         
         # If Thermal files are in a root folder without Area subfolders, filter by PMA Area in the filename
         if pma and search_dirA == temp: # only filter if we didn't successfully drill down into a PMA folder
@@ -1255,19 +1257,8 @@ def generate_plots(params):
             npdA = [f for f in npdA if file_has_pma(f)]
         
         # Run B is usually pure benchtop, just search by extension and SN
-        # IMPORTANT: Since folderB is the same root folder, it will accidentally find the NPDoverTemp files again.
-        # We must filter out "NPDoverTemp" files from Run B.
-        def filter_benchtop(files):
-            import os
-            # Only check the filename and immediate parent directory, not the entire path which might coincidentally contain 'npdovertemp'
-            return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
-            
-        def is_trace(f):
-            fname = os.path.basename(f).lower()
-            return not any(c in fname for c in ["base", "hat", "cap_", "bulkhead", "specan", "pathloss"])
-            
-        raw_sparB = [f for f in search_files(search_dirB, ".s2p", sn) if is_trace(f)]
-        if not raw_sparB and sn: raw_sparB = [f for f in search_files(search_dirB, ".s2p", "") if is_trace(f)]
+        raw_sparB = search_files(search_dirB, ".s2p", sn)
+        if not raw_sparB and sn: raw_sparB = search_files(search_dirB, ".s2p", "")
         sparB_filt = [f for f in raw_sparB if "vswr" in os.path.basename(f).lower()]
         sparB = filter_benchtop(sparB_filt if sparB_filt else raw_sparB)
         
