@@ -114,13 +114,14 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
     run_folder = os.path.dirname(filepath)
     if run_folder and os.path.isdir(run_folder):
         search_dirs.append(run_folder)
+        
         parent_run = os.path.dirname(run_folder)
         if parent_run and os.path.isdir(parent_run):
-            cl = os.path.join(parent_run, "Cable Loss")
-            if os.path.isdir(cl): 
-                search_dirs.append(cl)
-            # Also search the parent run itself just in case
             search_dirs.append(parent_run)
+            
+        grandparent = os.path.dirname(parent_run)
+        if grandparent and os.path.isdir(grandparent):
+            search_dirs.append(grandparent)
             
     # Then fallback to global cal folder if provided
     if cal_folder and os.path.isdir(cal_folder):
@@ -230,7 +231,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
                 else:
                     loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
             else:
-                loss_db = np.abs(net.s_db[:, 1, 0]) # abs(-2) = 2, abs(+2) = 2
+                loss_db = -net.s_db[:, 1, 0]
             
             
             if freq_ref is None:
