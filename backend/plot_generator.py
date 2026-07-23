@@ -89,7 +89,7 @@ def find_cal_file(folders, cap_num, cal_type):
 
     return None
 
-def get_calibration_loss(filepath, cal_folder, test_type=1):
+def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
     is_npd = filepath.lower().endswith('.csv')
     is_benchtop = test_type == 2 or test_type == 3
 
@@ -228,7 +228,10 @@ def get_calibration_loss(filepath, cal_folder, test_type=1):
             # Cables are passive. Their S21 is usually negative (e.g. -2 dB). Their "loss" should be +2 dB.
             # If a cable is saved as Insertion Loss (e.g. +2 dB), we still want +2 dB.
             if "speca" in f.lower():
-                loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
+                if plot_s12:
+                    loss_db = -net.s_db[:, 0, 1] # S12
+                else:
+                    loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
             else:
                 loss_db = np.abs(net.s_db[:, 1, 0]) # abs(-2) = 2, abs(+2) = 2
             
@@ -302,7 +305,7 @@ def load_excel_average(average_data_path, plot_type, title_suffix):
     except Exception as e:
         return None, None
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path="", y_upper_npd=None, y_lower_npd=None):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=False):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -329,7 +332,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type)
+            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type, plot_s12)
 
             # Apply Calibration
             if freq_cal is not None:
@@ -491,7 +494,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         freq_cal, total_loss_db = None, None
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(fpath, file_cal_folder, test_type)
+            freq_cal, total_loss_db = get_calibration_loss(fpath, file_cal_folder, test_type, plot_s12)
 
         s21_corr = raw_s21
         if freq_cal is not None:
@@ -1146,12 +1149,12 @@ def generate_plots(params):
                 
             average_data_path_to_use = average_data_path if name != "All Temps" else ""
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=apply_npd_cal, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
@@ -1339,7 +1342,7 @@ def generate_plots(params):
 
         
         apply_bench_cal_npd = True if (test_type == 2 or test_type == 3) else False
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal_npd, test_type=test_type, average_data_path=average_data_path, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal_npd, test_type=test_type, average_data_path=average_data_path, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
         if p1: generated_plots.append(p1)
 
         apply_bench_cal_s21 = True if (test_type == 2 or test_type == 3) else False

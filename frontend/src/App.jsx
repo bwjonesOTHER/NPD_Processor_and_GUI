@@ -976,8 +976,8 @@ function App() {
                 
                 <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
                   <label htmlFor="plot_s12" className="toggle-row-label">
-                    Plot S12 instead of S21
-                    <span className="toggle-row-hint">Check to extract and plot the S12 parameter from the S2P files.</span>
+                    Use S12 of SpecAn Calibration
+                    <span className="toggle-row-hint">Check to use the S12 parameter of the SpecAn calibration file instead of S21.</span>
                   </label>
                   <span className="toggle-switch">
                     <input
