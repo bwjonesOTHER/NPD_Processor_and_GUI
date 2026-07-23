@@ -102,6 +102,9 @@ def get_calibration_loss(filepath, cal_folder):
         # Only use Cap for Tile Benchtop (which has a Cap number). Arrays use Hat.
         if is_benchtop and ident_num is not None:
             cal_types = ("Base", "Cap", "Bulkhead")
+        elif is_benchtop:
+            # Array Benchtop (Test 3) doesn't use a Hat cable
+            cal_types = ("Base", "Bulkhead")
         else:
             cal_types = ("Base", "Hat", "Bulkhead")
 
@@ -112,14 +115,17 @@ def get_calibration_loss(filepath, cal_folder):
     run_folder = os.path.dirname(filepath)
     if run_folder and os.path.isdir(run_folder):
         search_dirs.append(run_folder)
-
-    parent_run_folder = os.path.dirname(run_folder)
-    if parent_run_folder and os.path.isdir(parent_run_folder):
-        search_dirs.append(parent_run_folder)
         
-    grandparent_run_folder = os.path.dirname(parent_run_folder)
-    if grandparent_run_folder and os.path.isdir(grandparent_run_folder):
-        search_dirs.append(grandparent_run_folder)
+        # Only search specific "Cable Loss" subfolders in parent, NOT the entire parent recursively!
+        parent_run = os.path.dirname(run_folder)
+        if parent_run and os.path.isdir(parent_run):
+            cl = os.path.join(parent_run, "Cable Loss")
+            if os.path.isdir(cl): search_dirs.append(cl)
+            
+        grandparent = os.path.dirname(parent_run)
+        if grandparent and os.path.isdir(grandparent):
+            cl = os.path.join(grandparent, "Cable Loss")
+            if os.path.isdir(cl): search_dirs.append(cl)
 
     cal_files_to_load = []
     found_base_bulk = False
