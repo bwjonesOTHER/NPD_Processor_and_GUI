@@ -481,10 +481,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         net = rf.Network(fpath)
         freq_ghz = net.f / 1e9
         
-        if plot_s12:
-            raw_s21 = net.s_db[:, 0, 1]
-        else:
-            raw_s21 = net.s_db[:, 1, 0]
+        raw_s21 = net.s_db[:, 1, 0]
             
         serial = extract_serial(fpath)
 
