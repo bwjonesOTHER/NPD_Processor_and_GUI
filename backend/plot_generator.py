@@ -148,6 +148,15 @@ def get_calibration_loss(filepath, cal_folder):
                             continue
                         name = file.lower()
                         name_norm = name.replace(" ", "").replace("_", "")
+                        
+                        # EXCLUSION: Never grab a data trace as a calibration cable
+                        if any(x in name_norm for x in ["vswr", "ambient", "hot", "cold", "25c", "pri", "red", "sec", "nfdirect"]):
+                            continue
+                            
+                        # If filepath is the exact same file (just different extension), skip it
+                        if os.path.splitext(os.path.basename(file))[0].lower() == os.path.splitext(os.path.basename(filepath))[0].lower():
+                            continue
+
                         cal_norm = cal_type.lower().replace(" ", "")
                         # Must exclude 'speca' when looking for 'base'
                         if cal_norm == "base" and "speca" in name_norm:
