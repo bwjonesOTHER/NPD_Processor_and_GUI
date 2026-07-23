@@ -2726,3 +2726,161 @@ total_loss_db (mean): 1.325854187654115
 --- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A\20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p ---
 cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
 total_loss_db (mean): 1.325854187654115
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A ---
+  20260626_46487_ArrayNPD_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_46593_ArrayNPD_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMANPD_VNA-Cal_M875.csa
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77 ---
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A ---
+  20260626_49138_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_49225_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A ---
+  20260626_46487_ArrayNPD_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_46593_ArrayNPD_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMANPD_VNA-Cal_M875.csa
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A\20260626_46487_ArrayNPD_LMO1469-77_L111111_SN0002_Pri.csv ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A ---
+  20260626_46487_ArrayNPD_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_46593_ArrayNPD_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMANPD_VNA-Cal_M875.csa
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77 ---
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A ---
+  20260626_49138_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_49225_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A ---
+  20260626_46487_ArrayNPD_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_46593_ArrayNPD_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMANPD_VNA-Cal_M875.csa
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A\20260626_46593_ArrayNPD_LMO1469-77_L111111_SN0002_Red.csv ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A ---
+  20260626_49138_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_49225_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77 ---
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A ---
+  20260626_49138_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_49225_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A ---
+  20260626_46487_ArrayNPD_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_46593_ArrayNPD_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMANPD_VNA-Cal_M875.csa
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A\20260626_49138_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Pri.csv ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A ---
+  20260626_49138_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_49225_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77 ---
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Cable Loss ---
+  20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p
+  20260626_Pathloss_Cap_RA_895-902-466-004_SN0002.s2p
+  20260713_SpecAnBaseCableAssy_pathloss.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A ---
+  20260626_49138_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_49225_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- DEBUG FILES IN C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A ---
+  20260626_46487_ArrayNPD_LMO1469-77_L111111_SN0002_Pri.csv
+  20260626_46593_ArrayNPD_LMO1469-77_L111111_SN0002_Red.csv
+  20260626_PMANPD_VNA-Cal_M875.csa
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Pri.s2p
+  20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Red.s2p
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A\20260626_49225_ArrayNPD_Run2_LMO1469-77_L111111_SN0002_Red.csv ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A\20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Pri.s2p ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run_1_8.953A\20260626_PMATestHatS_LMO1469-77_L111111_SN0002_Red.s2p ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A\20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Pri.s2p ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
+
+--- Cal for C:\Users\thomas.moore\Redwire Space\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\PMA Test Hat\SN0002_LMO1469-77\Run2_9.362A\20260626_PMATestHatS_Run2_LMO1469-77_L111111_SN0002_Red.s2p ---
+cal_files_to_load: ['C:\\Users\\thomas.moore\\Redwire Space\\LON-10095.1-Macallan - Documents\\03 - Technical\\06 - Test & Demonstrations\\06 Flight Phase Test Data\\PMA ARRAY\\PMA Test Hat\\SN0002_LMO1469-77\\Cable Loss\\20260624_Pathloss_Base_RA_895-902-466-004_SN0019.s2p']
+total_loss_db (mean): 1.325854187654115
