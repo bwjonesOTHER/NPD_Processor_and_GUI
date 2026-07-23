@@ -113,6 +113,7 @@ def get_calibration_loss(filepath, cal_folder):
     # Prioritize Cable Loss folder in the run's parent directory first
     run_folder = os.path.dirname(filepath)
     if run_folder and os.path.isdir(run_folder):
+        search_dirs.append(run_folder)
         parent_run = os.path.dirname(run_folder)
         if parent_run and os.path.isdir(parent_run):
             cl = os.path.join(parent_run, "Cable Loss")
