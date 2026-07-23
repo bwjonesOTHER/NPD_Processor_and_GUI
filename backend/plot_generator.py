@@ -463,7 +463,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=False):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -477,7 +477,12 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     for fpath in all_files:
         net = rf.Network(fpath)
         freq_ghz = net.f / 1e9
-        raw_s21 = net.s_db[:, 1, 0]
+        
+        if plot_s12:
+            raw_s21 = net.s_db[:, 0, 1]
+        else:
+            raw_s21 = net.s_db[:, 1, 0]
+            
         serial = extract_serial(fpath)
 
         # For filesA (Thermal), use Test 1 behavior (empty cal_folder so it searches run_folder)
@@ -1096,7 +1101,9 @@ def generate_plots(params):
     y_upper_npd = float(params.get('y_upper_npd')) if params.get('y_upper_npd') is not None else None
     y_lower_npd = float(params.get('y_lower_npd')) if params.get('y_lower_npd') is not None else None
     output_folder = params.get('outputFolder', '/tmp')
-    average_data_path = params.get('average_data_path', '')
+    average_data_path = params.get('average_data_path', "")
+    apply_npd_cal = params.get('apply_npd_cal', False)
+    plot_s12 = params.get('plot_s12', False)
 
     # Figure out calibration folder
     cal_folder = params.get('calFolder', "")
@@ -1149,7 +1156,7 @@ def generate_plots(params):
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
-            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21)
+            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21, plot_s12=plot_s12)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
@@ -1336,7 +1343,7 @@ def generate_plots(params):
         if p1: generated_plots.append(p1)
 
         apply_bench_cal_s21 = True if (test_type == 2 or test_type == 3) else False
-        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal_s21, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21)
+        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal_s21, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21, plot_s12=plot_s12)
         if p2: generated_plots.append(p2)
 
     return generated_plots

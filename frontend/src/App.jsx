@@ -59,6 +59,7 @@ function App() {
     y_lower_npd: -170,
     average_data_path: "",
     apply_npd_cal: false,
+    plot_s12: false,
   });
 
   useEffect(() => {
@@ -972,6 +973,22 @@ function App() {
                     </span>
                   </div>
                 )}
+                
+                <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
+                  <label htmlFor="plot_s12" className="toggle-row-label">
+                    Plot S12 instead of S21
+                    <span className="toggle-row-hint">Check to extract and plot the S12 parameter from the S2P files.</span>
+                  </label>
+                  <span className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      id="plot_s12"
+                      checked={!!plotParams.plot_s12}
+                      onChange={(e) => setPlotParams(prev => ({ ...prev, plot_s12: e.target.checked }))}
+                    />
+                    <span className="toggle-switch-track"></span>
+                  </span>
+                </div>
               </div>
 
 
