@@ -116,11 +116,11 @@ def get_calibration_loss(filepath, cal_folder):
     if run_folder and os.path.isdir(run_folder):
         search_dirs.append(run_folder)
         
-        # Only search specific "Cable Loss" subfolders in parent, NOT the entire parent recursively!
         parent_run = os.path.dirname(run_folder)
         if parent_run and os.path.isdir(parent_run):
+            search_dirs.append(parent_run) # Search parent (e.g. SN0002) but not grandparent (PMA Test Hat)
             cl = os.path.join(parent_run, "Cable Loss")
-            if os.path.isdir(cl): search_dirs.append(cl)
+            if os.path.isdir(cl) and cl not in search_dirs: search_dirs.append(cl)
             
         grandparent = os.path.dirname(parent_run)
         if grandparent and os.path.isdir(grandparent):
@@ -145,6 +145,18 @@ def get_calibration_loss(filepath, cal_folder):
                 if f: break
                 for root, dirs, files in os.walk(sdir):
                     if f: break
+                    
+                    # ONLY ONCE PER SEARCH: debug print all files we see in this directory
+                    if cal_type == "SpecA":
+                        debug_path = os.path.join(os.path.dirname(os.getcwd()), "calibration_debug_used_files.txt")
+                        if not os.path.exists(os.path.dirname(os.getcwd())):
+                            debug_path = os.path.join(os.getcwd(), "calibration_debug_used_files.txt")
+                        try:
+                            with open(debug_path, "a") as df:
+                                df.write(f"\n--- DEBUG FILES IN {root} ---\n")
+                                for _df in files:
+                                    df.write(f"  {_df}\n")
+                        except: pass
                     
                     # Sort files: prioritize files starting with a number, and sort descending (newest first)
                     files.sort(key=lambda x: (1 if x and x[0].isdigit() else 0, x), reverse=True)
