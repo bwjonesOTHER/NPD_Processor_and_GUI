@@ -148,11 +148,8 @@ def get_calibration_loss(filepath, cal_folder):
                     
                     # ONLY ONCE PER SEARCH: debug print all files we see in this directory
                     if cal_type == "SpecA":
-                        debug_path = os.path.join(os.path.dirname(os.getcwd()), "calibration_debug_used_files.txt")
-                        if not os.path.exists(os.path.dirname(os.getcwd())):
-                            debug_path = os.path.join(os.getcwd(), "calibration_debug_used_files.txt")
                         try:
-                            with open(debug_path, "a") as df:
+                            with open("debug_cal_loss.txt", "a") as df:
                                 df.write(f"\n--- DEBUG FILES IN {root} ---\n")
                                 for _df in files:
                                     df.write(f"  {_df}\n")
