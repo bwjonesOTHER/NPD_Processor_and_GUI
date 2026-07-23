@@ -109,23 +109,21 @@ def get_calibration_loss(filepath, cal_folder):
             cal_types = ("Base", "Hat", "Bulkhead")
 
     search_dirs = []
-    if cal_folder and os.path.isdir(cal_folder):
-        search_dirs.append(cal_folder)
-        
+    
+    # Prioritize Cable Loss folder in the run's parent directory first
     run_folder = os.path.dirname(filepath)
     if run_folder and os.path.isdir(run_folder):
-        search_dirs.append(run_folder)
-        
         parent_run = os.path.dirname(run_folder)
         if parent_run and os.path.isdir(parent_run):
-            search_dirs.append(parent_run) # Search parent (e.g. SN0002) but not grandparent (PMA Test Hat)
             cl = os.path.join(parent_run, "Cable Loss")
-            if os.path.isdir(cl) and cl not in search_dirs: search_dirs.append(cl)
+            if os.path.isdir(cl): 
+                search_dirs.append(cl)
+            # Also search the parent run itself just in case
+            search_dirs.append(parent_run)
             
-        grandparent = os.path.dirname(parent_run)
-        if grandparent and os.path.isdir(grandparent):
-            cl = os.path.join(grandparent, "Cable Loss")
-            if os.path.isdir(cl): search_dirs.append(cl)
+    # Then fallback to global cal folder if provided
+    if cal_folder and os.path.isdir(cal_folder):
+        search_dirs.append(cal_folder)
 
     cal_files_to_load = []
     found_base_bulk = False
