@@ -483,10 +483,10 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     
     layout = {
         "title": title,
-        "xaxis": {"title": "Frequency (GHz)", "range": [ref_freq_full[0], ref_freq_full[-1]]},
-        "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)", "autorange": True},
+        "xaxis": {"title": "Frequency (GHz)"},
+        "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)"},
         "showlegend": True,
-        "legend": {"x": 1.05, "y": 0.5}
+        "legend": {"x": 1.05, "y": 1}
     }
     
     filename_safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"
@@ -648,10 +648,10 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
     layout = {
         "title": title,
-        "xaxis": {"title": "Frequency (GHz)", "range": x_range},
-        "yaxis": {"title": "S21 (dB)", "autorange": True},
+        "xaxis": {"title": "Frequency (GHz)"},
+        "yaxis": {"title": "S21 (dB)"},
         "showlegend": True,
-        "legend": {"x": 1.05, "y": 0.5}
+        "legend": {"x": 1.05, "y": 1}
     }
 
     filename_safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"

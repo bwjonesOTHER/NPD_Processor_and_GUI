@@ -43,12 +43,12 @@ const InteractivePlot = forwardRef(({ plotData }, ref) => {
         plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: 'var(--text-color, #e0e0e0)' },
         xaxis: {
-          ...plotData.layout.xaxis,
+          ...(plotData.layout.xaxis || {}),
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         },
         yaxis: {
-          ...plotData.layout.yaxis,
+          ...(plotData.layout.yaxis || {}),
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         },
