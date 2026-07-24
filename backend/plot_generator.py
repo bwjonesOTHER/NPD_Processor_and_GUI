@@ -684,6 +684,10 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     if a_v is None or h_v is None or c_v is None:
         return None
         
+    a_f, a_v = np.array(a_f), np.array(a_v)
+    h_f, h_v = np.array(h_f), np.array(h_v)
+    c_f, c_v = np.array(c_f), np.array(c_v)
+        
     min_len = min(len(a_v), len(h_v), len(c_v))
     a_v, h_v, c_v = a_v[:min_len], h_v[:min_len], c_v[:min_len]
     a_f = a_f[:min_len]
