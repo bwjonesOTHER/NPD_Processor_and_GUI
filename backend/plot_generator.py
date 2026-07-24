@@ -484,7 +484,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     layout = {
         "title": title,
         "xaxis": {"title": "Frequency (GHz)", "range": [ref_freq_full[0], ref_freq_full[-1]]},
-        "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)", "range": y_range},
+        "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)", "autorange": True},
         "showlegend": True,
         "legend": {"x": 1.05, "y": 0.5}
     }
@@ -649,7 +649,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     layout = {
         "title": title,
         "xaxis": {"title": "Frequency (GHz)", "range": x_range},
-        "yaxis": {"title": "S21 (dB)", "range": y_range},
+        "yaxis": {"title": "S21 (dB)", "autorange": True},
         "showlegend": True,
         "legend": {"x": 1.05, "y": 0.5}
     }
@@ -1090,8 +1090,8 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
 
     layout = {
         "title": title,
-        "xaxis": {"title": "Frequency (GHz)", "range": _OTA_XLIM},
-        "yaxis": {"title": ylabel, "range": ylim},
+        "xaxis": {"title": "Frequency (GHz)", "autorange": True},
+        "yaxis": {"title": ylabel, "autorange": True},
         "showlegend": True,
         "legend": {"x": 0.5, "y": -0.28, "xanchor": "center", "orientation": "h"}
     }
@@ -1203,8 +1203,8 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
 
     layout = {
         "title": title,
-        "xaxis": {"title": "Frequency (GHz)", "range": _OTA_XLIM},
-        "yaxis": {"title": "S21 (dB)", "range": _OTA_S21_YLIM},
+        "xaxis": {"title": "Frequency (GHz)", "autorange": True},
+        "yaxis": {"title": "S21 (dB)", "autorange": True},
         "showlegend": True,
         "legend": {"x": 0.5, "y": -0.28, "xanchor": "center", "orientation": "h"}
     }

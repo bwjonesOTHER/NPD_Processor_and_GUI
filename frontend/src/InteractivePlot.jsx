@@ -65,6 +65,7 @@ const InteractivePlot = forwardRef(({ plotData }, ref) => {
         modeBarButtonsToRemove: ['lasso2d', 'select2d']
       }}
       style={{ width: '100%', height: '100%' }}
+      useResizeHandler={true}
       className={`plot-container ${plotData.status === 'failed' ? 'plot-fail' : 'plot-pass'}`}
     />
   );

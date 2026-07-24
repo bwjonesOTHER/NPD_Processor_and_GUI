@@ -630,15 +630,16 @@ def api_generate_plots():
     
     # Gather paths based on the test type for backward compatibility with existing text file logic
     if test == 1:
-        runs = []
-        if os.path.exists("SelectedRuns.txt"):
-            with open("SelectedRuns.txt", "r") as f:
-                runs = [line.strip() for line in f if line.strip()]
-        else:
-            run_a = read_txt("RunA_Path.txt")
-            run_b = read_txt("RunB_Path.txt")
-            runs = [run for run in [run_a, run_b] if run]
-        params['runs'] = runs
+        if not params.get('runs'):
+            runs = []
+            if os.path.exists("SelectedRuns.txt"):
+                with open("SelectedRuns.txt", "r") as f:
+                    runs = [line.strip() for line in f if line.strip()]
+            else:
+                run_a = read_txt("RunA_Path.txt")
+                run_b = read_txt("RunB_Path.txt")
+                runs = [run for run in [run_a, run_b] if run]
+            params['runs'] = runs
 
     elif test == 2:
         path = params.get('dataSource')
@@ -652,9 +653,10 @@ def api_generate_plots():
             params['lmo'] = read_txt("lmoNumber.txt")
 
     elif test == 3:
-        run_a = read_txt("RunA_Path.txt")
-        run_b = read_txt("RunB_Path.txt")
-        params['runs'] = [run for run in [run_a, run_b] if run]
+        if not params.get('runs'):
+            run_a = read_txt("RunA_Path.txt")
+            run_b = read_txt("RunB_Path.txt")
+            params['runs'] = [run for run in [run_a, run_b] if run]
         params['serial_number'] = read_txt("serialNumber.txt")
         
         cal_path = read_txt("Cal_Path.txt")
