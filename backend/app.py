@@ -667,19 +667,11 @@ def api_generate_plots():
     results = []
     if generated_data:
         for item in generated_data:
-            file_path = item.get("path")
-            status = item.get("status", "")
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as image_file:
-                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-                    results.append({
-                        "filename": os.path.basename(file_path),
-                        "data": f"data:image/png;base64,{encoded_string}",
-                        "status": status
-                    })
+            if item:
+                results.append(item)
                     
     shutil.rmtree(temp_out_dir, ignore_errors=True)
-    return jsonify({"success": True, "images": results, "warnings": plot_generator.get_warnings()})
+    return jsonify({"success": True, "plots_data": results, "warnings": plot_generator.get_warnings()})
 
 @app.route('/api/save_plots', methods=['POST'])
 def save_plots():

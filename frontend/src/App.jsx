@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, ChevronLeft, Activity, Download, UploadCloud, XCircle, Save, Folder, X, Maximize2, Settings } from 'lucide-react';
 import JSZip from 'jszip';
 import './App.css';
+import InteractivePlot from './InteractivePlot';
 
 const API_BASE = window.location.port === '5173' ? `http://${window.location.hostname}:5001/api` : '/api';
 
@@ -21,6 +22,7 @@ function App() {
   const [isUploadingSource, setIsUploadingSource] = useState(false);
   const [isUploadingRefFile, setIsUploadingRefFile] = useState(false);
   const [images, setImages] = useState([]);
+  const plotRefs = useRef([]);
   const [error, setError] = useState('');
   const [warnings, setWarnings] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -114,44 +116,71 @@ function App() {
 
 
 
+
   const handleExportPlots = async () => {
     if (images.length === 0) return;
-    const zip = new JSZip();
-    
-    images.forEach((img) => {
-      const base64Data = img.data.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
-      zip.file(img.filename, base64Data, { base64: true });
-    });
-    
-    const content = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(content);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "NPD_Plots.zip";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const zip = new JSZip();
+      for (let i = 0; i < images.length; i++) {
+        if (plotRefs.current[i]) {
+          const imgData = await plotRefs.current[i].toImage();
+          if (imgData) {
+            const base64Data = imgData.data.split(',')[1];
+            zip.file(imgData.filename, base64Data, { base64: true });
+          }
+        }
+      }
+      
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = window.URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'NPD_Plots.zip';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert("Failed to export plots: " + err.message);
+    }
   };
 
   const handleSavePlots = async () => {
-    if (!outputFolder) {
-      alert("Please select a Plot Output Destination folder on the previous page.");
-      return;
-    }
+    if (images.length === 0) return;
     try {
-      const res = await fetch(`${API_BASE}/save_plots`, {
+      // Collect image data from all Plotly components
+      const plotImages = [];
+      for (let i = 0; i < images.length; i++) {
+        if (plotRefs.current[i]) {
+          const imgData = await plotRefs.current[i].toImage();
+          if (imgData) {
+            plotImages.push(imgData);
+          }
+        }
+      }
+
+      const res = await fetch(`${API_BASE}/choose_directory`);
+      const dirData = await res.json();
+      if (!dirData.success) {
+        if (dirData.error && dirData.error !== "No directory selected") {
+          alert(`Error selecting output folder: ${dirData.error}`);
+        }
+        return;
+      }
+      
+      const outputFolder = dirData.path;
+      const resSave = await fetch(`${API_BASE}/save_plots`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputFolder, plots: images })
+        body: JSON.stringify({ outputFolder, plots: plotImages })
       });
-      const data = await res.json();
+      const data = await resSave.json();
       if (data.success) {
         alert(`Successfully saved ${data.saved.length} plots to ${outputFolder}`);
       } else {
         alert(`Error saving plots: ${data.error}`);
       }
     } catch (err) {
-      console.error(err);
       alert("Failed to save plots: " + err.message);
     }
   };
@@ -391,7 +420,7 @@ function App() {
 
       const data = await res.json();
       if (data.success) {
-        setImages(data.images || []);
+        setImages(data.plots_data || []);
         setWarnings(data.warnings || []);
       } else {
         setError(data.error || 'Failed to generate plots');
@@ -430,7 +459,7 @@ function App() {
     <div className="container" style={{ maxWidth: 'min(1800px, 96vw)' }}>
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.6.0.2 Dingo</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.7.0.0 Elk</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
@@ -1029,19 +1058,19 @@ function App() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
                     {images.map((img, idx) => (
-                      <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <div key={idx} style={{ background: 'var(--panel-bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
                         <div
-                          className="plot-thumb"
-                          onClick={() => setSelectedIndex(idx)}
-                          title="Click to inspect"
+                          style={{ width: '100%', height: '300px', position: 'relative' }}
                         >
-                          <img src={img.data} alt={img.filename} className={img.status === 'passed' ? 'plot-pass' : img.status === 'failed' ? 'plot-fail' : ''} style={{ width: '100%', height: 'auto', borderRadius: '4px', display: 'block' }} />
-                          <div className="plot-thumb-overlay">
-                            <Maximize2 size={28} color="#fff" />
+                          <InteractivePlot ref={el => plotRefs.current[idx] = el} plotData={img} />
+                          
+                          <div 
+                            style={{ position: 'absolute', top: 5, right: 5, cursor: 'pointer', background: 'rgba(0,0,0,0.5)', padding: '4px', borderRadius: '4px', zIndex: 10 }}
+                            onClick={() => setSelectedIndex(idx)}
+                            title="Expand Plot"
+                          >
+                            <Maximize2 size={16} color="#fff" />
                           </div>
-                        </div>
-                        <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                          {img.filename}
                         </div>
                       </div>
                     ))}

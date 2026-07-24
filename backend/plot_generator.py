@@ -311,7 +311,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     if not all_files:
         return None
 
-    plt.figure(figsize=(8, 4), dpi=150)
+    traces = []
     all_noise = []
     all_noise_win = []
     all_labels = []
@@ -334,8 +334,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             
         if apply_cal:
             freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type, plot_s12)
-
-            # Apply Calibration
             if freq_cal is not None:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
@@ -348,7 +346,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     ref_freq_full = None
     for file in all_files:
         serial = extract_serial(file)
-        
         file_cal_folder = cal_folder if file in filesB else ""
         freq, noise = load_np_data(file, file_cal_folder)
         if len(freq) == 0:
@@ -361,22 +358,25 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 noise = np.interp(ref_freq_full, freq, noise)
                 freq = ref_freq_full
 
-        plt.plot(freq, noise, label=f'{serial[-21:-4:1]}')
+        traces.append({
+            "x": freq.tolist(),
+            "y": noise.tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": serial[-21:-4:1]
+        })
         all_freqs.append(freq)
         all_noise.append(noise)
         
-        # Window points for Pass/Fail
         start_idx = np.searchsorted(freq, freq_min)
         end_idx = np.searchsorted(freq, freq_max)
         if start_idx == end_idx:
-            # If data is out of bounds, use all data just in case
             all_noise_win.append(noise)
         else:
             all_noise_win.append(noise[start_idx:end_idx])
         all_labels.append(serial[-21:-4:1])
 
     if not all_freqs:
-        plt.close()
         return None
 
     all_noise_win = np.array([x for x in all_noise_win if len(x) > 0])
@@ -389,7 +389,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         else:
             ref_freq_win = ref_freq_full
     else:
-        # We will interpolate in the next step, so we just set ref_freq_win to full here temporarily
         ref_freq_win = ref_freq_full
     
     status = "Passed"
@@ -407,7 +406,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         else:
             avg = np.mean(all_noise_win, axis=0)
 
-        # -- USER UPLOADED AVERAGE OVERRIDE -- #
         excel_freq, excel_val = load_excel_average(average_data_path, "Tile NPD" if test_type != 3 and test_type != 4 else "Array NPD", title_suffix)
         if excel_freq is not None and excel_val is not None:
             if not plot_density:
@@ -415,9 +413,15 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             from scipy.interpolate import interp1d
             f_avg_interp = interp1d(excel_freq, excel_val, bounds_error=False, fill_value=np.nan)
             avg = f_avg_interp(ref_freq_win)
-            plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
+            traces.append({
+                "x": excel_freq.tolist(),
+                "y": excel_val.tolist(),
+                "type": "scatter",
+                "mode": "lines",
+                "name": "User Average",
+                "line": {"color": "black", "dash": "dash", "width": 2.5}
+            })
 
-        # Using requested bounds
         upper = avg + u_bound_npd
         lower = avg - l_bound_npd
 
@@ -427,36 +431,65 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             status = "Failed"
 
         if len(ref_freq_win) == len(lower):
-            plt.plot(ref_freq_win, lower, color='red', alpha=1, marker='o', markersize=3, markevery=100, label='Lower bound')
-            plt.plot(ref_freq_win, upper, color='red', alpha=1, marker='x', markersize=3, markevery=100, label='Upper bound')
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": lower.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Lower bound",
+                "marker": {"color": "red", "symbol": "circle", "size": 4},
+                "line": {"color": "red"}
+            })
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": upper.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Upper bound",
+                "marker": {"color": "red", "symbol": "x", "size": 4},
+                "line": {"color": "red"}
+            })
 
-    plt.xlim(ref_freq_full[0], ref_freq_full[-1])
-    plt.axvline(x=freq_min, color='g')
-    plt.axvline(x=freq_max, color='g')
-    plt.grid(True)
+    # Vertical lines for min/max
+    traces.append({
+        "x": [freq_min, freq_min],
+        "y": [y_lower_npd or -170, y_upper_npd or -90],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Min",
+        "line": {"color": "green"}
+    })
+    traces.append({
+        "x": [freq_max, freq_max],
+        "y": [y_lower_npd or -170, y_upper_npd or -90],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Max",
+        "line": {"color": "green"}
+    })
+
     if y_upper_npd is not None and y_lower_npd is not None:
         if plot_density:
-            plt.ylim(y_lower_npd, y_upper_npd)
+            y_range = [y_lower_npd, y_upper_npd]
         else:
-            plt.ylim(y_lower_npd + 40, y_upper_npd + 40)
+            y_range = [y_lower_npd + 40, y_upper_npd + 40]
     else:
         if plot_density:
-            plt.ylim(-170, -110)
+            y_range = [-170, -110]
         else:
-            plt.ylim(-130, -90)
-    
-    title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
-    plt.title(title)
-    plt.xlabel('Frequency (GHz)')
-    plt.ylabel('NPD (dBm/Hz)') if plot_density else plt.ylabel('NP (dBm)')
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
-    plt.subplots_adjust(right=0.7)
+            y_range = [-130, -90]
 
+    title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
+    
+    layout = {
+        "title": title,
+        "xaxis": {"title": "Frequency (GHz)", "range": [ref_freq_full[0], ref_freq_full[-1]]},
+        "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)", "range": y_range},
+        "showlegend": True,
+        "legend": {"x": 1.05, "y": 0.5}
+    }
+    
     filename_safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"
-    save_path = os.path.join(output_folder, filename_safe_title)
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    plt.close()
     
     full_avg = None
     if len(all_noise) > 0:
@@ -464,7 +497,14 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         full_avg = np.mean([x[:min_len] for x in all_noise], axis=0)
         ref_freq_full = ref_freq_full[:min_len]
         
-    return {"path": save_path, "status": status.lower(), "freq": ref_freq_full if full_avg is not None else None, "avg": full_avg}
+    return {
+        "filename": filename_safe_title,
+        "status": status.lower(),
+        "freq": ref_freq_full.tolist() if full_avg is not None else None,
+        "avg": full_avg.tolist() if full_avg is not None else None,
+        "traces": traces,
+        "layout": layout
+    }
 
 
 def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=False):
@@ -475,19 +515,14 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     avg_collection = []
     all_s21_full = []
     file_coll = []
-    plt.figure(figsize=(7, 4), dpi=150)
-
+    traces = []
     ref_freq_ghz = None
+
     for fpath in all_files:
         net = rf.Network(fpath)
         freq_ghz = net.f / 1e9
-        
         raw_s21 = net.s_db[:, 1, 0]
-            
         serial = extract_serial(fpath)
-
-        # For filesA (Thermal), use Test 1 behavior (empty cal_folder so it searches run_folder)
-        # For filesB (Benchtop), use the provided cal_folder
         file_cal_folder = cal_folder if fpath in filesB else ""
 
         freq_cal, total_loss_db = None, None
@@ -498,14 +533,19 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         if freq_cal is not None:
             s21_corr = raw_s21 + np.interp(freq_ghz, freq_cal, total_loss_db)
 
-        plt.plot(freq_ghz, s21_corr, label=f'{serial[-21:-4:1]}')
+        traces.append({
+            "x": freq_ghz.tolist(),
+            "y": s21_corr.tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": serial[-21:-4:1]
+        })
 
         start_idx = np.searchsorted(freq_ghz, freq_min)
         end_idx = np.searchsorted(freq_ghz, freq_max)
         
         if ref_freq_ghz is None:
             ref_freq_ghz = freq_ghz
-            
             start_idx = np.searchsorted(ref_freq_ghz, freq_min)
             end_idx = np.searchsorted(ref_freq_ghz, freq_max)
             if start_idx != end_idx:
@@ -533,13 +573,19 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     if len(s21_avg) > 0:
         avg = np.mean(s21_avg, axis=0)
         
-        # -- USER UPLOADED AVERAGE OVERRIDE -- #
         excel_freq, excel_val = load_excel_average(average_data_path, "Tile S21" if test_type != 3 and test_type != 4 else "Array S21", title_suffix)
         if excel_freq is not None and excel_val is not None:
             from scipy.interpolate import interp1d
             f_avg_interp = interp1d(excel_freq, excel_val, bounds_error=False, fill_value=np.nan)
             avg = f_avg_interp(ref_freq_win)
-            plt.plot(excel_freq, excel_val, color='black', linewidth=2.5, linestyle='--', label='User Average')
+            traces.append({
+                "x": excel_freq.tolist(),
+                "y": excel_val.tolist(),
+                "type": "scatter",
+                "mode": "lines",
+                "name": "User Average",
+                "line": {"color": "black", "dash": "dash", "width": 2.5}
+            })
             
         upper_bound = avg + u_bound_s21
         lower_bound = avg - l_bound_s21
@@ -550,35 +596,65 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
             status = "Failed"
             
         if ref_freq_ghz is not None and len(ref_freq_win) == len(lower_bound):
-            plt.plot(ref_freq_win, lower_bound, 'ro-', markersize=3, markevery=100, label='Lower bound')
-            plt.plot(ref_freq_win, upper_bound, 'rx-', markersize=3, markevery=100, label='Upper bound')
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": lower_bound.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Lower bound",
+                "marker": {"color": "red", "symbol": "circle", "size": 4},
+                "line": {"color": "red"}
+            })
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": upper_bound.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Upper bound",
+                "marker": {"color": "red", "symbol": "x", "size": 4},
+                "line": {"color": "red"}
+            })
 
-    if ref_freq_ghz is not None:
-        plt.xlim(ref_freq_ghz[0], ref_freq_ghz[-1])
-    else:
-        plt.xlim(freq_min, freq_max)
-    plt.axvline(x=freq_min, color='g')
-    plt.axvline(x=freq_max, color='g')
-    plt.grid(True)
+    traces.append({
+        "x": [freq_min, freq_min],
+        "y": [y_lower_s21 or -40, y_upper_s21 or 40],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Min",
+        "line": {"color": "green"}
+    })
+    traces.append({
+        "x": [freq_max, freq_max],
+        "y": [y_lower_s21 or -40, y_upper_s21 or 40],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Max",
+        "line": {"color": "green"}
+    })
+
     if y_upper_s21 is not None and y_lower_s21 is not None:
-        plt.ylim(y_lower_s21, y_upper_s21)
+        y_range = [y_lower_s21, y_upper_s21]
     elif (test_type != 1 and test_type != 3) and apply_cal:
-        plt.ylim(0, 30)
+        y_range = [0, 30]
     else:
-        plt.ylim(-40, 40)
+        y_range = [-40, 40]
         
     title = f'S21 Calibrated {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'S21 {title_suffix}, {status}'
-    plt.title(title)
-    plt.xlabel('Frequency (GHz)')
-    plt.ylabel('S21 (dB)')
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='8')
-    plt.subplots_adjust(right=0.8)
+    
+    if ref_freq_ghz is not None:
+        x_range = [ref_freq_ghz[0], ref_freq_ghz[-1]]
+    else:
+        x_range = [freq_min, freq_max]
+
+    layout = {
+        "title": title,
+        "xaxis": {"title": "Frequency (GHz)", "range": x_range},
+        "yaxis": {"title": "S21 (dB)", "range": y_range},
+        "showlegend": True,
+        "legend": {"x": 1.05, "y": 0.5}
+    }
 
     filename_safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"
-    save_path = os.path.join(output_folder, filename_safe_title)
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    plt.close()
     
     full_avg = None
     if len(all_s21_full) > 0:
@@ -586,8 +662,14 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         full_avg = np.mean([x[:min_len] for x in all_s21_full], axis=0)
         ref_freq_ghz = ref_freq_ghz[:min_len]
         
-    return {"path": save_path, "status": status.lower(), "freq": ref_freq_ghz if full_avg is not None else None, "avg": full_avg}
-
+    return {
+        "filename": filename_safe_title,
+        "status": status.lower(),
+        "freq": ref_freq_ghz.tolist() if full_avg is not None else None,
+        "avg": full_avg.tolist() if full_avg is not None else None,
+        "traces": traces,
+        "layout": layout
+    }
 
 
 
@@ -602,43 +684,92 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     if a_v is None or h_v is None or c_v is None:
         return None
         
-    # Ensure they are same length
     min_len = min(len(a_v), len(h_v), len(c_v))
     a_v, h_v, c_v = a_v[:min_len], h_v[:min_len], c_v[:min_len]
     a_f = a_f[:min_len]
 
-    plt.figure(figsize=(8, 5), dpi=150)
-    ax1 = plt.gca()
+    traces = []
     
-    ax1.plot(a_f, a_v, label='Ambient', color='black', linestyle='solid')
-    ax1.plot(a_f, h_v, label='Hot', color='red', linestyle='solid')
-    ax1.plot(a_f, c_v, label='Cold', color='blue', linestyle='solid')
-    ax1.set_xlabel('Frequency (GHz)')
-    ax1.set_ylabel(ylabel)
-    ax1.grid(True)
-    if ax1_ylim: ax1.set_ylim(ax1_ylim)
+    traces.append({
+        "x": a_f.tolist(),
+        "y": a_v.tolist(),
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Ambient",
+        "line": {"color": "black", "dash": "solid"},
+        "yaxis": "y1"
+    })
+    traces.append({
+        "x": a_f.tolist(),
+        "y": h_v.tolist(),
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Hot",
+        "line": {"color": "red", "dash": "solid"},
+        "yaxis": "y1"
+    })
+    traces.append({
+        "x": a_f.tolist(),
+        "y": c_v.tolist(),
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Cold",
+        "line": {"color": "blue", "dash": "solid"},
+        "yaxis": "y1"
+    })
     
-    ax2 = ax1.twinx()
-    ax2.plot(a_f, np.abs(a_v - h_v), label='|Amb - Hot|', color='orange', linestyle='dashed')
-    ax2.plot(a_f, np.abs(a_v - c_v), label='|Amb - Cold|', color='cyan', linestyle='dashed')
-    ax2.plot(a_f, np.abs(h_v - c_v), label='|Hot - Cold|', color='purple', linestyle='dashed')
-    ax2.set_ylabel('Delta (dB)')
-    if ax2_ylim: ax2.set_ylim(ax2_ylim)
+    traces.append({
+        "x": a_f.tolist(),
+        "y": np.abs(a_v - h_v).tolist(),
+        "type": "scatter",
+        "mode": "lines",
+        "name": "|Amb - Hot|",
+        "line": {"color": "orange", "dash": "dash"},
+        "yaxis": "y2"
+    })
+    traces.append({
+        "x": a_f.tolist(),
+        "y": np.abs(a_v - c_v).tolist(),
+        "type": "scatter",
+        "mode": "lines",
+        "name": "|Amb - Cold|",
+        "line": {"color": "cyan", "dash": "dash"},
+        "yaxis": "y2"
+    })
+    traces.append({
+        "x": a_f.tolist(),
+        "y": np.abs(h_v - c_v).tolist(),
+        "type": "scatter",
+        "mode": "lines",
+        "name": "|Hot - Cold|",
+        "line": {"color": "purple", "dash": "dash"},
+        "yaxis": "y2"
+    })
     
-    # Combined legend
-    lines_1, labels_1 = ax1.get_legend_handles_labels()
-    lines_2, labels_2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='center left', bbox_to_anchor=(1.1, 0.5), fontsize='8')
+    layout = {
+        "title": f'{title} Temp Deltas, Passed',
+        "xaxis": {"title": "Frequency (GHz)"},
+        "yaxis": {"title": ylabel},
+        "yaxis2": {
+            "title": "Delta (dB)",
+            "overlaying": "y",
+            "side": "right"
+        },
+        "showlegend": True,
+        "legend": {"x": 1.1, "y": 0.5}
+    }
     
-    plt.title(f'{title} Temp Deltas, Passed')
-    plt.subplots_adjust(right=0.7)
+    if ax1_ylim: layout["yaxis"]["range"] = ax1_ylim
+    if ax2_ylim: layout["yaxis2"]["range"] = ax2_ylim
     
     filename_safe_title = f"{title.replace(' ', '_')}_Temp_Deltas.png"
-    save_path = os.path.join(output_folder, filename_safe_title)
-    plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    plt.close()
     
-    return {"path": save_path, "status": "passed"}
+    return {
+        "filename": filename_safe_title,
+        "status": "passed",
+        "traces": traces,
+        "layout": layout
+    }
 
 # ============================================================
 # TEST 4: NPD OVER TEMP ARRAY
@@ -855,10 +986,10 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     check_bounds = avg_freq is not None and u_bound is not None and l_bound is not None
     failed_files = []
 
-    plt.figure(figsize=(8, 4), dpi=150)
+    traces = []
+    plotted = 0
     color_cycle = iter(_OTA_COLORS)
 
-    plotted = 0
     for f in files:
         freq, raw = _ota_load_csv(f, 2 if plot_density else 1)
         if len(freq) == 0:
@@ -866,14 +997,6 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         smoothed = _ota_smooth(raw, n_avg)
         freq_smooth = freq[:len(smoothed)]
 
-        # NP/NPD only needs the SpecAn cal file — Base/Hat don't apply to it
-        # (they calibrate S21 instead; see _ota_plot_s21). SpecAn's assembly
-        # had an amplifier inline when its pathloss file was made — so it's
-        # non-reciprocal: S21 is the amp's heavily-isolated reverse path
-        # (not usable here), while S12 is the actual forward path the
-        # signal travels (a real gain figure; loaded in
-        # _ota_load_specan_cal) and gets subtracted back out (abs() makes
-        # this correct regardless of the S2P's sign convention).
         corrected = smoothed
         if apply_cal and specan_freq is not None:
             corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
@@ -886,54 +1009,98 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
             if valid.any() and (np.any(corrected[valid] > upper) or np.any(corrected[valid] < lower)):
                 failed_files.append(os.path.basename(f))
 
-        if check_bounds:
-            avg_interp = np.interp(freq_smooth, avg_freq, avg_vals, left=np.nan, right=np.nan)
-            valid = np.isfinite(avg_interp)
-            upper = avg_interp[valid] + u_bound
-            lower = avg_interp[valid] - l_bound
-            if valid.any() and (np.any(corrected[valid] > upper) or np.any(corrected[valid] < lower)):
-                failed_files.append(os.path.basename(f))
+        try:
+            color = next(color_cycle)
+        except StopIteration:
+            color_cycle = iter(_OTA_COLORS)
+            color = next(color_cycle)
 
-        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
+        traces.append({
+            "x": freq_smooth.tolist(),
+            "y": corrected.tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": os.path.basename(f),
+            "line": {"color": color}
+        })
         plotted += 1
 
     if plotted == 0:
-        plt.close()
         return None
 
     if avg_freq is not None:
-        plt.plot(avg_freq, avg_vals, color='black', linewidth=2, linestyle='--', label='Reference Average')
+        traces.append({
+            "x": avg_freq.tolist(),
+            "y": avg_vals.tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": "Reference Average",
+            "line": {"color": "black", "dash": "dash", "width": 2}
+        })
     if check_bounds:
-        plt.plot(avg_freq, avg_vals + u_bound, color='red', linewidth=1.2, linestyle='--', label='Upper Bound')
-        plt.plot(avg_freq, avg_vals - l_bound, color='red', linewidth=1.2, linestyle='--', label='Lower Bound')
+        traces.append({
+            "x": avg_freq.tolist(),
+            "y": (avg_vals + u_bound).tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": "Upper Bound",
+            "line": {"color": "red", "dash": "dash", "width": 1.2}
+        })
+        traces.append({
+            "x": avg_freq.tolist(),
+            "y": (avg_vals - l_bound).tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": "Lower Bound",
+            "line": {"color": "red", "dash": "dash", "width": 1.2}
+        })
+
+    traces.append({
+        "x": [freq_min, freq_min],
+        "y": _OTA_NPD_YLIM if plot_density else _OTA_NP_YLIM,
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Min",
+        "line": {"color": "green"}
+    })
+    traces.append({
+        "x": [freq_max, freq_max],
+        "y": _OTA_NPD_YLIM if plot_density else _OTA_NP_YLIM,
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Max",
+        "line": {"color": "green"}
+    })
 
     cal_suffix = "Calibrated" if apply_cal else "Raw"
-    plt.grid(True)
     if plot_density:
         base_title = f"{date_str} Noise Power Density {title_suffix} ({cal_suffix})"
-        plt.ylabel("NPD (dBm/Hz)")
-        plt.ylim(_OTA_NPD_YLIM)
+        ylabel = "NPD (dBm/Hz)"
+        ylim = _OTA_NPD_YLIM
     else:
         base_title = f"{date_str} Noise Power {title_suffix} ({cal_suffix})"
-        plt.ylabel("Noise Power (dBm)")
-        plt.ylim(_OTA_NP_YLIM)
+        ylabel = "Noise Power (dBm)"
+        ylim = _OTA_NP_YLIM
+        
     title = f"{base_title} — FAIL: {', '.join(failed_files)}" if failed_files else base_title
-    plt.title(title)
-    plt.xlabel("Frequency (GHz)")
-    plt.xlim(_OTA_XLIM)
-    plt.axvline(x=freq_min, color='g')
-    plt.axvline(x=freq_max, color='g')
 
-    handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
+    layout = {
+        "title": title,
+        "xaxis": {"title": "Frequency (GHz)", "range": _OTA_XLIM},
+        "yaxis": {"title": ylabel, "range": ylim},
+        "showlegend": True,
+        "legend": {"x": 0.5, "y": -0.28, "xanchor": "center", "orientation": "h"}
+    }
 
     prefix = "NPD" if plot_density else "NP"
     filename_safe_title = f"{date_str}_{prefix}_{title_suffix}".replace(" ", "_") + ".png"
-    save_path = os.path.join(output_folder, filename_safe_title)
-    plt.subplots_adjust(bottom=0.45)
-    plt.savefig(save_path, dpi=300, bbox_inches="tight")
-    plt.close()
-    return {"path": save_path, "status": "failed" if failed_files else "passed"}
+
+    return {
+        "filename": filename_safe_title,
+        "status": "failed" if failed_files else "passed",
+        "traces": traces,
+        "layout": layout
+    }
 
 def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None, avg_ref=None, u_bound=None, l_bound=None):
     if not files:
@@ -942,21 +1109,18 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     base_freq, base_s21 = cal["base"]
     hat_freq, hat_s21 = cal["hat"]
 
-    plt.figure(figsize=(8, 4), dpi=150)
-    color_cycle = iter(_OTA_COLORS)
-
     avg_freq, avg_vals = avg_ref if avg_ref else (None, None)
     check_bounds = avg_freq is not None and u_bound is not None and l_bound is not None
     failed_files = []
+
+    traces = []
+    color_cycle = iter(_OTA_COLORS)
 
     for f in files:
         freq, s21 = _ota_load_s2p(f)
         s21_smooth = _ota_smooth(s21, n_avg)
         freq_smooth = freq[:len(s21_smooth)]
 
-        # S21 is measured directly through the Base/Hat cables (no amplifier
-        # in that chain), so Base/Hat calibrate S21 — SpecAn doesn't apply
-        # here (see _ota_plot_noise for the NP/NPD side of this split).
         corrected = s21_smooth
         if base_freq is not None:
             corrected = corrected + np.abs(np.interp(freq_smooth, base_freq, base_s21))
@@ -971,33 +1135,84 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
             if valid.any() and (np.any(corrected[valid] > upper) or np.any(corrected[valid] < lower)):
                 failed_files.append(os.path.basename(f))
 
-        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
+        try:
+            color = next(color_cycle)
+        except StopIteration:
+            color_cycle = iter(_OTA_COLORS)
+            color = next(color_cycle)
+
+        traces.append({
+            "x": freq_smooth.tolist(),
+            "y": corrected.tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": os.path.basename(f),
+            "line": {"color": color}
+        })
 
     if avg_freq is not None:
-        plt.plot(avg_freq, avg_vals, color='black', linewidth=2, linestyle='--', label='Reference Average')
+        traces.append({
+            "x": avg_freq.tolist(),
+            "y": avg_vals.tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": "Reference Average",
+            "line": {"color": "black", "dash": "dash", "width": 2}
+        })
     if check_bounds:
-        plt.plot(avg_freq, avg_vals + u_bound, color='red', linewidth=1.2, linestyle='--', label='Upper Bound')
-        plt.plot(avg_freq, avg_vals - l_bound, color='red', linewidth=1.2, linestyle='--', label='Lower Bound')
+        traces.append({
+            "x": avg_freq.tolist(),
+            "y": (avg_vals + u_bound).tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": "Upper Bound",
+            "line": {"color": "red", "dash": "dash", "width": 1.2}
+        })
+        traces.append({
+            "x": avg_freq.tolist(),
+            "y": (avg_vals - l_bound).tolist(),
+            "type": "scatter",
+            "mode": "lines",
+            "name": "Lower Bound",
+            "line": {"color": "red", "dash": "dash", "width": 1.2}
+        })
 
-    plt.grid(True)
+    traces.append({
+        "x": [freq_min, freq_min],
+        "y": _OTA_S21_YLIM,
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Min",
+        "line": {"color": "green"}
+    })
+    traces.append({
+        "x": [freq_max, freq_max],
+        "y": _OTA_S21_YLIM,
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Max",
+        "line": {"color": "green"}
+    })
+
     base_title = f"{date_str} S21 {title_suffix}"
-    plt.title(f"{base_title} — FAIL: {', '.join(failed_files)}" if failed_files else base_title)
-    plt.xlabel("Frequency (GHz)")
-    plt.ylabel("S21 (dB)")
-    plt.xlim(_OTA_XLIM)
-    plt.ylim(_OTA_S21_YLIM)
-    plt.axvline(x=freq_min, color='g')
-    plt.axvline(x=freq_max, color='g')
+    title = f"{base_title} — FAIL: {', '.join(failed_files)}" if failed_files else base_title
 
-    handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
+    layout = {
+        "title": title,
+        "xaxis": {"title": "Frequency (GHz)", "range": _OTA_XLIM},
+        "yaxis": {"title": "S21 (dB)", "range": _OTA_S21_YLIM},
+        "showlegend": True,
+        "legend": {"x": 0.5, "y": -0.28, "xanchor": "center", "orientation": "h"}
+    }
 
     filename_safe_title = f"{date_str}_S21_{title_suffix}".replace(" ", "_") + ".png"
-    save_path = os.path.join(output_folder, filename_safe_title)
-    plt.subplots_adjust(bottom=0.45)
-    plt.savefig(save_path, dpi=300, bbox_inches="tight")
-    plt.close()
-    return {"path": save_path, "status": "passed"}
+
+    return {
+        "filename": filename_safe_title,
+        "status": "passed",
+        "traces": traces,
+        "layout": layout
+    }
 
 def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=False, average_data_path="", u_bound_npd=None, l_bound_npd=None):
     generated = []
