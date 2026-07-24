@@ -417,6 +417,14 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             from scipy.interpolate import interp1d
             f_avg_interp = interp1d(excel_freq, excel_val, bounds_error=False, fill_value=np.nan)
             avg = f_avg_interp(ref_freq_win)
+            traces.append({
+                "x": excel_freq.tolist(),
+                "y": excel_val.tolist(),
+                "type": "scatter",
+                "mode": "lines",
+                "name": "User Average",
+                "line": {"color": "black", "dash": "dash", "width": 2.5}
+            })
         upper = avg + u_bound_npd
         lower = avg - l_bound_npd
 
@@ -425,6 +433,43 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         if len(failed_indices) > 0:
             status = "Failed"
 
+        if len(ref_freq_win) == len(lower):
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": lower.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Lower bound",
+                "marker": {"color": "red", "symbol": "circle", "size": 4},
+                "line": {"color": "red"}
+            })
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": upper.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Upper bound",
+                "marker": {"color": "red", "symbol": "x", "size": 4},
+                "line": {"color": "red"}
+            })
+
+    # Vertical lines for min/max
+    traces.append({
+        "x": [freq_min, freq_min],
+        "y": [y_lower_npd or -170, y_upper_npd or -90],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Min",
+        "line": {"color": "green"}
+    })
+    traces.append({
+        "x": [freq_max, freq_max],
+        "y": [y_lower_npd or -170, y_upper_npd or -90],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Max",
+        "line": {"color": "green"}
+    })
     if y_upper_npd is not None and y_lower_npd is not None:
         if plot_density:
             y_range = [y_lower_npd, y_upper_npd]
@@ -537,6 +582,20 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     if len(s21_avg) > 0:
         avg = np.mean(s21_avg, axis=0)
         
+        excel_freq, excel_val = load_excel_average(average_data_path, "Tile S21" if test_type != 3 and test_type != 4 else "Array S21", title_suffix)
+        if excel_freq is not None and excel_val is not None:
+            from scipy.interpolate import interp1d
+            f_avg_interp = interp1d(excel_freq, excel_val, bounds_error=False, fill_value=np.nan)
+            avg = f_avg_interp(ref_freq_win)
+            traces.append({
+                "x": excel_freq.tolist(),
+                "y": excel_val.tolist(),
+                "type": "scatter",
+                "mode": "lines",
+                "name": "User Average",
+                "line": {"color": "black", "dash": "dash", "width": 2.5}
+            })
+            
         upper_bound = avg + u_bound_s21
         lower_bound = avg - l_bound_s21
 
@@ -545,8 +604,43 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         if len(failed_indices) > 0:
             status = "Failed"
             
+        if ref_freq_ghz is not None and len(ref_freq_win) == len(lower_bound):
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": lower_bound.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Lower bound",
+                "marker": {"color": "red", "symbol": "circle", "size": 4},
+                "line": {"color": "red"}
+            })
+            traces.append({
+                "x": ref_freq_win.tolist(),
+                "y": upper_bound.tolist(),
+                "type": "scatter",
+                "mode": "lines+markers",
+                "name": "Upper bound",
+                "marker": {"color": "red", "symbol": "x", "size": 4},
+                "line": {"color": "red"}
+            })
 
-
+    traces.append({
+        "x": [freq_min, freq_min],
+        "y": [y_lower_s21 or -40, y_upper_s21 or 40],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Min",
+        "line": {"color": "green"}
+    })
+    traces.append({
+        "x": [freq_max, freq_max],
+        "y": [y_lower_s21 or -40, y_upper_s21 or 40],
+        "type": "scatter",
+        "mode": "lines",
+        "name": "Freq Max",
+        "line": {"color": "green"}
+    })
+    
     if y_upper_s21 is not None and y_lower_s21 is not None:
         y_range = [y_lower_s21, y_upper_s21]
     elif (test_type != 1 and test_type != 3) and apply_cal:
