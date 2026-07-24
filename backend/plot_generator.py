@@ -358,22 +358,26 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 noise = np.interp(ref_freq_full, freq, noise)
                 freq = ref_freq_full
 
+        start_idx = np.searchsorted(freq, freq_min)
+        end_idx = np.searchsorted(freq, freq_max)
+        
+        if start_idx == end_idx:
+            sliced_freq = freq
+            sliced_noise = noise
+        else:
+            sliced_freq = freq[start_idx:end_idx]
+            sliced_noise = noise[start_idx:end_idx]
+
         traces.append({
-            "x": freq.tolist(),
-            "y": noise.tolist(),
+            "x": sliced_freq.tolist(),
+            "y": sliced_noise.tolist(),
             "type": "scatter",
             "mode": "lines",
             "name": serial[-21:-4:1]
         })
         all_freqs.append(freq)
         all_noise.append(noise)
-        
-        start_idx = np.searchsorted(freq, freq_min)
-        end_idx = np.searchsorted(freq, freq_max)
-        if start_idx == end_idx:
-            all_noise_win.append(noise)
-        else:
-            all_noise_win.append(noise[start_idx:end_idx])
+        all_noise_win.append(sliced_noise)
         all_labels.append(serial[-21:-4:1])
 
     if not all_freqs:
@@ -533,16 +537,23 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         if freq_cal is not None:
             s21_corr = raw_s21 + np.interp(freq_ghz, freq_cal, total_loss_db)
 
+        start_idx = np.searchsorted(freq_ghz, freq_min)
+        end_idx = np.searchsorted(freq_ghz, freq_max)
+        
+        if start_idx == end_idx:
+            sliced_freq = freq_ghz
+            sliced_s21 = s21_corr
+        else:
+            sliced_freq = freq_ghz[start_idx:end_idx]
+            sliced_s21 = s21_corr[start_idx:end_idx]
+
         traces.append({
-            "x": freq_ghz.tolist(),
-            "y": s21_corr.tolist(),
+            "x": sliced_freq.tolist(),
+            "y": sliced_s21.tolist(),
             "type": "scatter",
             "mode": "lines",
             "name": serial[-21:-4:1]
         })
-
-        start_idx = np.searchsorted(freq_ghz, freq_min)
-        end_idx = np.searchsorted(freq_ghz, freq_max)
         
         if ref_freq_ghz is None:
             ref_freq_ghz = freq_ghz
