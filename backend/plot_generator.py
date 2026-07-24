@@ -320,7 +320,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     def load_np_data(file, current_cal_folder):
         df_all = pd.read_csv(file, on_bad_lines='skip', encoding='latin1', engine='python', names=range(10))
         num_df = df_all.apply(pd.to_numeric, errors='coerce')
-        freq = remove_nan(num_df.values[:, 0], remove_infinite=True) / 1e9
+        freq = remove_nan(num_df.values[:, 0], remove_infinite=True)
 
         if plot_density:
             try:
@@ -830,7 +830,7 @@ def _ota_load_csv(filepath, col):
     col 1 = Raw Data (Noise Power, dBm at 10 kHz RBW), col 2 = dBm/Hz (NPD)."""
     df = pd.read_csv(filepath, header=None, names=range(6), on_bad_lines='skip', encoding='latin1', engine='python')
     num = df.apply(pd.to_numeric, errors='coerce')
-    freq = num.iloc[:, 0].values / 1e9
+    freq = num.iloc[:, 0].values
     val = num.iloc[:, col].values
     mask = np.isfinite(freq) & np.isfinite(val)
     return freq[mask], val[mask]
