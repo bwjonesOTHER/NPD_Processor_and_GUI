@@ -608,7 +608,21 @@ def api_generate_plots():
     
     import tempfile
     import shutil
+    import math
+    from datetime import datetime
     import plot_generator
+
+    def sanitize_for_json(obj):
+        if isinstance(obj, list):
+            return [sanitize_for_json(v) for v in obj]
+        elif isinstance(obj, dict):
+            return {k: sanitize_for_json(v) for k, v in obj.items()}
+        elif isinstance(obj, float):
+            if math.isnan(obj) or math.isinf(obj):
+                return None
+            return obj
+        return obj
+
     temp_out_dir = tempfile.mkdtemp(prefix="npd_plots_")
     params['folder_path'] = temp_out_dir
     params['outputFolder'] = temp_out_dir
@@ -671,7 +685,7 @@ def api_generate_plots():
                 results.append(item)
                     
     shutil.rmtree(temp_out_dir, ignore_errors=True)
-    return jsonify({"success": True, "plots_data": results, "warnings": plot_generator.get_warnings()})
+    return jsonify({"success": True, "plots_data": sanitize_for_json(results), "warnings": plot_generator.get_warnings()})
 
 @app.route('/api/save_plots', methods=['POST'])
 def save_plots():

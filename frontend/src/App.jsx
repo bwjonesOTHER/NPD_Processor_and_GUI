@@ -1056,12 +1056,10 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
                     {images.map((img, idx) => (
                       <div key={idx} style={{ background: 'var(--panel-bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
-                        <div
-                          style={{ width: '100%', height: '300px', position: 'relative' }}
-                        >
+                        <div style={{ width: '100%', height: '300px', position: 'relative' }}>
                           <InteractivePlot ref={el => plotRefs.current[idx] = el} plotData={img} />
                           
                           <div 
