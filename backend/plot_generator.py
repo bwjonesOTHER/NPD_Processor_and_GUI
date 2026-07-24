@@ -371,7 +371,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_noise.tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": serial[-21:-4:1]
         })
@@ -503,7 +503,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_s21.tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": serial[-21:-4:1]
         })
@@ -612,7 +612,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     traces.append({
         "x": a_f.tolist(),
         "y": a_v.tolist(),
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "Ambient",
         "line": {"color": "black", "dash": "solid"},
@@ -621,7 +621,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     traces.append({
         "x": a_f.tolist(),
         "y": h_v.tolist(),
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "Hot",
         "line": {"color": "red", "dash": "solid"},
@@ -630,7 +630,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     traces.append({
         "x": a_f.tolist(),
         "y": c_v.tolist(),
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "Cold",
         "line": {"color": "blue", "dash": "solid"},
@@ -640,7 +640,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     traces.append({
         "x": a_f.tolist(),
         "y": np.abs(a_v - h_v).tolist(),
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "|Amb - Hot|",
         "line": {"color": "orange", "dash": "dash"},
@@ -649,7 +649,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     traces.append({
         "x": a_f.tolist(),
         "y": np.abs(a_v - c_v).tolist(),
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "|Amb - Cold|",
         "line": {"color": "cyan", "dash": "dash"},
@@ -658,7 +658,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     traces.append({
         "x": a_f.tolist(),
         "y": np.abs(h_v - c_v).tolist(),
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "|Hot - Cold|",
         "line": {"color": "purple", "dash": "dash"},
@@ -937,7 +937,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         traces.append({
             "x": freq_smooth.tolist(),
             "y": corrected.tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": os.path.basename(f),
             "line": {"color": color}
@@ -951,7 +951,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         traces.append({
             "x": avg_freq.tolist(),
             "y": avg_vals.tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": "Reference Average",
             "line": {"color": "black", "dash": "dash", "width": 2}
@@ -960,7 +960,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         traces.append({
             "x": avg_freq.tolist(),
             "y": (avg_vals + u_bound).tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": "Upper Bound",
             "line": {"color": "red", "dash": "dash", "width": 1.2}
@@ -968,7 +968,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         traces.append({
             "x": avg_freq.tolist(),
             "y": (avg_vals - l_bound).tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": "Lower Bound",
             "line": {"color": "red", "dash": "dash", "width": 1.2}
@@ -977,7 +977,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     traces.append({
         "x": [freq_min, freq_min],
         "y": _OTA_NPD_YLIM if plot_density else _OTA_NP_YLIM,
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "Freq Min",
         "line": {"color": "green"}
@@ -985,7 +985,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     traces.append({
         "x": [freq_max, freq_max],
         "y": _OTA_NPD_YLIM if plot_density else _OTA_NP_YLIM,
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "Freq Max",
         "line": {"color": "green"}
@@ -1063,7 +1063,7 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         traces.append({
             "x": freq_smooth.tolist(),
             "y": corrected.tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": os.path.basename(f),
             "line": {"color": color}
@@ -1073,7 +1073,7 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         traces.append({
             "x": avg_freq.tolist(),
             "y": avg_vals.tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": "Reference Average",
             "line": {"color": "black", "dash": "dash", "width": 2}
@@ -1082,7 +1082,7 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         traces.append({
             "x": avg_freq.tolist(),
             "y": (avg_vals + u_bound).tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": "Upper Bound",
             "line": {"color": "red", "dash": "dash", "width": 1.2}
@@ -1090,7 +1090,7 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         traces.append({
             "x": avg_freq.tolist(),
             "y": (avg_vals - l_bound).tolist(),
-            "type": "scatter",
+            "type": "scattergl",
             "mode": "lines",
             "name": "Lower Bound",
             "line": {"color": "red", "dash": "dash", "width": 1.2}
@@ -1099,7 +1099,7 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     traces.append({
         "x": [freq_min, freq_min],
         "y": _OTA_S21_YLIM,
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "Freq Min",
         "line": {"color": "green"}
@@ -1107,7 +1107,7 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     traces.append({
         "x": [freq_max, freq_max],
         "y": _OTA_S21_YLIM,
-        "type": "scatter",
+        "type": "scattergl",
         "mode": "lines",
         "name": "Freq Max",
         "line": {"color": "green"}
