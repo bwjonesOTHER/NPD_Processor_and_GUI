@@ -1,7 +1,7 @@
 import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import Plot from 'react-plotly.js';
 
-const InteractivePlot = forwardRef(({ plotData }, ref) => {
+const InteractivePlot = forwardRef(({ plotData, height = '300px' }, ref) => {
   const plotRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
@@ -64,7 +64,7 @@ const InteractivePlot = forwardRef(({ plotData }, ref) => {
         displaylogo: false,
         modeBarButtonsToRemove: ['lasso2d', 'select2d']
       }}
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '100%', height: height }}
       useResizeHandler={true}
       className={`plot-container ${plotData.status === 'failed' ? 'plot-fail' : 'plot-pass'}`}
     />

@@ -1264,12 +1264,9 @@ function App() {
             </button>
           )}
 
-          <img
-            src={images[selectedIndex].data}
-            alt={images[selectedIndex].filename}
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: '8px', cursor: 'default', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}
-          />
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '90vw', height: '80vh', background: 'var(--panel-bg)', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
+            <InteractivePlot plotData={images[selectedIndex]} height="100%" />
+          </div>
           <div style={{ marginTop: '1rem', color: '#fff', fontSize: '1rem', textAlign: 'center' }}>
             {images[selectedIndex].filename} ({selectedIndex + 1} / {images.length})
           </div>
