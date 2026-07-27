@@ -127,15 +127,27 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
             search_dirs.append(grandparent)
 
         # Smart fallback: if this is a temp file, look in the corresponding bench folder for Cable Loss
-        if os.sep + "temp" + os.sep in filepath:
-            bench_run_folder = run_folder.replace(os.sep + "temp" + os.sep, os.sep + "bench" + os.sep)
-            if os.path.isdir(bench_run_folder): search_dirs.append(bench_run_folder)
+        def to_bench(p):
+            parts = p.split(os.sep)
+            for i in range(len(parts)-1, -1, -1):
+                if parts[i] == 'temp':
+                    parts[i] = 'bench'
+                    break
+            return os.sep.join(parts)
             
-            bench_parent = parent_run.replace(os.sep + "temp" + os.sep, os.sep + "bench" + os.sep)
-            if os.path.isdir(bench_parent): search_dirs.append(bench_parent)
+        bench_run_folder = to_bench(run_folder)
+        if bench_run_folder != run_folder and os.path.isdir(bench_run_folder):
+            search_dirs.append(bench_run_folder)
             
-            bench_grandparent = grandparent.replace(os.sep + "temp" + os.sep, os.sep + "bench" + os.sep)
-            if os.path.isdir(bench_grandparent): search_dirs.append(bench_grandparent)
+        if parent_run:
+            bench_parent = to_bench(parent_run)
+            if bench_parent != parent_run and os.path.isdir(bench_parent):
+                search_dirs.append(bench_parent)
+                
+        if grandparent:
+            bench_grandparent = to_bench(grandparent)
+            if bench_grandparent != grandparent and os.path.isdir(bench_grandparent):
+                search_dirs.append(bench_grandparent)
             
     # Then fallback to global cal folder if provided
     if cal_folder and os.path.isdir(cal_folder):
