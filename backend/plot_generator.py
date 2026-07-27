@@ -378,9 +378,16 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             "name": serial[-21:-4:1],
             "line": {"color": colors[color_idx]}
         })
+        start_idx = np.searchsorted(freq, freq_min)
+        end_idx = np.searchsorted(freq, freq_max)
+        if start_idx != end_idx:
+            noise_win = noise[start_idx:end_idx]
+        else:
+            noise_win = noise
+
         all_freqs.append(freq)
         all_noise.append(noise)
-        all_noise_win.append(sliced_noise)
+        all_noise_win.append(noise_win)
         all_labels.append(serial[-21:-4:1])
 
     if not all_freqs:
@@ -470,15 +477,10 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
 
     title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     
-    if ref_freq_full is not None and len(ref_freq_full) > 0:
-        x_range = [ref_freq_full[0], ref_freq_full[-1]]
-    else:
-        x_range = [freq_min, freq_max]
-
     layout = {
         "title": title,
-        "xaxis": {"title": "Frequency (GHz)", "range": x_range},
-        "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)", "range": y_range},
+        "xaxis": {"title": "Frequency (GHz)"},
+        "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)"},
         "showlegend": True,
         "legend": {"x": 1.05, "y": 1},
         "shapes": [
@@ -623,26 +625,12 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 "line": {"color": "red"}
             })
 
-    
-    
-    if y_upper_s21 is not None and y_lower_s21 is not None:
-        y_range = [y_lower_s21, y_upper_s21]
-    elif (test_type != 1 and test_type != 3) and apply_cal:
-        y_range = [0, 30]
-    else:
-        y_range = [-40, 40]
-        
     title = f'S21 Calibrated {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'S21 {title_suffix}, {status}'
     
-    if ref_freq_ghz is not None:
-        x_range = [ref_freq_ghz[0], ref_freq_ghz[-1]]
-    else:
-        x_range = [freq_min, freq_max]
-
     layout = {
         "title": title,
-        "xaxis": {"title": "Frequency (GHz)", "range": x_range},
-        "yaxis": {"title": "S21 (dB)", "range": y_range},
+        "xaxis": {"title": "Frequency (GHz)"},
+        "yaxis": {"title": "S21 (dB)"},
         "showlegend": True,
         "legend": {"x": 1.05, "y": 1},
         "shapes": [
