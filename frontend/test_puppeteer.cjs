@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 (async () => {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({userDataDir: '/tmp/puppeteer_data'});
   const page = await browser.newPage();
   
   // Capture console messages
@@ -18,7 +18,7 @@ const fs = require('fs');
   <body>
     <div id="plot" style="width:1200px; height:600px;"></div>
     <script>
-      fetch('../Noise_Power_Ambient_Passed (3).json')
+      fetch('../../broken.json')
         .then(res => res.json())
         .then(data => {
           console.log('Data loaded, traces:', data.traces.length);
