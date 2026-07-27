@@ -89,7 +89,7 @@ def find_cal_file(folders, cap_num, cal_type):
 
     return None
 
-def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, exclude_bulkhead=False):
+def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
     is_npd = filepath.lower().endswith('.csv')
     is_benchtop = test_type == 2 or test_type == 3
 
@@ -111,9 +111,6 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, excl
         else:
             cal_types = ["Base", "Hat", "Bulkhead", "SpecA"]
             
-    if exclude_bulkhead and "Bulkhead" in cal_types:
-        cal_types.remove("Bulkhead")
-
     search_dirs = []
     
     # Prioritize Cable Loss folder in the run's parent directory first
@@ -339,7 +336,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type, plot_s12, exclude_bulkhead=plot_density)
+            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type, plot_s12)
             if freq_cal is not None:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
