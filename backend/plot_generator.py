@@ -625,12 +625,30 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 "line": {"color": "red"}
             })
 
+    if y_upper_s21 is not None and y_lower_s21 is not None:
+        y_range = [y_lower_s21, y_upper_s21]
+    else:
+        y_max_val = -1000
+        y_min_val = 1000
+        for t in traces:
+            y_data = [y for y in t["y"] if y is not None and not np.isnan(y)]
+            if y_data:
+                y_max_val = max(y_max_val, max(y_data))
+                y_min_val = min(y_min_val, min(y_data))
+        if y_max_val == -1000:
+            y_max_val = 40
+            y_min_val = -40
+            
+        y_min_bound = max(-40, y_min_val)
+        y_max_bound = y_max_val + max(2, (y_max_val - y_min_bound) * 0.05) # Add 5% padding to top
+        y_range = [y_min_bound, y_max_bound]
+
     title = f'S21 Calibrated {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'S21 {title_suffix}, {status}'
     
     layout = {
         "title": title,
         "xaxis": {"title": "Frequency (GHz)"},
-        "yaxis": {"title": "S21 (dB)"},
+        "yaxis": {"title": "S21 (dB)", "range": y_range},
         "showlegend": True,
         "legend": {"x": 1.05, "y": 1},
         "shapes": [
