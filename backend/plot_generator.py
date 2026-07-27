@@ -18,6 +18,11 @@ from datetime import datetime
 import pandas as pd
 import glob
 
+# Canonical NPD pass/fail reference-average file, used whenever the
+# frontend hasn't supplied its own average_data_path (upload is still an
+# override - see generate_plots()).
+DEFAULT_AVERAGE_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "NPD_AVERAGED_DATA.csv")
+
 def remove_nan(arr, remove_infinite=False):
     if not isinstance(arr, np.ndarray):
         raise TypeError("Input must be a NumPy array.")
@@ -56,37 +61,107 @@ def search_files(root_dir, filename_part, serial_number=None):
                     pass
     return matches
 
+# Absolute safety cap on how many files a single cal-file search walks
+# through. Directory scans here are meant to cover one test run's worth of
+# cal data (dozens to low thousands of files at most) — if a search somehow
+# balloons past this, something's wrong with the search root, and it's
+# better to stop and find nothing than to hang scanning an unrelated part
+# of the filesystem.
+_CAL_SCAN_FILE_BUDGET = 20000
+
+def _walk_s2p_files(root_dir):
+    """Yields (root, filename) for every .s2p file under root_dir, bailing
+    out early once _CAL_SCAN_FILE_BUDGET total files have been examined."""
+    scanned = 0
+    for root, _, files in os.walk(root_dir):
+        for f in files:
+            scanned += 1
+            if scanned > _CAL_SCAN_FILE_BUDGET:
+                return
+            if f.lower().endswith('.s2p'):
+                yield root, f
+
+def _collect_ancestor_dirs(filepath, max_levels=6):
+    """Walk up from filepath's own folder through its ancestors, so cal
+    files can be found regardless of how many levels separate the data from
+    wherever the calibration files actually live (their own Cap folder, one
+    level up, a sibling "Cable Loss" folder, etc.). Stops climbing as soon
+    as a level either already has its own Base/Hat/Bulkhead files right in
+    it, or looks like the run root (its contents include a "Cable
+    Loss"-like or "Cap_##" folder) — climbing any further than that risks
+    wandering into unrelated, potentially huge parts of the filesystem for
+    no benefit."""
+    dirs = []
+    current = os.path.dirname(os.path.abspath(filepath))
+    for _ in range(max_levels):
+        if not current or not os.path.isdir(current) or current in dirs:
+            break
+        dirs.append(current)
+        try:
+            children = os.listdir(current)
+        except OSError:
+            children = []
+        looks_like_run_root = any(
+            re.search(r'cable[\s_-]*loss', c, re.IGNORECASE) or re.match(r'^cap[_\s-]?\d+$', c, re.IGNORECASE)
+            for c in children
+        )
+        has_local_cal_files = any(
+            c.lower().endswith('.s2p') and any(key in c.lower() for key in ('base', 'hat', 'bulkhead'))
+            for c in children
+        )
+        if looks_like_run_root or has_local_cal_files:
+            break
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+    return dirs
+
 def find_cal_file(folders, cap_num, cal_type):
+    """Searches every folder (recursively) for a .s2p file whose name
+    contains cal_type (base/hat/bulkhead). If cap_num is given and matches
+    one of the candidates (by "SN####" in the file's own name, or by
+    "Cap_##"/"SN####" in its containing path), that one is returned.
+    Otherwise, if there's exactly one candidate in scope at all, it's
+    unambiguous and gets returned regardless — multiple candidates with no
+    way to tell them apart is where this stops, since guessing wrong is
+    worse than finding nothing."""
     cal_type_lower = cal_type.lower()
     try:
         cap_num_int = int(cap_num)
     except (ValueError, TypeError):
+        cap_num_int = None
+
+    candidates = []
+    seen = set()
+    for folder in folders:
+        for root, file in _walk_s2p_files(folder):
+            if cal_type_lower not in file.lower():
+                continue
+            full = os.path.join(root, file)
+            if full not in seen:
+                seen.add(full)
+                candidates.append(full)
+
+    if not candidates:
         return None
 
-    for folder in folders:
-        for root, dirs, files in os.walk(folder):
-            for file in files:
-                if not file.lower().endswith('.s2p'):
-                    continue
-                if cal_type_lower in file.lower():
-                    # Extract number after SN in the file's own name
-                    match = re.search(r'sn0*(\d+)', file.lower())
-                    sn_match = False
-                    if match:
-                        if int(match.group(1)) == cap_num_int:
-                            sn_match = True
+    if cap_num_int is not None:
+        for f in candidates:
+            name_lower = os.path.basename(f).lower()
+            path_lower = f.lower()
+            # Extract number after "sn" in the file's own name
+            match = re.search(r'sn0*(\d+)', name_lower)
+            sn_match = bool(match) and int(match.group(1)) == cap_num_int
+            # Check the full path too (covers a "Cap_##" folder, or an
+            # "SN####" subfolder). Negative lookahead for a trailing digit
+            # so "cap_1"/"sn1" don't also match inside "cap_10"/"sn10".
+            folder_match = bool(re.search(rf'(?:cap[_\s-]?|sn)0*{cap_num_int}(?!\d)', path_lower))
+            if sn_match or folder_match:
+                return f
 
-                    # Check the full path (covers both situations: cal files
-                    # sitting in a "Cap_##" folder alongside the run data, or
-                    # in a separate cal folder organized by "SN####"
-                    # subfolders). Negative lookahead for a trailing digit so
-                    # "cap_1"/"sn1" don't also match inside "cap_10"/"sn10".
-                    path_lower = os.path.join(root, file).lower()
-                    folder_match = bool(re.search(rf'(?:cap[_\s]?|sn)0*{cap_num_int}(?!\d)', path_lower))
-
-                    if sn_match or folder_match:
-                        return os.path.join(root, file)
-
+    if len(candidates) == 1:
+        return candidates[0]
     return None
 
 def get_calibration_loss(filepath, cal_folder):
@@ -94,57 +169,31 @@ def get_calibration_loss(filepath, cal_folder):
     if cal_folder and os.path.isdir(cal_folder):
         search_dirs.append(cal_folder)
 
-    run_folder = os.path.dirname(filepath)
-    if run_folder and os.path.isdir(run_folder):
-        search_dirs.append(run_folder)
-
-    parent_run_folder = os.path.dirname(run_folder)
-    if parent_run_folder and os.path.isdir(parent_run_folder):
-        search_dirs.append(parent_run_folder)
+    # Walk up the ancestor chain from the data file's own folder. This finds
+    # cal files whether they sit right alongside the data, one or more
+    # levels up, or in a sibling folder like "Cable Loss" -- however many
+    # levels separate them -- without needing to know the exact layout.
+    for d in _collect_ancestor_dirs(filepath):
+        if d not in search_dirs:
+            search_dirs.append(d)
 
     if not search_dirs:
         return None, None
 
-    cal_files_to_load = []
-
-    # Two situations: (A) the Base/Hat/Bulkhead cal files sit alongside the
-    # run data in its own Cap_XX folder, or (B) they live in a separate,
-    # shared cal folder where each file is instead tagged with its Cap
-    # number directly (e.g. "BaseSN7Cable_..." for Cap_07). Either way, the
-    # identifying number is the Cap number — NOT the tile's own serial
-    # number, which is a completely different, unrelated number (a tile's
-    # serial number and its Cap-slot cable's tag can be in overlapping
-    # ranges purely by coincidence). find_cal_file() matches a cal file by
-    # that number appearing either in its own filename or in its containing
-    # path, so it covers both situations once we know the Cap number.
+    # The Base/Hat/Bulkhead cal files are tagged with a Cap number, either
+    # in their own filename (e.g. "BaseSN7Cable_..." for Cap_07) or in a
+    # folder they sit in (e.g. "Cap_07/Base.s2p") -- NOT the tile's own
+    # serial number, which is a completely different, unrelated number (a
+    # tile's serial number and a Cap slot's cable tag can overlap in range
+    # purely by coincidence).
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
 
-    if ident_num is not None:
-        for cal_type in ("Base", "Hat", "Bulkhead"):
-            f = find_cal_file(search_dirs, ident_num, cal_type)
-            if f:
-                cal_files_to_load.append(f)
-
-    if not cal_files_to_load and run_folder and os.path.isdir(run_folder):
-        # No Cap number could be identified for this file — fall back to
-        # grabbing one Base/Hat/Bulkhead file by name alone, but ONLY from
-        # the file's own immediate folder, non-recursively. Anything broader
-        # (the shared cal_folder, the run's parent folder, which may have
-        # sibling Cap_## folders) risks silently grabbing another cap's cal
-        # file with no way to tell they don't match; finding nothing is
-        # safer than guessing wrong.
-        try:
-            immediate_files = os.listdir(run_folder)
-        except OSError:
-            immediate_files = []
-        for f in immediate_files:
-            if not f.lower().endswith('.s2p'):
-                continue
-            name = f.lower()
-            for key in ("base", "hat", "bulkhead"):
-                if key in name and not any(key in os.path.basename(p).lower() for p in cal_files_to_load):
-                    cal_files_to_load.append(os.path.join(run_folder, f))
+    cal_files_to_load = []
+    for cal_type in ("Base", "Hat", "Bulkhead"):
+        f = find_cal_file(search_dirs, ident_num, cal_type)
+        if f:
+            cal_files_to_load.append(f)
 
     debug_path = os.path.expanduser("~/Desktop/debug_cal_loss.txt")
     try:
@@ -504,8 +553,60 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     save_path = os.path.join(output_folder, filename_safe_title)
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
-    
+
     return {"path": save_path, "status": "passed"}
+
+
+# NPD (density) delta pass/fail band - only checked within the standard
+# 2.7-4.1 GHz NPD band, same as the reference-average bounds check.
+_NPD_DELTA_BAND = (2.7, 4.1)
+
+
+def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=None):
+    """Plots NPD delta = Ambient - other (Hot or Cold) as its own single
+    trace against a fixed [lower, upper] dBm/Hz pass/fail range - kept
+    separate per-comparison (not overlaid together like plot_temp_deltas)
+    since Ambient-Hot and Ambient-Cold have different bounds."""
+    date_str = date_str or datetime.now().strftime('%Y%m%d')
+    a_freq, a_vals = ambient
+    o_freq, o_vals = other
+    if a_vals is None or o_vals is None:
+        return None
+
+    min_len = min(len(a_vals), len(o_vals))
+    freq = a_freq[:min_len]
+    delta = a_vals[:min_len] - o_vals[:min_len]
+
+    lower, upper = bounds
+    mask = (freq >= _NPD_DELTA_BAND[0]) & (freq <= _NPD_DELTA_BAND[1])
+    status = "Passed"
+    if mask.any() and (np.any(delta[mask] < lower) or np.any(delta[mask] > upper)):
+        status = "Failed"
+
+    plt.figure(figsize=(8, 4), dpi=150)
+    plt.plot(freq, delta, color="blue", label=f"Ambient - {other_label}")
+    plt.axhline(y=upper, color="red", linestyle="--", label="Upper Bound")
+    plt.axhline(y=lower, color="red", linestyle="--", label="Lower Bound")
+    plt.axvline(x=_NPD_DELTA_BAND[0], color="g")
+    plt.axvline(x=_NPD_DELTA_BAND[1], color="g")
+
+    plt.grid(True)
+    plt.title(f"{date_str} NPD Delta Ambient-{other_label}, {status}")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("Delta NPD (dBm/Hz)")
+    plt.xlim(_OTA_XLIM)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
+    plt.subplots_adjust(bottom=0.45)
+
+    filename_safe_title = f"{date_str}_NPD_Delta_Ambient_{other_label}.png"
+    save_path = os.path.join(output_folder, filename_safe_title)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    return {"path": save_path, "status": status.lower()}
+
 
 # ============================================================
 # TEST 4: NPD OVER TEMP ARRAY
@@ -934,7 +1035,7 @@ def generate_plots(params):
     u_bound_npd = float(params.get('u_bound_npd', 2))
     l_bound_npd = float(params.get('l_bound_npd', 2))
     output_folder = params.get('outputFolder', '/tmp')
-    average_data_path = params.get('average_data_path', '')
+    average_data_path = params.get('average_data_path', '') or DEFAULT_AVERAGE_CSV
 
     # Figure out calibration folder
     cal_folder = params.get('calFolder', "")
@@ -992,8 +1093,16 @@ def generate_plots(params):
                 
         dp1 = plot_temp_deltas(np_averages, "Noise Power", "NP (dBm)", output_folder, ax1_ylim=(-130, -90), ax2_ylim=(0, 5))
         if dp1: generated_plots.append(dp1)
-        dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -110), ax2_ylim=(0, 5))
-        if dp1_den: generated_plots.append(dp1_den)
+
+        # NPD (density) deltas are pass/fail-checked against fixed dBm/Hz
+        # bounds, not plotted together - see plot_npd_delta().
+        if "Ambient" in npd_averages and "Hot" in npd_averages:
+            dp_hot = plot_npd_delta(npd_averages["Ambient"], npd_averages["Hot"], "Hot", (-0.7, -0.2), output_folder)
+            if dp_hot: generated_plots.append(dp_hot)
+        if "Ambient" in npd_averages and "Cold" in npd_averages:
+            dp_cold = plot_npd_delta(npd_averages["Ambient"], npd_averages["Cold"], "Cold", (0.4, 1.3), output_folder)
+            if dp_cold: generated_plots.append(dp_cold)
+
         dp2 = plot_temp_deltas(s21_averages, "S21", "S21 (dB)", output_folder, ax1_ylim=(-40, 40), ax2_ylim=(0, 30))
         if dp2: generated_plots.append(dp2)
 

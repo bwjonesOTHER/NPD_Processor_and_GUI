@@ -42,7 +42,7 @@ n_avg = 20
 freq_min = 2.0
 freq_max = 5.0
 
-npd_ylim = (-180, -120)
+npd_ylim = (-170, -140)
 s21_ylim = (-105, 5)
 
 show_plot = True
@@ -127,7 +127,7 @@ def plot_npd(files, title_suffix):
     specan_s12 = smooth(specan_s12)
     specan_freq, specan_s12 = enforce_equal_length(specan_freq, specan_s12)
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(my_colors)
 
     for f in files:
@@ -155,11 +155,12 @@ def plot_npd(files, title_suffix):
         handles,
         labels,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.15),
-        ncol=1
+        bbox_to_anchor=(0.5, -0.28),
+        ncol=1,
+        fontsize="8"
     )
 
-    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.45)
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_{title_suffix}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
@@ -183,7 +184,7 @@ def plot_s21(files, title_suffix):
     base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
     hat_freq,  hat_s21  = enforce_equal_length(hat_freq, hat_s21)
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(my_colors)
 
     for f in files:
@@ -205,11 +206,12 @@ def plot_s21(files, title_suffix):
         handles,
         labels,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.15),
-        ncol=1
+        bbox_to_anchor=(0.5, -0.28),
+        ncol=1,
+        fontsize="8"
     )
 
-    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.45)
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_{title_suffix}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
@@ -230,7 +232,7 @@ def overlay_temperature(temp_name, folder1, folder2):
     specan_s12 = smooth(specan_s12)
     specan_freq, specan_s12 = enforce_equal_length(specan_freq, specan_s12)
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(my_colors)
 
     for f in files:
@@ -258,11 +260,12 @@ def overlay_temperature(temp_name, folder1, folder2):
         handles,
         labels,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.15),
-        ncol=1
+        bbox_to_anchor=(0.5, -0.28),
+        ncol=1,
+        fontsize="8"
     )
 
-    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.45)
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_OVERLAY_{temp_name}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
@@ -282,7 +285,7 @@ def overlay_temperature(temp_name, folder1, folder2):
     base_freq, base_s21 = enforce_equal_length(base_freq, base_s21)
     hat_freq, hat_s21 = enforce_equal_length(hat_freq, hat_s21)
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = iter(my_colors)
 
     for f in files_s2p:
@@ -304,11 +307,12 @@ def overlay_temperature(temp_name, folder1, folder2):
         handles,
         labels,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.15),
-        ncol=1
+        bbox_to_anchor=(0.5, -0.28),
+        ncol=1,
+        fontsize="8"
     )
 
-    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.45)
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_OVERLAY_{temp_name}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
