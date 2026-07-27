@@ -562,9 +562,9 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         serial = extract_serial(fpath)
         file_cal_folder = cal_folder
 
-        freq_cal, total_loss_db = None, None
+        freq_cal, total_loss_db, cal_files_used = None, None, []
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(fpath, file_cal_folder, test_type, plot_s12)
+            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(fpath, file_cal_folder, test_type, plot_s12)
 
         s21_corr = raw_s21
         if freq_cal is not None:
@@ -582,12 +582,14 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         color_idx = len(traces) % 10
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+        
+        cal_names_str = ",".join([os.path.basename(p).replace(".s2p","") for p in cal_files_used]) if cal_files_used else "NoCal"
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_s21.tolist(),
             "type": "scatter",
             "mode": "lines",
-            "name": serial[-21:-4:1],
+            "name": f"{serial[-21:-4:1]} [{cal_names_str}]",
             "line": {"color": colors[color_idx]}
         })
         
