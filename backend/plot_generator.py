@@ -125,6 +125,17 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
         grandparent = os.path.dirname(parent_run)
         if grandparent and os.path.isdir(grandparent):
             search_dirs.append(grandparent)
+
+        # Smart fallback: if this is a temp file, look in the corresponding bench folder for Cable Loss
+        if os.sep + "temp" + os.sep in filepath:
+            bench_run_folder = run_folder.replace(os.sep + "temp" + os.sep, os.sep + "bench" + os.sep)
+            if os.path.isdir(bench_run_folder): search_dirs.append(bench_run_folder)
+            
+            bench_parent = parent_run.replace(os.sep + "temp" + os.sep, os.sep + "bench" + os.sep)
+            if os.path.isdir(bench_parent): search_dirs.append(bench_parent)
+            
+            bench_grandparent = grandparent.replace(os.sep + "temp" + os.sep, os.sep + "bench" + os.sep)
+            if os.path.isdir(bench_grandparent): search_dirs.append(bench_grandparent)
             
     # Then fallback to global cal folder if provided
     if cal_folder and os.path.isdir(cal_folder):
