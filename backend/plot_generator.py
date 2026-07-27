@@ -98,18 +98,18 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
 
     if is_npd:
         if is_benchtop:
-            cal_types = ("Base", "Bulkhead")
+            cal_types = ("Base", "Bulkhead", "SpecA")
         else:
-            cal_types = ("Base", "Hat", "Bulkhead")
+            cal_types = ("Base", "Hat", "Bulkhead", "SpecA")
     else:
         # Only use Cap for Tile Benchtop (which has a Cap number). Arrays use Hat.
         if is_benchtop and ident_num is not None:
-            cal_types = ("Base", "Cap", "Bulkhead")
+            cal_types = ("Base", "Cap", "Bulkhead", "SpecA")
         elif is_benchtop:
             # Array Benchtop (Test 3) doesn't use a Hat cable
-            cal_types = ("Base", "Bulkhead")
+            cal_types = ("Base", "Bulkhead", "SpecA")
         else:
-            cal_types = ("Base", "Hat", "Bulkhead")
+            cal_types = ("Base", "Hat", "Bulkhead", "SpecA")
 
     search_dirs = []
     
