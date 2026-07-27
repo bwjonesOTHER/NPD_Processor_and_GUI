@@ -368,12 +368,15 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             sliced_freq = freq[start_idx:end_idx]
             sliced_noise = noise[start_idx:end_idx]
 
+        color_idx = len(traces) % 10
+        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_noise.tolist(),
             "type": "scatter",
             "mode": "lines",
-            "name": serial[-21:-4:1]
+            "name": serial[-21:-4:1],
+            "line": {"color": colors[color_idx]}
         })
         all_freqs.append(freq)
         all_noise.append(noise)
@@ -454,22 +457,8 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             })
 
     # Vertical lines for min/max
-    traces.append({
-        "x": [freq_min, freq_min],
-        "y": [y_lower_npd or -170, y_upper_npd or -90],
-        "type": "scatter",
-        "mode": "lines",
-        "name": "Freq Min",
-        "line": {"color": "green"}
-    })
-    traces.append({
-        "x": [freq_max, freq_max],
-        "y": [y_lower_npd or -170, y_upper_npd or -90],
-        "type": "scatter",
-        "mode": "lines",
-        "name": "Freq Max",
-        "line": {"color": "green"}
-    })
+    
+    
     if y_upper_npd is not None and y_lower_npd is not None:
         if plot_density:
             y_range = [y_lower_npd, y_upper_npd]
@@ -488,7 +477,11 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         "xaxis": {"title": "Frequency (GHz)", "range": [freq_min, freq_max]},
         "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)", "range": y_range},
         "showlegend": True,
-        "legend": {"x": 1.05, "y": 1}
+        "legend": {"x": 1.05, "y": 1},
+        "shapes": [
+            {"type": "line", "x0": freq_min, "x1": freq_min, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}},
+            {"type": "line", "x0": freq_max, "x1": freq_max, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}}
+        ]
     }
     
     filename_safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"
@@ -545,12 +538,15 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
             sliced_freq = freq_ghz[start_idx:end_idx]
             sliced_s21 = s21_corr[start_idx:end_idx]
 
+        color_idx = len(traces) % 10
+        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_s21.tolist(),
             "type": "scatter",
             "mode": "lines",
-            "name": serial[-21:-4:1]
+            "name": serial[-21:-4:1],
+            "line": {"color": colors[color_idx]}
         })
         
         if ref_freq_ghz is None:
@@ -624,22 +620,8 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 "line": {"color": "red"}
             })
 
-    traces.append({
-        "x": [freq_min, freq_min],
-        "y": [y_lower_s21 or -40, y_upper_s21 or 40],
-        "type": "scatter",
-        "mode": "lines",
-        "name": "Freq Min",
-        "line": {"color": "green"}
-    })
-    traces.append({
-        "x": [freq_max, freq_max],
-        "y": [y_lower_s21 or -40, y_upper_s21 or 40],
-        "type": "scatter",
-        "mode": "lines",
-        "name": "Freq Max",
-        "line": {"color": "green"}
-    })
+    
+    
     
     if y_upper_s21 is not None and y_lower_s21 is not None:
         y_range = [y_lower_s21, y_upper_s21]
