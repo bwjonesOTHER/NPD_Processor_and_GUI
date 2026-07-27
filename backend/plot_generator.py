@@ -234,7 +234,10 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
                 else:
                     loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
             else:
-                loss_db = -net.s_db[:, 1, 0]
+                if plot_s12:
+                    loss_db = np.abs(net.s_db[:, 0, 1])
+                else:
+                    loss_db = np.abs(net.s_db[:, 1, 0])
             
             
             if freq_ref is None:
@@ -451,7 +454,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 "mode": "lines+markers",
                 "name": "Lower bound",
                 "marker": {"color": "red", "symbol": "circle", "size": 4},
-                "line": {"color": "red"}
+                "line": {"color": "red", "width": 1.5}
             })
             traces.append({
                 "x": ref_freq_win.tolist(),
@@ -460,7 +463,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 "mode": "lines+markers",
                 "name": "Upper bound",
                 "marker": {"color": "red", "symbol": "x", "size": 4},
-                "line": {"color": "red"}
+                "line": {"color": "red", "width": 1.5}
             })
 
     
@@ -613,7 +616,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 "mode": "lines+markers",
                 "name": "Lower bound",
                 "marker": {"color": "red", "symbol": "circle", "size": 4},
-                "line": {"color": "red"}
+                "line": {"color": "red", "width": 1.5}
             })
             traces.append({
                 "x": ref_freq_win.tolist(),
@@ -622,7 +625,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 "mode": "lines+markers",
                 "name": "Upper bound",
                 "marker": {"color": "red", "symbol": "x", "size": 4},
-                "line": {"color": "red"}
+                "line": {"color": "red", "width": 1.5}
             })
 
     if y_upper_s21 is not None and y_lower_s21 is not None:
