@@ -424,7 +424,13 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         color_idx = len(traces) % 10
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
         
-        cal_names_str = ",".join([os.path.basename(p).replace(".s2p","") for p in cal_files_used]) if cal_files_used else "NoCal"
+        def get_cal_label(p):
+            parent = os.path.basename(os.path.dirname(p))
+            grandparent = os.path.basename(os.path.dirname(os.path.dirname(p)))
+            base = os.path.basename(p).replace(".s2p", "")
+            return f"{grandparent}/{parent}/{base}"
+
+        cal_names_str = ",".join([get_cal_label(p) for p in cal_files_used]) if cal_files_used else "NoCal"
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_noise.tolist(),
@@ -602,7 +608,13 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         color_idx = len(traces) % 10
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
         
-        cal_names_str = ",".join([os.path.basename(p).replace(".s2p","") for p in cal_files_used]) if cal_files_used else "NoCal"
+        def get_cal_label(p):
+            parent = os.path.basename(os.path.dirname(p))
+            grandparent = os.path.basename(os.path.dirname(os.path.dirname(p)))
+            base = os.path.basename(p).replace(".s2p", "")
+            return f"{grandparent}/{parent}/{base}"
+            
+        cal_names_str = ",".join([get_cal_label(p) for p in cal_files_used]) if cal_files_used else "NoCal"
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_s21.tolist(),

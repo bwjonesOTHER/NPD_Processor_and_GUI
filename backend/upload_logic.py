@@ -45,8 +45,8 @@ def upload_test_data():
         area = None
         sn = None
         
-        # Regex to find something like SN1234 or SN_1234
-        sn_pattern = re.compile(r'SN[_-]?(\d+)', re.IGNORECASE)
+        # Regex to find something like SN1234, SN_1234, EM-1234
+        sn_pattern = re.compile(r'(?:SN|EM-)[_-]?(\d+)', re.IGNORECASE)
         # Regex to find Area, e.g., Area1, Area_1
         area_pattern = re.compile(r'Area[_-]?(\d+)', re.IGNORECASE)
         
