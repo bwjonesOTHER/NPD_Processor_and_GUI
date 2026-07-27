@@ -17,6 +17,9 @@ const filterValidFiles = (files) => {
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [testType, setTestType] = useState(null);
+  const [test2Files, setTest2Files] = useState({ bench: null, temp: null, cal: null });
+  const [generalFiles, setGeneralFiles] = useState(null);
+  const [sessionData, setSessionData] = useState(null);
   const [isConnected, setIsConnected] = useState(true); // Always true now since we removed SharePoint
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploadingSource, setIsUploadingSource] = useState(false);
