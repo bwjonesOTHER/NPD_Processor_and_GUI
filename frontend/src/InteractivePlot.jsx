@@ -1,5 +1,6 @@
 import React, { useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import Plot from 'react-plotly.js';
+import Plotly from 'plotly.js-dist-min';
 
 const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError }, ref) => {
   const plotRef = useRef(null);
@@ -10,7 +11,7 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError },
       // Access the internal Plotly object to download image
       if (plotRef.current && plotRef.current.el) {
         try {
-          const dataUrl = await window.Plotly.toImage(plotRef.current.el, {
+          const dataUrl = await Plotly.toImage(plotRef.current.el, {
             format: 'png',
             width: 1200,
             height: 600,
