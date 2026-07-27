@@ -9,10 +9,12 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError },
   useImperativeHandle(ref, () => ({
     toImage: async () => {
       // Access the internal Plotly object to download image
-      if (plotRef.current && plotRef.current.el) {
+      if (plotRef.current) {
         try {
           const plotlyObj = Plotly.default || Plotly;
-          const dataUrl = await plotlyObj.toImage(plotRef.current.el, {
+          // In newer react-plotly.js, the ref directly resolves to the graph div
+          const graphDiv = plotRef.current.el || plotRef.current;
+          const dataUrl = await plotlyObj.toImage(graphDiv, {
             format: 'png',
             width: 1200,
             height: 600,

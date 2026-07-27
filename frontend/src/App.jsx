@@ -159,24 +159,26 @@ function App() {
         }
       }
 
-      const res = await fetch(`${API_BASE}/choose_directory`);
-      const dirData = await res.json();
-      if (!dirData.success) {
-        if (dirData.error && dirData.error !== "No directory selected") {
-          alert(`Error selecting output folder: ${dirData.error}`);
+      let targetFolder = outputFolder;
+      if (!targetFolder) {
+        const res = await fetch(`${API_BASE}/choose_directory`);
+        const dirData = await res.json();
+        if (!dirData.success) {
+          if (dirData.error && dirData.error !== "No directory selected") {
+            alert(`Error selecting output folder: ${dirData.error}`);
+          }
+          return;
         }
-        return;
+        targetFolder = dirData.path;
       }
-      
-      const outputFolder = dirData.path;
       const resSave = await fetch(`${API_BASE}/save_plots`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputFolder, plots: plotImages })
+        body: JSON.stringify({ outputFolder: targetFolder, plots: plotImages })
       });
       const data = await resSave.json();
       if (data.success) {
-        alert(`Successfully saved ${data.saved.length} plots to ${outputFolder}`);
+        alert(`Successfully saved ${data.saved.length} plots to ${targetFolder}`);
       } else {
         alert(`Error saving plots: ${data.error}`);
       }
