@@ -74,16 +74,19 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError },
         font: { color: '#e0e0e0' },
         xaxis: {
           ...(plotData.layout.xaxis || {}),
+          anchor: 'y',
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         },
         yaxis: {
           ...(plotData.layout.yaxis || {}),
+          anchor: 'x',
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         },
         yaxis2: plotData.layout.yaxis2 ? {
           ...plotData.layout.yaxis2,
+          anchor: 'x',
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         } : undefined
