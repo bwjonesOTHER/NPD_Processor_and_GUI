@@ -234,10 +234,18 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
                 else:
                     loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
             else:
-                if plot_s12:
-                    loss_db = -net.s_db[:, 0, 1]
+                if not is_npd:
+                    # Physically correct math for S21 plots (handles insertion loss exports correctly)
+                    if plot_s12:
+                        loss_db = np.abs(net.s_db[:, 0, 1])
+                    else:
+                        loss_db = np.abs(net.s_db[:, 1, 0])
                 else:
-                    loss_db = -net.s_db[:, 1, 0]
+                    # Legacy backward math for NPD plots to match old python script
+                    if plot_s12:
+                        loss_db = -net.s_db[:, 0, 1]
+                    else:
+                        loss_db = -net.s_db[:, 1, 0]
             
             
             if freq_ref is None:
