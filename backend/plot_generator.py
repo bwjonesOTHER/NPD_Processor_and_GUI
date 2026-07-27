@@ -1497,6 +1497,10 @@ def generate_plots(params):
             f_dbg.write(f"sn: {sn}\n")
             f_dbg.write(f"test_type: {test_type}\n")
 
+        def filter_benchtop(files):
+            import os
+            return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
+
         if test_type == 2:
             # S2P Search with fallbacks for Run A
             sparA = search_files(search_dirA, "NPDoverTempVSWR_ambient", sn)
@@ -1510,10 +1514,6 @@ def generate_plots(params):
             if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_ambient", sn)
             if not npdA: npdA = search_files(search_dirA, "NPDoverTempN_25C", sn)
         else: # test_type == 3
-            def filter_benchtop(files):
-                import os
-                return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
-                
             raw_sparA = search_files(search_dirA, ".s2p", sn)
             if not raw_sparA and sn: raw_sparA = search_files(search_dirA, ".s2p", "")
             sparA_filt = [f for f in raw_sparA if "vswr" in os.path.basename(f).lower()]
