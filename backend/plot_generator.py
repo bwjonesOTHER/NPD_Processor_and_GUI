@@ -1364,7 +1364,6 @@ def generate_plots(params):
                     best_cal = root
         return best_cal
 
-    test_type = int(params.get('test_type', 1))
 
     # First try the explicitly provided cal_folder
     if cal_folder and os.path.isdir(cal_folder):
