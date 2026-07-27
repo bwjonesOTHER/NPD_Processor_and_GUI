@@ -98,7 +98,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
 
     if is_npd:
         if is_benchtop:
-            cal_types = ["Base", "Bulkhead"]
+            cal_types = ["Base", "Bulkhead", "SpecA"]
         else:
             cal_types = ["Base", "Bulkhead", "SpecA"]
     else:
@@ -234,14 +234,14 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
                 else:
                     loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
             else:
-                if not is_npd:
-                    # Physically correct math for S21 plots (handles insertion loss exports correctly)
+                if not (is_npd and test_type == 1):
+                    # Physically correct math for S21 plots and Test 3 (which lacks the test1 backward bug)
                     if plot_s12:
                         loss_db = np.abs(net.s_db[:, 0, 1])
                     else:
                         loss_db = np.abs(net.s_db[:, 1, 0])
                 else:
-                    # Legacy backward math for NPD plots to match old python script
+                    # Legacy backward math ONLY for Test 1 NP/NPD plots to match old python script
                     if plot_s12:
                         loss_db = -net.s_db[:, 0, 1]
                     else:
