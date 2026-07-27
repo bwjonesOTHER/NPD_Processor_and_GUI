@@ -1355,6 +1355,37 @@ def generate_plots(params):
             cal_folder = inner_cal
         else:
             cal_folder = os.path.join(os.path.dirname(folderA), "Cable Loss")
+            
+    # If still not found, try benchPath (since Cable Loss might be in Bench Data upload)
+    if not cal_folder or not os.path.exists(cal_folder):
+        bench_path = params.get('benchPath', "")
+        if bench_path and os.path.isdir(bench_path):
+            inner_cal_sn = os.path.join(bench_path, "Cable Loss", "SN006")
+            inner_cal = os.path.join(bench_path, "Cable Loss")
+            if os.path.exists(inner_cal_sn):
+                cal_folder = inner_cal_sn
+            elif os.path.exists(inner_cal):
+                cal_folder = inner_cal
+            else:
+                cal_folder = os.path.join(os.path.dirname(bench_path), "Cable Loss")
+                
+    # Check if there is an SN006 folder inside the resolved cal_folder (either from upload or fallback)
+    if cal_folder and os.path.isdir(cal_folder):
+        # find SN006 case-insensitively
+        for d in os.listdir(cal_folder):
+            d_path = os.path.join(cal_folder, d)
+            if os.path.isdir(d_path) and d.lower().replace("_", "") == "sn006":
+                cal_folder = d_path
+                break
+        # Also check one level deeper if user uploaded the parent of Cable Loss
+        for d in os.listdir(cal_folder):
+            d_path = os.path.join(cal_folder, d)
+            if os.path.isdir(d_path):
+                sn_path = os.path.join(d_path, "SN006")
+                if os.path.isdir(sn_path):
+                    cal_folder = sn_path
+                    break
+
     
     generated_plots = []
 

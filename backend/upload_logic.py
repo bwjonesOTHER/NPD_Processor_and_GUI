@@ -27,10 +27,16 @@ def upload_test_data():
             paths[cat] = cat_dir
             for file in files:
                 if file.filename:
-                    # Sanitize but keep structure flat for now
-                    filename = secure_filename(os.path.basename(file.filename))
-                    if filename:
-                        file.save(os.path.join(cat_dir, filename))
+                    # Preserve directory structure
+                    rel_path = file.filename
+                    if rel_path:
+                        # Split path and secure each part
+                        parts = rel_path.replace('\\', '/').split('/')
+                        safe_parts = [secure_filename(p) for p in parts if p]
+                        if safe_parts:
+                            safe_path = os.path.join(cat_dir, *safe_parts)
+                            os.makedirs(os.path.dirname(safe_path), exist_ok=True)
+                            file.save(safe_path)
     
     # Metadata parsing
     metadata = {}
