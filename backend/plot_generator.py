@@ -562,11 +562,13 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
 _NPD_DELTA_BAND = (2.7, 4.1)
 
 
-def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=None):
-    """Plots NPD delta = Ambient - other (Hot or Cold) as its own single
-    trace against a fixed [lower, upper] dBm/Hz pass/fail range - kept
-    separate per-comparison (not overlaid together like plot_temp_deltas)
-    since Ambient-Hot and Ambient-Cold have different bounds."""
+def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=None, ambient_label="Ambient"):
+    """Plots NPD delta = -(ambient - other) (Hot/Hot2 or Cold/Cold2) as its
+    own single trace against a fixed [lower, upper] dBm/Hz pass/fail range
+    - kept separate per-comparison (not overlaid together like
+    plot_temp_deltas) since the Hot and Cold bounds differ. ambient_label
+    lets this cover both the Ambient/Hot/Cold and Ambient2/Hot2/Cold2
+    repeat-run comparisons."""
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     a_freq, a_vals = ambient
     o_freq, o_vals = other
@@ -584,14 +586,14 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=
         status = "Failed"
 
     plt.figure(figsize=(8, 4), dpi=150)
-    plt.plot(freq, delta, color="blue", label=f"Ambient - {other_label}")
+    plt.plot(freq, delta, color="blue", label=f"{ambient_label} - {other_label}")
     plt.hlines(upper, _NPD_DELTA_BAND[0], _NPD_DELTA_BAND[1], color="red", linestyle="--", label="Upper Bound")
     plt.hlines(lower, _NPD_DELTA_BAND[0], _NPD_DELTA_BAND[1], color="red", linestyle="--", label="Lower Bound")
     plt.axvline(x=_NPD_DELTA_BAND[0], color="g")
     plt.axvline(x=_NPD_DELTA_BAND[1], color="g")
 
     plt.grid(True)
-    plt.title(f"{date_str} NPD Delta Ambient-{other_label}, {status}")
+    plt.title(f"{date_str} NPD Delta {ambient_label}-{other_label}, {status}")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("Delta NPD (dBm/Hz)")
     plt.xlim(_OTA_XLIM)
@@ -600,7 +602,7 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=
     plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
     plt.subplots_adjust(bottom=0.45)
 
-    filename_safe_title = f"{date_str}_NPD_Delta_Ambient_{other_label}.png"
+    filename_safe_title = f"{date_str}_NPD_Delta_{ambient_label}_{other_label}.png"
     save_path = os.path.join(output_folder, filename_safe_title)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
@@ -997,10 +999,13 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     }
 
     # Per-temperature averaged RAW (uncalibrated) NPD dBm/Hz curve, keyed
-    # by "Ambient"/"Cold"/"Hot" - used below for the Ambient-Hot /
-    # Ambient-Cold delta pass/fail plots, independent of apply_npd_cal.
-    # The combined "<Temp> Overlay" run (both repeats) is preferred; the
-    # single-folder run is kept only as a fallback if there's no repeat.
+    # by "Ambient"/"Cold"/"Hot" (and their "2" repeat-run counterparts) -
+    # used below for the Ambient-Hot/Ambient-Cold and Ambient2-Hot2/
+    # Ambient2-Cold2 delta pass/fail plots, independent of apply_npd_cal.
+    # For the base (non-"2") labels, the combined "<Temp> Overlay" run
+    # (both repeats) is preferred; the single-folder run is kept only as
+    # a fallback if there's no repeat. The "2" labels only ever come from
+    # their own single folder - there's no further repeat to combine.
     npd_avg_by_label = {}
 
     folder_specs = [
@@ -1018,7 +1023,7 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
                              avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
         if p:
             generated.append(p)
-            if label in ("Ambient", "Cold", "Hot") and p.get("avg_raw") is not None:
+            if p.get("avg_raw") is not None:
                 npd_avg_by_label[label] = (p["freq"], p["avg_raw"])
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
@@ -1038,15 +1043,19 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
 
-    # NPD (density) Ambient-Hot / Ambient-Cold deltas, pass/fail-checked
-    # against fixed dBm/Hz bounds and plotted separately (not overlaid
-    # together) - see plot_npd_delta().
-    if "Ambient" in npd_avg_by_label and "Hot" in npd_avg_by_label:
-        dp_hot = plot_npd_delta(npd_avg_by_label["Ambient"], npd_avg_by_label["Hot"], "Hot", (-0.7, -0.2), output_folder, date_str=date_str)
-        if dp_hot: generated.append(dp_hot)
-    if "Ambient" in npd_avg_by_label and "Cold" in npd_avg_by_label:
-        dp_cold = plot_npd_delta(npd_avg_by_label["Ambient"], npd_avg_by_label["Cold"], "Cold", (0.4, 1.3), output_folder, date_str=date_str)
-        if dp_cold: generated.append(dp_cold)
+    # NPD (density) deltas, pass/fail-checked against fixed dBm/Hz bounds
+    # and plotted separately (not overlaid together) - see
+    # plot_npd_delta(). Four total: Ambient-Hot, Ambient-Cold, and the
+    # same pair again for the "2" repeat run.
+    for amb_label, hot_label, cold_label in [("Ambient", "Hot", "Cold"), ("Ambient2", "Hot2", "Cold2")]:
+        if amb_label in npd_avg_by_label and hot_label in npd_avg_by_label:
+            dp_hot = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[hot_label], hot_label,
+                                     (-0.7, -0.2), output_folder, date_str=date_str, ambient_label=amb_label)
+            if dp_hot: generated.append(dp_hot)
+        if amb_label in npd_avg_by_label and cold_label in npd_avg_by_label:
+            dp_cold = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[cold_label], cold_label,
+                                      (0.4, 1.3), output_folder, date_str=date_str, ambient_label=amb_label)
+            if dp_cold: generated.append(dp_cold)
 
     return generated
 
