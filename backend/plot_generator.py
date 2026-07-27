@@ -358,15 +358,8 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 noise = np.interp(ref_freq_full, freq, noise)
                 freq = ref_freq_full
 
-        start_idx = np.searchsorted(freq, freq_min)
-        end_idx = np.searchsorted(freq, freq_max)
-        
-        if start_idx == end_idx:
-            sliced_freq = freq
-            sliced_noise = noise
-        else:
-            sliced_freq = freq[start_idx:end_idx]
-            sliced_noise = noise[start_idx:end_idx]
+        sliced_freq = freq
+        sliced_noise = noise
 
         # Thin data when many files are being plotted to keep rendering fast
         max_points = 500 if len(all_files) > 10 else len(sliced_freq)
@@ -477,9 +470,14 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
 
     title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     
+    if ref_freq_full is not None and len(ref_freq_full) > 0:
+        x_range = [ref_freq_full[0], ref_freq_full[-1]]
+    else:
+        x_range = [freq_min, freq_max]
+
     layout = {
         "title": title,
-        "xaxis": {"title": "Frequency (GHz)", "range": [freq_min, freq_max]},
+        "xaxis": {"title": "Frequency (GHz)", "range": x_range},
         "yaxis": {"title": "NPD (dBm/Hz)" if plot_density else "NP (dBm)", "range": y_range},
         "showlegend": True,
         "legend": {"x": 1.05, "y": 1},
@@ -533,15 +531,8 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         if freq_cal is not None:
             s21_corr = raw_s21 + np.interp(freq_ghz, freq_cal, total_loss_db)
 
-        start_idx = np.searchsorted(freq_ghz, freq_min)
-        end_idx = np.searchsorted(freq_ghz, freq_max)
-        
-        if start_idx == end_idx:
-            sliced_freq = freq_ghz
-            sliced_s21 = s21_corr
-        else:
-            sliced_freq = freq_ghz[start_idx:end_idx]
-            sliced_s21 = s21_corr[start_idx:end_idx]
+        sliced_freq = freq_ghz
+        sliced_s21 = s21_corr
 
         # Thin data when many files are being plotted to keep rendering fast
         max_points = 500 if len(all_files) > 10 else len(sliced_freq)
