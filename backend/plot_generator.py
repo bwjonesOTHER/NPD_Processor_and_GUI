@@ -830,6 +830,8 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     color_cycle = iter(_OTA_COLORS)
 
     plotted = 0
+    all_freqs = []
+    all_corrected = []
     for f in files:
         freq, raw = _ota_load_csv(f, 2 if plot_density else 1)
         if len(freq) == 0:
@@ -859,10 +861,19 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
 
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
         plotted += 1
+        all_freqs.append(freq_smooth)
+        all_corrected.append(corrected)
 
     if plotted == 0:
         plt.close()
         return None
+
+    # Per-frequency average across the plotted files, truncated to the
+    # shortest trace (same approach plotNPD uses) - this is what the
+    # Ambient/Hot/Cold NPD delta plots are built from.
+    min_len = min(len(x) for x in all_corrected)
+    avg_curve = np.mean([x[:min_len] for x in all_corrected], axis=0)
+    avg_curve_freq = all_freqs[0][:min_len]
 
     if check_bounds:
         plt.plot(avg_freq, avg_vals, color='black', linewidth=2, linestyle='--', label='Reference Average')
@@ -895,7 +906,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     plt.subplots_adjust(bottom=0.45)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
-    return {"path": save_path, "status": "failed" if failed_files else "passed"}
+    return {"path": save_path, "status": "failed" if failed_files else "passed", "freq": avg_curve_freq, "avg": avg_curve}
 
 def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None):
     if not files:
@@ -980,6 +991,12 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         "specan": _ota_load_specan_cal(specan_file, n_avg),
     }
 
+    # Per-temperature averaged NPD curve, keyed by "Ambient"/"Cold"/"Hot" -
+    # used below for the Ambient-Hot / Ambient-Cold delta pass/fail plots.
+    # The combined "<Temp> Overlay" run (both repeats) is preferred; the
+    # single-folder run is kept only as a fallback if there's no repeat.
+    npd_avg_by_label = {}
+
     folder_specs = [
         ("Ambient", ambient), ("Ambient2", ambient2),
         ("Cold", cold), ("Cold2", cold2),
@@ -993,7 +1010,10 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         is_ambient = label.startswith("Ambient")
         p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
                              avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
-        if p: generated.append(p)
+        if p:
+            generated.append(p)
+            if label in ("Ambient", "Cold", "Hot") and p.get("avg") is not None:
+                npd_avg_by_label[label] = (p["freq"], p["avg"])
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
 
@@ -1005,9 +1025,22 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         is_ambient = label == "Ambient"
         p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
                              avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
-        if p: generated.append(p)
+        if p:
+            generated.append(p)
+            if p.get("avg") is not None:
+                npd_avg_by_label[label] = (p["freq"], p["avg"])
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
+
+    # NPD (density) Ambient-Hot / Ambient-Cold deltas, pass/fail-checked
+    # against fixed dBm/Hz bounds and plotted separately (not overlaid
+    # together) - see plot_npd_delta().
+    if "Ambient" in npd_avg_by_label and "Hot" in npd_avg_by_label:
+        dp_hot = plot_npd_delta(npd_avg_by_label["Ambient"], npd_avg_by_label["Hot"], "Hot", (-0.7, -0.2), output_folder, date_str=date_str)
+        if dp_hot: generated.append(dp_hot)
+    if "Ambient" in npd_avg_by_label and "Cold" in npd_avg_by_label:
+        dp_cold = plot_npd_delta(npd_avg_by_label["Ambient"], npd_avg_by_label["Cold"], "Cold", (0.4, 1.3), output_folder, date_str=date_str)
+        if dp_cold: generated.append(dp_cold)
 
     return generated
 
@@ -1035,7 +1068,7 @@ def generate_plots(params):
     u_bound_npd = float(params.get('u_bound_npd', 2))
     l_bound_npd = float(params.get('l_bound_npd', 2))
     output_folder = params.get('outputFolder', '/tmp')
-    average_data_path = params.get('average_data_path', '') or DEFAULT_AVERAGE_CSV
+    average_data_path = params.get('average_data_path', '')
 
     # Figure out calibration folder
     cal_folder = params.get('calFolder', "")
@@ -1093,25 +1126,21 @@ def generate_plots(params):
                 
         dp1 = plot_temp_deltas(np_averages, "Noise Power", "NP (dBm)", output_folder, ax1_ylim=(-130, -90), ax2_ylim=(0, 5))
         if dp1: generated_plots.append(dp1)
-
-        # NPD (density) deltas are pass/fail-checked against fixed dBm/Hz
-        # bounds, not plotted together - see plot_npd_delta().
-        if "Ambient" in npd_averages and "Hot" in npd_averages:
-            dp_hot = plot_npd_delta(npd_averages["Ambient"], npd_averages["Hot"], "Hot", (-0.7, -0.2), output_folder)
-            if dp_hot: generated_plots.append(dp_hot)
-        if "Ambient" in npd_averages and "Cold" in npd_averages:
-            dp_cold = plot_npd_delta(npd_averages["Ambient"], npd_averages["Cold"], "Cold", (0.4, 1.3), output_folder)
-            if dp_cold: generated_plots.append(dp_cold)
-
+        dp1_den = plot_temp_deltas(npd_averages, "Noise Power Density", "NPD (dBm/Hz)", output_folder, ax1_ylim=(-170, -110), ax2_ylim=(0, 5))
+        if dp1_den: generated_plots.append(dp1_den)
         dp2 = plot_temp_deltas(s21_averages, "S21", "S21 (dB)", output_folder, ax1_ylim=(-40, 40), ax2_ylim=(0, 30))
         if dp2: generated_plots.append(dp2)
 
     elif test_type == 4:
         # NPD Over Temp Array: folderA is the single root folder containing
         # Ambient/Cold/Hot measurement folders and a Cable Loss folder.
+        # This is the only test that defaults to the project's own
+        # NPD_AVERAGED_DATA.csv and gets the Ambient-Hot / Ambient-Cold
+        # NPD delta pass/fail plots - Test 1/2/3 are untouched.
         apply_npd_cal = bool(params.get('apply_npd_cal', False))
+        ota_average_data_path = average_data_path or DEFAULT_AVERAGE_CSV
         generated_plots = generate_over_temp_array_plots(folderA, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=apply_npd_cal,
-                                                           average_data_path=average_data_path, u_bound_npd=u_bound_npd, l_bound_npd=l_bound_npd)
+                                                           average_data_path=ota_average_data_path, u_bound_npd=u_bound_npd, l_bound_npd=l_bound_npd)
 
     else:
         # Benchtop (Test 2 & 3)
