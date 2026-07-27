@@ -1349,47 +1349,37 @@ def generate_plots(params):
     if not cal_folder and folderA:
         inner_cal_sn = os.path.join(folderA, "Cable Loss", "SN006")
         inner_cal = os.path.join(folderA, "Cable Loss")
-        if os.path.exists(inner_cal_sn):
-            cal_folder = inner_cal_sn
-        elif os.path.exists(inner_cal):
-            cal_folder = inner_cal
+    # Resolve the best calibration folder
+    def find_best_cal(base_path, test_type):
+        best_cal = None
+        if not base_path or not os.path.isdir(base_path): return None
+        for root, dirs, files in os.walk(base_path):
+            if "cableloss" in os.path.basename(root).lower().replace(" ", "").replace("_", ""):
+                # Main ONLY used SN006 for Test 3 (Array). Test 1 and 2 used the outer cables.
+                if test_type == 3:
+                    for d in dirs:
+                        if d.lower().replace("_", "") == "sn006":
+                            return os.path.join(root, d) # Return immediately if SN006 is found
+                if not best_cal:
+                    best_cal = root
+        return best_cal
+
+    test_type = int(params.get('test_type', 1))
+
+    # First try the explicitly provided cal_folder
+    if cal_folder and os.path.isdir(cal_folder):
+        found_cal = find_best_cal(cal_folder, test_type)
+        if found_cal:
+            cal_folder = found_cal
+
     # If still not found, search benchPath and tempPath dynamically for Cable Loss
     if not cal_folder or not os.path.exists(cal_folder):
         bench_path = params.get('benchPath', "")
         temp_path = params.get('tempPath', "")
         
-        def find_best_cal(base_path):
-            best_cal = None
-            if not base_path or not os.path.isdir(base_path): return None
-            for root, dirs, files in os.walk(base_path):
-                if "cableloss" in os.path.basename(root).lower().replace(" ", "").replace("_", ""):
-                    for d in dirs:
-                        if d.lower().replace("_", "") == "sn006":
-                            return os.path.join(root, d) # Return immediately if SN006 is found
-                    if not best_cal:
-                        best_cal = root
-            return best_cal
-            
-        cal_folder = find_best_cal(bench_path)
+        cal_folder = find_best_cal(bench_path, test_type)
         if not cal_folder:
-            cal_folder = find_best_cal(temp_path)
-                
-    # Check if there is an SN006 folder inside the resolved cal_folder (either from upload or fallback)
-    if cal_folder and os.path.isdir(cal_folder):
-        # find SN006 case-insensitively
-        for d in os.listdir(cal_folder):
-            d_path = os.path.join(cal_folder, d)
-            if os.path.isdir(d_path) and d.lower().replace("_", "") == "sn006":
-                cal_folder = d_path
-                break
-        # Also check one level deeper if user uploaded the parent of Cable Loss
-        for d in os.listdir(cal_folder):
-            d_path = os.path.join(cal_folder, d)
-            if os.path.isdir(d_path):
-                sn_path = os.path.join(d_path, "SN006")
-                if os.path.isdir(sn_path):
-                    cal_folder = sn_path
-                    break
+            cal_folder = find_best_cal(temp_path, test_type)
 
     
     generated_plots = []
