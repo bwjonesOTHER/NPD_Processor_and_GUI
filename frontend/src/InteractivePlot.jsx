@@ -32,15 +32,7 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError },
     return <div style={{ color: '#ef4444', padding: '1rem' }}>Invalid plot data</div>;
   }
 
-  // For plots with many traces, switch to scattergl (WebGL) to avoid SVG rendering crash.
-  // Keep scatter (SVG) for small plots to avoid unnecessary WebGL context usage.
-  const useWebGL = plotData.traces.length > 10;
-  const processedTraces = useWebGL
-    ? plotData.traces.map(t => ({
-        ...t,
-        type: t.type === 'scatter' ? 'scattergl' : t.type
-      }))
-    : plotData.traces;
+  const processedTraces = plotData.traces;
 
   if (renderError) {
     return (
@@ -74,19 +66,16 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError },
         font: { color: '#e0e0e0' },
         xaxis: {
           ...(plotData.layout.xaxis || {}),
-          anchor: 'y',
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         },
         yaxis: {
           ...(plotData.layout.yaxis || {}),
-          anchor: 'x',
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         },
         yaxis2: plotData.layout.yaxis2 ? {
           ...plotData.layout.yaxis2,
-          anchor: 'x',
           gridcolor: 'rgba(255,255,255,0.1)',
           zerolinecolor: 'rgba(255,255,255,0.2)'
         } : undefined
