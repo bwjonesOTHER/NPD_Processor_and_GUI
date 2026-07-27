@@ -434,7 +434,9 @@ function App() {
           dataSource: sessionData?.paths?.general || formData.basePath, 
           calFolder: sessionData?.paths?.cal || formData.calPath,
           benchPath: sessionData?.paths?.bench,
-          tempPath: sessionData?.paths?.temp
+          tempPath: sessionData?.paths?.temp,
+          serial_number: formData.serialNumber,
+          pmaArea: formData.pmaArea
         })
       });
 

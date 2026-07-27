@@ -648,18 +648,20 @@ def api_generate_plots():
         if not path:
             path = read_txt("path.txt")
         params['runs'] = [path] if path else []
-        params['serial_number'] = read_txt("serialNumber.txt")
-        params['pma'] = read_txt("PMA_Area.txt")
-        params['lmo'] = read_txt("LMO_Number.txt")
-        if not params['lmo']:
-            params['lmo'] = read_txt("lmoNumber.txt")
+        if not params.get('serial_number'):
+            params['serial_number'] = read_txt("serialNumber.txt")
+        if not params.get('pmaArea'):
+            params['pmaArea'] = params.get('pma', read_txt("PMA_Area.txt"))
+        if not params.get('lmo'):
+            params['lmo'] = read_txt("LMO_Number.txt") or read_txt("lmoNumber.txt")
 
     elif test == 3:
         if not params.get('runs'):
             run_a = read_txt("RunA_Path.txt")
             run_b = read_txt("RunB_Path.txt")
             params['runs'] = [run for run in [run_a, run_b] if run]
-        params['serial_number'] = read_txt("serialNumber.txt")
+        if not params.get('serial_number'):
+            params['serial_number'] = read_txt("serialNumber.txt")
         
         cal_path = read_txt("Cal_Path.txt")
         if cal_path and not params.get('calFolder'):
