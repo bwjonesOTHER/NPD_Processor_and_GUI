@@ -98,7 +98,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
 
     if is_npd:
         if is_benchtop:
-            cal_types = ["Base", "Bulkhead", "SpecA"]
+            cal_types = ["Base", "Bulkhead"]
         else:
             cal_types = ["Base", "Bulkhead", "SpecA"]
     else:
