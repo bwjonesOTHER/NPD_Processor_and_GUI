@@ -50,15 +50,19 @@ def upload_test_data():
         # Regex to find Area, e.g., Area1, Area_1
         area_pattern = re.compile(r'Area[_-]?(\d+)', re.IGNORECASE)
         
-        for f in os.listdir(bench_dir):
-            if not sn:
-                m = sn_pattern.search(f)
-                if m:
-                    sn = m.group(1)
-            if not area:
-                m = area_pattern.search(f)
-                if m:
-                    area = f"Area{m.group(1)}"
+        for root, dirs, files in os.walk(bench_dir):
+            for f in files:
+                if not f.lower().endswith('.csv'): continue
+                if not sn:
+                    m = sn_pattern.search(f)
+                    if m:
+                        sn = m.group(1)
+                if not area:
+                    m = area_pattern.search(f)
+                    if m:
+                        area = f"Area{m.group(1)}"
+                if sn and area:
+                    break
             if sn and area:
                 break
                 
@@ -68,7 +72,11 @@ def upload_test_data():
         # Validate Temp files
         if 'temp' in paths and sn:
             temp_dir = paths['temp']
-            matching_files = [f for f in os.listdir(temp_dir) if sn in f]
+            matching_files = []
+            for root, dirs, files in os.walk(temp_dir):
+                for f in files:
+                    if sn in f:
+                        matching_files.append(f)
             if not matching_files:
                 return jsonify({"success": False, "error": f"Failed to Locate matching Temp files for SN {sn}"}), 400
                 
