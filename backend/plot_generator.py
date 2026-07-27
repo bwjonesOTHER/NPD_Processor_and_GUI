@@ -585,8 +585,8 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=
 
     plt.figure(figsize=(8, 4), dpi=150)
     plt.plot(freq, delta, color="blue", label=f"Ambient - {other_label}")
-    plt.axhline(y=upper, color="red", linestyle="--", label="Upper Bound")
-    plt.axhline(y=lower, color="red", linestyle="--", label="Lower Bound")
+    plt.hlines(upper, _NPD_DELTA_BAND[0], _NPD_DELTA_BAND[1], color="red", linestyle="--", label="Upper Bound")
+    plt.hlines(lower, _NPD_DELTA_BAND[0], _NPD_DELTA_BAND[1], color="red", linestyle="--", label="Lower Bound")
     plt.axvline(x=_NPD_DELTA_BAND[0], color="g")
     plt.axvline(x=_NPD_DELTA_BAND[1], color="g")
 
@@ -832,6 +832,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     plotted = 0
     all_freqs = []
     all_corrected = []
+    all_raw = []
     for f in files:
         freq, raw = _ota_load_csv(f, 2 if plot_density else 1)
         if len(freq) == 0:
@@ -863,16 +864,20 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         plotted += 1
         all_freqs.append(freq_smooth)
         all_corrected.append(corrected)
+        all_raw.append(smoothed)
 
     if plotted == 0:
         plt.close()
         return None
 
     # Per-frequency average across the plotted files, truncated to the
-    # shortest trace (same approach plotNPD uses) - this is what the
-    # Ambient/Hot/Cold NPD delta plots are built from.
+    # shortest trace (same approach plotNPD uses). "avg" (possibly
+    # calibrated) is what's actually plotted; "avg_raw" (always
+    # uncalibrated dBm/Hz) is what the Ambient/Hot/Cold NPD delta plots
+    # are built from, regardless of the apply_cal setting used here.
     min_len = min(len(x) for x in all_corrected)
     avg_curve = np.mean([x[:min_len] for x in all_corrected], axis=0)
+    avg_curve_raw = np.mean([x[:min_len] for x in all_raw], axis=0)
     avg_curve_freq = all_freqs[0][:min_len]
 
     if check_bounds:
@@ -906,7 +911,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     plt.subplots_adjust(bottom=0.45)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
-    return {"path": save_path, "status": "failed" if failed_files else "passed", "freq": avg_curve_freq, "avg": avg_curve}
+    return {"path": save_path, "status": "failed" if failed_files else "passed", "freq": avg_curve_freq, "avg": avg_curve, "avg_raw": avg_curve_raw}
 
 def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None):
     if not files:
@@ -991,8 +996,9 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         "specan": _ota_load_specan_cal(specan_file, n_avg),
     }
 
-    # Per-temperature averaged NPD curve, keyed by "Ambient"/"Cold"/"Hot" -
-    # used below for the Ambient-Hot / Ambient-Cold delta pass/fail plots.
+    # Per-temperature averaged RAW (uncalibrated) NPD dBm/Hz curve, keyed
+    # by "Ambient"/"Cold"/"Hot" - used below for the Ambient-Hot /
+    # Ambient-Cold delta pass/fail plots, independent of apply_npd_cal.
     # The combined "<Temp> Overlay" run (both repeats) is preferred; the
     # single-folder run is kept only as a fallback if there's no repeat.
     npd_avg_by_label = {}
@@ -1012,8 +1018,8 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
                              avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
         if p:
             generated.append(p)
-            if label in ("Ambient", "Cold", "Hot") and p.get("avg") is not None:
-                npd_avg_by_label[label] = (p["freq"], p["avg"])
+            if label in ("Ambient", "Cold", "Hot") and p.get("avg_raw") is not None:
+                npd_avg_by_label[label] = (p["freq"], p["avg_raw"])
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
 
@@ -1027,8 +1033,8 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
                              avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
         if p:
             generated.append(p)
-            if p.get("avg") is not None:
-                npd_avg_by_label[label] = (p["freq"], p["avg"])
+            if p.get("avg_raw") is not None:
+                npd_avg_by_label[label] = (p["freq"], p["avg_raw"])
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
 
