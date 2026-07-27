@@ -1420,8 +1420,8 @@ def generate_plots(params):
         lmo = None
         if test_type == 2:
             pma = params.get('pmaArea')
-            search_dirA = params.get('benchPath', search_dirA)
-            search_dirB = params.get('tempPath', search_dirB)
+            search_dirA = params.get('tempPath', search_dirA)
+            search_dirB = params.get('benchPath', search_dirB)
         def filter_benchtop(files):
             import os
             return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
