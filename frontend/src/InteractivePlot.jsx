@@ -1,8 +1,9 @@
-import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import Plot from 'react-plotly.js';
 
-const InteractivePlot = forwardRef(({ plotData, height = '300px' }, ref) => {
+const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError }, ref) => {
   const plotRef = useRef(null);
+  const [renderError, setRenderError] = useState(null);
 
   useImperativeHandle(ref, () => ({
     toImage: async () => {
@@ -28,20 +29,49 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px' }, ref) => {
   }));
 
   if (!plotData || !plotData.traces || !plotData.layout) {
-    return <div>Invalid plot data</div>;
+    return <div style={{ color: '#ef4444', padding: '1rem' }}>Invalid plot data</div>;
+  }
+
+  // For plots with many traces, switch to scattergl (WebGL) to avoid SVG rendering crash.
+  // Keep scatter (SVG) for small plots to avoid unnecessary WebGL context usage.
+  const useWebGL = plotData.traces.length > 10;
+  const processedTraces = useWebGL
+    ? plotData.traces.map(t => ({
+        ...t,
+        type: t.type === 'scatter' ? 'scattergl' : t.type
+      }))
+    : plotData.traces;
+
+  if (renderError) {
+    return (
+      <div style={{
+        color: '#ef4444',
+        padding: '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: height,
+        border: '2px solid #ef4444',
+        borderRadius: '8px',
+        fontSize: '0.85rem',
+        textAlign: 'center'
+      }}>
+        Plot render failed: {renderError}
+      </div>
+    );
   }
 
   return (
     <Plot
       ref={plotRef}
-      data={plotData.traces}
+      data={processedTraces}
       layout={{
         ...plotData.layout,
         autosize: true,
         margin: { l: 60, r: 40, t: 60, b: 60 },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: 'var(--text-color, #e0e0e0)' },
+        font: { color: '#e0e0e0' },
         xaxis: {
           ...(plotData.layout.xaxis || {}),
           gridcolor: 'rgba(255,255,255,0.1)',
@@ -64,7 +94,13 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px' }, ref) => {
         displaylogo: false,
         modeBarButtonsToRemove: ['lasso2d', 'select2d']
       }}
-      style={{ width: '100%', height: height }}
+      onError={(err) => {
+        console.error('Plotly render error:', err);
+        const msg = err?.message || String(err);
+        setRenderError(msg);
+        if (onPlotError) onPlotError(msg);
+      }}
+      style={{ width: '100%', height: height, position: 'relative', display: 'inline-block' }}
       useResizeHandler={true}
       className={`plot-container ${plotData.status === 'failed' ? 'plot-fail' : 'plot-pass'}`}
     />

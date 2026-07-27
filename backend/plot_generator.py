@@ -368,6 +368,13 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             sliced_freq = freq[start_idx:end_idx]
             sliced_noise = noise[start_idx:end_idx]
 
+        # Thin data when many files are being plotted to keep rendering fast
+        max_points = 500 if len(all_files) > 10 else len(sliced_freq)
+        if len(sliced_freq) > max_points:
+            step = len(sliced_freq) // max_points
+            sliced_freq = sliced_freq[::step]
+            sliced_noise = sliced_noise[::step]
+
         color_idx = len(traces) % 10
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
         traces.append({
@@ -456,8 +463,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 "line": {"color": "red"}
             })
 
-    # Vertical lines for min/max
-    
     
     if y_upper_npd is not None and y_lower_npd is not None:
         if plot_density:
@@ -537,6 +542,13 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         else:
             sliced_freq = freq_ghz[start_idx:end_idx]
             sliced_s21 = s21_corr[start_idx:end_idx]
+
+        # Thin data when many files are being plotted to keep rendering fast
+        max_points = 500 if len(all_files) > 10 else len(sliced_freq)
+        if len(sliced_freq) > max_points:
+            step = len(sliced_freq) // max_points
+            sliced_freq = sliced_freq[::step]
+            sliced_s21 = sliced_s21[::step]
 
         color_idx = len(traces) % 10
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
@@ -622,7 +634,6 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
     
     
-    
     if y_upper_s21 is not None and y_lower_s21 is not None:
         y_range = [y_lower_s21, y_upper_s21]
     elif (test_type != 1 and test_type != 3) and apply_cal:
@@ -642,7 +653,11 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         "xaxis": {"title": "Frequency (GHz)", "range": x_range},
         "yaxis": {"title": "S21 (dB)", "range": y_range},
         "showlegend": True,
-        "legend": {"x": 1.05, "y": 1}
+        "legend": {"x": 1.05, "y": 1},
+        "shapes": [
+            {"type": "line", "x0": freq_min, "x1": freq_min, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}},
+            {"type": "line", "x0": freq_max, "x1": freq_max, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}}
+        ]
     }
 
     filename_safe_title = title.replace(" ", "_").replace(":", "").replace(",", "") + ".png"
