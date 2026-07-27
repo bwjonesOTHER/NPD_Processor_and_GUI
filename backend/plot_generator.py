@@ -89,7 +89,7 @@ def find_cal_file(folders, cap_num, cal_type):
 
     return None
 
-def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
+def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, exclude_bulkhead=False):
     is_npd = filepath.lower().endswith('.csv')
     is_benchtop = test_type == 2 or test_type == 3
 
@@ -98,18 +98,21 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
 
     if is_npd:
         if is_benchtop:
-            cal_types = ("Base", "Bulkhead", "SpecA")
+            cal_types = ["Base", "Bulkhead", "SpecA"]
         else:
-            cal_types = ("Base", "Hat", "Bulkhead", "SpecA")
+            cal_types = ["Base", "Hat", "Bulkhead", "SpecA"]
     else:
         # Only use Cap for Tile Benchtop (which has a Cap number). Arrays use Hat.
         if is_benchtop and ident_num is not None:
-            cal_types = ("Base", "Cap", "Bulkhead", "SpecA")
+            cal_types = ["Base", "Cap", "Bulkhead", "SpecA"]
         elif is_benchtop:
             # Array Benchtop (Test 3) doesn't use a Hat cable
-            cal_types = ("Base", "Bulkhead", "SpecA")
+            cal_types = ["Base", "Bulkhead", "SpecA"]
         else:
-            cal_types = ("Base", "Hat", "Bulkhead", "SpecA")
+            cal_types = ["Base", "Hat", "Bulkhead", "SpecA"]
+            
+    if exclude_bulkhead and "Bulkhead" in cal_types:
+        cal_types.remove("Bulkhead")
 
     search_dirs = []
     
@@ -336,7 +339,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             return np.array([]), np.array([])
             
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type, plot_s12)
+            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type, plot_s12, exclude_bulkhead=plot_density)
             if freq_cal is not None:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
