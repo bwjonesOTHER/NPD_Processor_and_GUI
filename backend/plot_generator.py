@@ -91,7 +91,7 @@ def find_cal_file(folders, cap_num, cal_type):
 
 def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
     is_npd = filepath.lower().endswith('.csv')
-    is_benchtop = test_type == 2 or test_type == 3
+    is_benchtop = test_type == 3
 
     cap_match = re.search(r'cap[_\s-]?(\d+)', filepath, re.IGNORECASE)
     ident_num = cap_match.group(1) if cap_match else None
