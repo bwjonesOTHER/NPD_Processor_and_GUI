@@ -11,7 +11,8 @@ const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError },
       // Access the internal Plotly object to download image
       if (plotRef.current && plotRef.current.el) {
         try {
-          const dataUrl = await Plotly.toImage(plotRef.current.el, {
+          const plotlyObj = Plotly.default || Plotly;
+          const dataUrl = await plotlyObj.toImage(plotRef.current.el, {
             format: 'png',
             width: 1200,
             height: 600,
