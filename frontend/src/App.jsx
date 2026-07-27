@@ -476,7 +476,7 @@ function App() {
     <div className="container" style={{ maxWidth: 'min(1800px, 96vw)' }}>
       <header className="app-header">
         <h1 className="app-title">NPD Data Processor</h1>
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.7.3.0 Elk</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '-0.5rem', marginBottom: '0.5rem' }}>Version 0.8.0.0 Elk</div>
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
