@@ -45,7 +45,7 @@ function App() {
     exactLmoFolder: '',
   });
 
-  const [showPlotProps, setShowPlotProps] = useState(false);
+
   const [plotParams, setPlotParams] = useState({
     freq_min: 2.7,
     freq_max: 4.1,
@@ -1040,10 +1040,7 @@ function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem' }}>
                     <div>
                       <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>Generated Plots ({images.length})</h3>
-                      <button onClick={() => setShowPlotProps(true)} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--accent)' }}>
-                        <Settings size={16} />
-                        Plot Properties
-                      </button>
+
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                       <button onClick={handleSavePlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--success)' }}>
@@ -1089,54 +1086,6 @@ function App() {
                       </div>
                     ))}
                   </div>
-                  
-                  {showPlotProps && (
-                    <div className="modal-overlay" onClick={() => setShowPlotProps(false)}>
-                      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                          <h3 style={{ margin: 0 }}>Plot Properties (Y-Axis Limits)</h3>
-                          <button className="icon-button" onClick={() => setShowPlotProps(false)}><X size={20} /></button>
-                        </div>
-                        
-                        <div className="param-group">
-                          <label>NPD Upper Bound (dBm/Hz)</label>
-                          <input type="number" step="0.1" name="y_upper_npd" defaultValue={plotParams.y_upper_npd} id="modal_y_upper_npd" />
-                        </div>
-                        <div className="param-group">
-                          <label>NPD Lower Bound (dBm/Hz)</label>
-                          <input type="number" step="0.1" name="y_lower_npd" defaultValue={plotParams.y_lower_npd} id="modal_y_lower_npd" />
-                        </div>
-                        
-                        <div className="param-group">
-                          <label>S21 Upper Bound (dB)</label>
-                          <input type="number" step="0.1" name="y_upper_s21" defaultValue={plotParams.y_upper_s21 || 40} id="modal_y_upper_s21" />
-                        </div>
-                        <div className="param-group">
-                          <label>S21 Lower Bound (dB)</label>
-                          <input type="number" step="0.1" name="y_lower_s21" defaultValue={plotParams.y_lower_s21 || -40} id="modal_y_lower_s21" />
-                        </div>
-                        
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem', gap: '0.5rem' }}>
-                          <button onClick={() => setShowPlotProps(false)} className="btn-secondary">Close</button>
-                          <button onClick={() => { 
-                            const newParams = {
-                              ...plotParams,
-                              y_upper_npd: parseFloat(document.getElementById('modal_y_upper_npd').value),
-                              y_lower_npd: parseFloat(document.getElementById('modal_y_lower_npd').value),
-                              y_upper_s21: parseFloat(document.getElementById('modal_y_upper_s21').value),
-                              y_lower_s21: parseFloat(document.getElementById('modal_y_lower_s21').value)
-                            };
-                            setPlotParams(newParams);
-                            setShowPlotProps(false); 
-                            startProcessing(newParams); 
-                          }} className="btn-primary" disabled={isProcessing}>
-                            {isProcessing ? <Activity size={16} className="animate-spin" /> : <Save size={16} />}
-                            Save & Re-plot
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
