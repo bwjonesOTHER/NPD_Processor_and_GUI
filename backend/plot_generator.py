@@ -575,7 +575,7 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=
 
     min_len = min(len(a_vals), len(o_vals))
     freq = a_freq[:min_len]
-    delta = a_vals[:min_len] - o_vals[:min_len]
+    delta = -1 * (a_vals[:min_len] - o_vals[:min_len])
 
     lower, upper = bounds
     mask = (freq >= _NPD_DELTA_BAND[0]) & (freq <= _NPD_DELTA_BAND[1])
