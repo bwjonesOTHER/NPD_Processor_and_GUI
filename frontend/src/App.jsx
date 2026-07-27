@@ -274,51 +274,59 @@ function App() {
     }
   };
 
-  const handleDataSourceUpload = async (e) => {
-    const selectedFiles = filterValidFiles(e.target.files);
-    if (selectedFiles.length === 0) return;
-    
+  const handleDataUpload = async () => {
     setIsUploadingSource(true);
-    
     try {
-      const CHUNK_SIZE = 50;
-      let finalUploadPath = '';
+      const data = new FormData();
+      data.append('test_type', testType);
       
-      for (let i = 0; i < selectedFiles.length; i += CHUNK_SIZE) {
-        const chunk = selectedFiles.slice(i, i + CHUNK_SIZE);
-        const data = new FormData();
-        chunk.forEach(f => {
-          data.append('files', f);
-          data.append('paths', f.webkitRelativePath || f.name);
-        });
-        data.append('run_index', '0');
-        data.append('chunk_index', i === 0 ? '0' : '1');
-        data.append('testType', testType);
-        
-        const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
+      if (testType === 2) {
+        if (!test2Files.bench || test2Files.bench.length === 0) {
+          alert('Bench Data Folder is required for Test 2');
+          setIsUploadingSource(false);
+          return;
         }
-        
-        const json = await res.json();
-        if (json.status !== 'success') {
-          throw new Error(json.error || 'Upload failed');
+        Array.from(test2Files.bench).forEach(f => data.append('bench_files', f));
+        if (test2Files.temp) Array.from(test2Files.temp).forEach(f => data.append('temp_files', f));
+        if (test2Files.cal) Array.from(test2Files.cal).forEach(f => data.append('cal_files', f));
+      } else {
+        if (!generalFiles || generalFiles.length === 0) {
+          alert('Test Data Folder is required');
+          setIsUploadingSource(false);
+          return;
         }
-        finalUploadPath = json.upload_path;
+        Array.from(generalFiles).forEach(f => data.append('general_files', f));
       }
 
-      if (finalUploadPath) {
-        setFormData(prev => ({...prev, basePath: finalUploadPath}));
-      } else {
-        alert("Upload failed: No upload path returned.");
+      const res = await fetch(`${API_BASE}/upload_test_data`, {
+        method: 'POST',
+        body: data
+      });
+      
+      const json = await res.json();
+      if (!json.success) {
+        alert(json.error || 'Failed to upload test data');
+        setIsUploadingSource(false);
+        return;
       }
+      
+      // Update session data with paths and metadata
+      setSessionData(json);
+      
+      // If Test 2 extracted metadata, apply it
+      if (testType === 2 && json.metadata) {
+        setFormData(prev => ({
+          ...prev,
+          serialNumber: json.metadata.sn || prev.serialNumber,
+          pmaArea: json.metadata.pmaArea || prev.pmaArea
+        }));
+      }
+      
+      setCurrentStep(2);
     } catch (err) {
-      console.error(err);
-      alert("Upload error: " + err.message);
+      alert("Error uploading data: " + err.message);
     } finally {
       setIsUploadingSource(false);
-      e.target.value = ''; // Reset input
     }
   };
 
@@ -417,7 +425,14 @@ function App() {
       const res = await fetch(`${API_BASE}/generate_plots?testType=${testType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...activeParams, outputFolder: "", dataSource: formData.basePath, calFolder: formData.calPath })
+        body: JSON.stringify({ 
+          ...activeParams, 
+          outputFolder: "", 
+          dataSource: sessionData?.paths?.general || formData.basePath, 
+          calFolder: sessionData?.paths?.cal || formData.calPath,
+          benchPath: sessionData?.paths?.bench,
+          tempPath: sessionData?.paths?.temp
+        })
       });
 
       const data = await res.json();
@@ -512,11 +527,8 @@ function App() {
               </div>
 
               <div className="btn-group" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', width: '100%' }}>
-                <button onClick={() => handleTestTypeNext('access')} disabled={!testType} className="primary">
-                  Access
-                </button>
-                <button onClick={() => handleTestTypeNext('upload')} disabled={!testType} className="primary">
-                  Upload <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
+                <button onClick={() => setCurrentStep(1)} disabled={!testType} className="primary">
+                  Next <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
                 </button>
               </div>
             </div>
@@ -525,188 +537,56 @@ function App() {
           {currentStep === 1 && (
             <div className="step-card">
               <h2>Data Source & Info</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Provide the base path and metadata for the test files.</p>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Upload your test data and provide metadata.</p>
 
-              {uploadMode !== 'upload' && testType !== 1 && (
+              {testType === 2 ? (
                 <>
                   <div className="form-group">
-                    <label>{testType === 2 ? 'BenchNPD Root Directory' : testType === 4 ? 'Test Folder (contains Hot/Ambient/Cold/Cable Loss)' : 'Base Source Path'}</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input type="text" name="basePath" value={formData.basePath} onChange={handleInputChange} placeholder={testType === 2 ? 'Select BenchNPD root folder...' : testType === 4 ? 'Select the folder containing all temperature + cable loss data...' : 'Select a directory to read files from...'} style={{ flex: 1 }} />
-                      <button onClick={async () => {
-                        try {
-                          const res = await fetch(`${API_BASE}/choose_directory`);
-                          const data = await res.json();
-                          if (data.success && data.path) {
-                            setFormData(prev => ({...prev, basePath: data.path}));
-                          } else if (!data.success && data.error && data.error !== "No directory selected") {
-                            alert("Error opening directory picker: " + data.error);
-                          }
-                        } catch (err) {
-                          console.error("Failed to choose directory:", err);
-                          alert("Error opening directory picker: " + err.message);
-                        }
-                      }} className="secondary">Browse</button>
-                    </div>
+                    <label>Bench Data Folder (Required)</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, bench: e.target.files}))} />
                   </div>
-                  {testType === 2 && (
-                    <div className="form-group">
-                      <label>Calibration Directory (Optional)</label>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input type="text" name="calPath" value={formData.calPath} onChange={handleInputChange} placeholder="Select explicit Cable Loss / SN folder..." style={{ flex: 1 }} />
-                        <button onClick={async () => {
-                          try {
-                            const res = await fetch(`${API_BASE}/choose_directory`);
-                            const data = await res.json();
-                            if (data.success && data.path) {
-                              setFormData(prev => ({...prev, calPath: data.path}));
-                            } else if (!data.success && data.error && data.error !== "No directory selected") {
-                              alert("Error opening directory picker: " + data.error);
-                            }
-                          } catch (err) {
-                            console.error("Failed to choose directory:", err);
-                            alert("Error opening directory picker: " + err.message);
-                          }
-                        }} className="secondary">Browse</button>
-                      </div>
-                    </div>
-                  )}
+                  <div className="form-group">
+                    <label>Temp Data Folder (Optional)</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, temp: e.target.files}))} />
+                  </div>
+                  <div className="form-group">
+                    <label>Calibration Files Folder (Optional)</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, cal: e.target.files}))} />
+                  </div>
                 </>
-              )}
-
-              {uploadMode === 'upload' && testType === 4 && (
-                <div className="form-group">
-                  <label>Upload Test Folder (preserves Hot/Ambient/Cold/Cable Loss structure)</label>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      className="secondary"
-                      disabled={isUploadingSource}
-                      onClick={() => document.getElementById('otaFolderInput').click()}
-                    >
-                      {isUploadingSource ? 'Uploading...' : 'Select Folder'}
-                    </button>
-                    <span style={{ fontSize: '0.875rem', color: formData.basePath ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {formData.basePath || 'No folder selected yet'}
-                    </span>
-                  </div>
-                  <input
-                    type="file"
-                    id="otaFolderInput"
-                    webkitdirectory="true"
-                    directory="true"
-                    multiple
-                    style={{ display: 'none' }}
-                    onChange={handleDataSourceUpload}
-                  />
-                </div>
-              )}
-
-              {testType !== 4 && (
-                <div className="form-group">
-                  <label>{testType === 2 ? 'LMO Number (e.g. 1234)' : 'LMO Number (####-##)'}</label>
-                  <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
-                </div>
-              )}
-
-              {testType === 1 && (
+              ) : (
                 <>
                   <div className="form-group">
-                    <label>Run Number (#)</label>
-                    <input type="text" name="runNumber" value={formData.runNumber} onChange={handleInputChange} />
+                    <label>Test Data Folder</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setGeneralFiles(e.target.files)} />
                   </div>
-                  <div className="form-group">
-                    <label>Cap Number (##)</label>
-                    <input type="text" name="capNumber" value={formData.capNumber} onChange={handleInputChange} />
-                  </div>
-                </>
-              )}
-
-              {testType === 2 && (
-                <>
-                  <div className="form-group">
-                    <label>Serial Number (####)</label>
-                    <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>PMA Area (L110173C or L110172E)</label>
-                    <input type="text" name="pmaArea" value={formData.pmaArea} onChange={handleInputChange} />
-                  </div>
-                </>
-              )}
-
-              {testType === 3 && (
-                <>
-                  <div className="form-group">
-                    <label>Serial Number (####)</label>
-                    <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Run Entry (Run_#_#.###A)</label>
-                    <input type="text" name="runEntry" value={formData.runEntry} onChange={handleInputChange} />
-                  </div>
-                </>
-              )}
-
-              <div className="btn-group">
-                <button className="secondary" onClick={() => setCurrentStep(0)}>Back</button>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  {testType === 2 ? (
-                    <button onClick={async () => {
-                      if (uploadMode !== 'upload' && !formData.basePath) {
-                        alert(`Please select the BenchNPD Root Directory before continuing.`);
-                        return;
-                      }
-                      
-                      const result = await submitFileInfo();
-                      
-                      if (result && result.requireLmoSelection) return;
-                      
-                      if (result && result.success) {
-                        if (uploadMode === 'access') {
-                          setCurrentStep(4);
-                        } else {
-                          // For upload mode, directory is now created on the backend, proceed to upload files
-                          setCurrentStep(2);
-                        }
-                      }
-                    }} className="primary" style={{ background: 'var(--success)' }}>
-                      {uploadMode === 'upload' ? 'Proceed to Upload' : 'Proceed to Configuration'} <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
-                    </button>
-                  ) : testType === 4 ? (
-                    <button onClick={async () => {
-                      if (!formData.basePath) {
-                        alert(uploadMode === 'upload'
-                          ? 'Please upload the test folder before continuing.'
-                          : 'Please select the test folder before continuing.');
-                        return;
-                      }
-                      const result = await submitFileInfo();
-                      if (result && result.success) setCurrentStep(4);
-                    }} className="primary" style={{ background: 'var(--success)' }}>
-                      Proceed to Configuration <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
-                    </button>
-                  ) : (
+                  
+                  {testType === 1 && (
                     <>
-                      <button onClick={async () => {
-                        if (uploadMode !== 'upload' && testType !== 1 && !formData.basePath) {
-                          alert("Please select a Base Source Path before continuing.");
-                          return;
-                        }
-                        const result = await submitFileInfo();
-                        if (result && result.success) setCurrentStep(2);
-                      }} className="primary">Upload Files <Upload size={18} style={{ verticalAlign: 'middle' }} /></button>
-                      <button onClick={async () => {
-                        if (uploadMode !== 'upload' && testType !== 1 && !formData.basePath) {
-                          alert("Please select a Base Source Path before continuing.");
-                          return;
-                        }
-                        const result = await submitFileInfo();
-                        if (result && result.success) setCurrentStep(3);
-                      }} className="primary" style={{ background: 'var(--success)' }}>Process <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
+                      <div className="form-group">
+                        <label>Run Number (#)</label>
+                        <input type="text" name="runNumber" value={formData.runNumber} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Cap Number (##)</label>
+                        <input type="text" name="capNumber" value={formData.capNumber} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>LMO Number (####-##)</label>
+                        <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
+                      </div>
                     </>
                   )}
-                </div>
+                </>
+              )}
+
+              <div className="btn-group" style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between', marginTop: '2rem' }}>
+                <button onClick={() => setCurrentStep(0)} className="secondary">
+                  <ChevronLeft size={18} style={{ verticalAlign: 'middle' }} /> Back
+                </button>
+                <button onClick={handleDataUpload} disabled={isUploadingSource} className="primary" style={{ background: 'var(--success)' }}>
+                  {isUploadingSource ? 'Uploading...' : 'Upload & Proceed'} <ChevronRight size={18} style={{ verticalAlign: 'middle' }} />
+                </button>
               </div>
             </div>
           )}
@@ -916,17 +796,7 @@ function App() {
               <h2>Plot Configuration</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
 
-              <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Plot Output Destination</h4>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button onClick={handleSelectOutputFolder} className="btn-primary" style={{ padding: '0.5rem 1rem', width: 'auto', fontSize: '0.9rem' }}>
-                    Select Output Folder
-                  </button>
-                  <span style={{ fontSize: '0.875rem', color: outputFolder ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {outputFolder || 'Plots will NOT be saved automatically. Click Save Plots after generation.'}
-                  </span>
-                </div>
-              </div>
+              
 
               <div className="form-grid">
                 <div className="input-group">
@@ -1045,10 +915,7 @@ function App() {
 
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
-                      <button onClick={handleSavePlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem', background: 'var(--success)' }}>
-                        <Save size={16} />
-                        Save Plots to Destination
-                      </button>
+                      
                       <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
                         <Download size={16} />
                         Export All Plots (.zip)

@@ -9,6 +9,7 @@ import sys
 import shutil
 import subprocess
 import base64
+from upload_logic import upload_bp
 
 backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
@@ -56,8 +57,9 @@ _ensure_dependencies()
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
-dist_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend', 'dist')
-app = Flask(__name__, static_folder=dist_folder)
+app = Flask(__name__, static_folder='../frontend/dist', static_url_path='/')
+app.register_blueprint(upload_bp)
+
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
 if hasattr(app.request_class, 'max_form_parts'):
@@ -717,14 +719,10 @@ def save_plots():
             f_dbg.write(traceback.format_exc() + "\n")
         return jsonify({"success": False, "error": str(e)}), 500
 
-@app.route('/')
-def index():
-    return send_from_directory(app.static_folder, 'index.html')
-
+@app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def static_proxy(path):
-    full_path = os.path.join(app.static_folder, path)
-    if os.path.exists(full_path):
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')

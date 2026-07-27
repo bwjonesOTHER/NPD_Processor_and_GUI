@@ -1419,84 +1419,9 @@ def generate_plots(params):
         pma = None
         lmo = None
         if test_type == 2:
-            pma = params.get('pma')
-            
-            def get_subfolder(base_d, target_name):
-                if not os.path.exists(base_d): return None
-                for d in os.listdir(base_d):
-                    if os.path.isdir(os.path.join(base_d, d)) and target_name.lower() in d.lower().replace("_", ""):
-                        return os.path.join(base_d, d)
-                return None
-                
-            def get_pma_folder(base_d, pma_area):
-                if not pma_area or not os.path.exists(base_d): return None
-                import re
-                pma_norm = re.sub(r'[^a-zA-Z0-9]', '', pma_area).lower()
-                for d in os.listdir(base_d):
-                    if not os.path.isdir(os.path.join(base_d, d)): continue
-                    d_norm = re.sub(r'[^a-zA-Z0-9]', '', d).lower()
-                    match = pma_norm in d_norm
-                    if not match and pma_norm:
-                        last_char = pma_norm[-1]
-                        if last_char.isalpha():
-                            if f"area{last_char}" in d_norm:
-                                match = True
-                    if match:
-                        return os.path.join(base_d, d)
-                # If a specific PMA Area was requested but we couldn't find its folder, 
-                # log what we actually saw so we can debug this!
-                try:
-                    with open("debug_log.txt", "a") as dbg:
-                        dbg.write(f"\n--- DEBUG ---\n")
-                        dbg.write(f"Failed to find PMA Area!\n")
-                        dbg.write(f"pma_area: {pma_area}\n")
-                        dbg.write(f"pma_norm: {pma_norm}\n")
-                        dbg.write(f"base_d: {base_d}\n")
-                        dbg.write(f"Directories in base_d: {os.listdir(base_d)}\n")
-                except:
-                    pass
-                # just return the base directory (e.g. OverTemp might not have Area subfolders)
-                return base_d
-            
-            lmo = params.get('lmo')
-            
-            bench = get_subfolder(folderB, "bench")
-            if bench:
-                search_dirB = bench
-                if pma:
-                    pma_folder = get_pma_folder(search_dirB, pma)
-                    if pma_folder: search_dirB = pma_folder
-                if lmo:
-                    lmo_folder = get_pma_folder(search_dirB, lmo)
-                    if lmo_folder: search_dirB = lmo_folder
-            
-            try:
-                with open("debug_log.txt", "a") as f_dbg:
-                    f_dbg.write(f"\n--- DRILLER DEBUG ---\n")
-                    f_dbg.write(f"pma input: {pma}\n")
-                    f_dbg.write(f"lmo input: {lmo}\n")
-                    f_dbg.write(f"bench root: {bench}\n")
-                    f_dbg.write(f"search_dirB final: {search_dirB}\n")
-            except: pass
-                
-            temp = get_subfolder(folderA, "overtemp")
-            if not temp: temp = get_subfolder(folderA, "temp")
-            if temp:
-                search_dirA = temp
-                if pma:
-                    pma_folder = get_pma_folder(search_dirA, pma)
-                    if pma_folder: search_dirA = pma_folder
-                if lmo:
-                    lmo_folder = get_pma_folder(search_dirA, lmo)
-                    if lmo_folder: search_dirA = lmo_folder
-        
-        with open("debug.txt", "a") as f_dbg:
-            f_dbg.write(f"\n--- TEST 3 DEBUG ---\n")
-            f_dbg.write(f"search_dirA: {search_dirA}\n")
-            f_dbg.write(f"search_dirB: {search_dirB}\n")
-            f_dbg.write(f"sn: {sn}\n")
-            f_dbg.write(f"test_type: {test_type}\n")
-
+            pma = params.get('pmaArea')
+            search_dirA = params.get('benchPath', search_dirA)
+            search_dirB = params.get('tempPath', search_dirB)
         def filter_benchtop(files):
             import os
             return [f for f in files if "npdovertemp" not in os.path.basename(f).lower()]
