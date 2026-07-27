@@ -89,7 +89,7 @@ def find_cal_file(folders, cap_num, cal_type):
 
     return None
 
-def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
+def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, reference_filepath=None):
     is_npd = filepath.lower().endswith('.csv')
     is_benchtop = test_type == 3
 
@@ -148,6 +148,20 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
             bench_grandparent = to_bench(grandparent)
             if bench_grandparent != grandparent and os.path.isdir(bench_grandparent):
                 search_dirs.append(bench_grandparent)
+                
+        # Super Smart Fallback: Use the Bench trace's path to find the correct nested Cable Loss folder
+        if reference_filepath:
+            ref_run_folder = os.path.dirname(reference_filepath)
+            if ref_run_folder and os.path.isdir(ref_run_folder):
+                search_dirs.append(ref_run_folder)
+                
+                ref_parent = os.path.dirname(ref_run_folder)
+                if ref_parent and os.path.isdir(ref_parent):
+                    search_dirs.append(ref_parent)
+                    
+                ref_grandparent = os.path.dirname(ref_parent)
+                if ref_grandparent and os.path.isdir(ref_grandparent):
+                    search_dirs.append(ref_grandparent)
             
     # Then fallback to global cal folder if provided
     if cal_folder and os.path.isdir(cal_folder):
@@ -351,7 +365,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     all_labels = []
     all_freqs = []
 
-    def load_np_data(file, current_cal_folder):
+    def load_np_data(file, current_cal_folder, ref_path=None):
         df_all = pd.read_csv(file, on_bad_lines='skip', encoding='latin1', engine='python', names=range(10))
         num_df = df_all.apply(pd.to_numeric, errors='coerce')
         freq = remove_nan(num_df.values[:, 0], remove_infinite=True)
@@ -368,7 +382,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             
         cal_files_used = []
         if apply_cal:
-            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(file, current_cal_folder, test_type, plot_s12)
+            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(file, current_cal_folder, test_type, plot_s12, reference_filepath=ref_path)
             if freq_cal is not None:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
@@ -382,7 +396,11 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     for file in all_files:
         serial = extract_serial(file)
         file_cal_folder = cal_folder
-        freq, noise, cal_files_used = load_np_data(file, file_cal_folder)
+        
+        # Super Smart Fallback: if this is a Temp trace, use the first Bench trace (if any) as a reference to find its nested Cable Loss
+        ref_path = filesB[0] if file in filesA and filesB else None
+        
+        freq, noise, cal_files_used = load_np_data(file, file_cal_folder, ref_path=ref_path)
         if len(freq) == 0:
             continue
             
@@ -564,7 +582,8 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         freq_cal, total_loss_db, cal_files_used = None, None, []
         if apply_cal:
-            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(fpath, file_cal_folder, test_type, plot_s12)
+            ref_path = filesB[0] if fpath in filesA and filesB else None
+            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(fpath, file_cal_folder, test_type, plot_s12, reference_filepath=ref_path)
 
         s21_corr = raw_s21
         if freq_cal is not None:
