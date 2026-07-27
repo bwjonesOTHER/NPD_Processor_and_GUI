@@ -1353,21 +1353,26 @@ def generate_plots(params):
             cal_folder = inner_cal_sn
         elif os.path.exists(inner_cal):
             cal_folder = inner_cal
-        else:
-            cal_folder = os.path.join(os.path.dirname(folderA), "Cable Loss")
-            
-    # If still not found, try benchPath (since Cable Loss might be in Bench Data upload)
+    # If still not found, search benchPath and tempPath dynamically for Cable Loss
     if not cal_folder or not os.path.exists(cal_folder):
         bench_path = params.get('benchPath', "")
-        if bench_path and os.path.isdir(bench_path):
-            inner_cal_sn = os.path.join(bench_path, "Cable Loss", "SN006")
-            inner_cal = os.path.join(bench_path, "Cable Loss")
-            if os.path.exists(inner_cal_sn):
-                cal_folder = inner_cal_sn
-            elif os.path.exists(inner_cal):
-                cal_folder = inner_cal
-            else:
-                cal_folder = os.path.join(os.path.dirname(bench_path), "Cable Loss")
+        temp_path = params.get('tempPath', "")
+        
+        def find_best_cal(base_path):
+            best_cal = None
+            if not base_path or not os.path.isdir(base_path): return None
+            for root, dirs, files in os.walk(base_path):
+                if "cableloss" in os.path.basename(root).lower().replace(" ", "").replace("_", ""):
+                    for d in dirs:
+                        if d.lower().replace("_", "") == "sn006":
+                            return os.path.join(root, d) # Return immediately if SN006 is found
+                    if not best_cal:
+                        best_cal = root
+            return best_cal
+            
+        cal_folder = find_best_cal(bench_path)
+        if not cal_folder:
+            cal_folder = find_best_cal(temp_path)
                 
     # Check if there is an SN006 folder inside the resolved cal_folder (either from upload or fallback)
     if cal_folder and os.path.isdir(cal_folder):
