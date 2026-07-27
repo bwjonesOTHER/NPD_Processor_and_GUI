@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <div id="plot1"></div>
+  <script>
+    Plotly.newPlot('plot1', [{x:[1], y:[1], type:'scatter'}], { yaxis2: undefined }).then(() => console.log('OK')).catch(e => console.error('ERROR:', e.message));
+  </script>
+</body>
+</html>

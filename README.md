@@ -2,14 +2,15 @@
 
 A modern full-stack web application designed to upload, manage, and process Noise Power Density (NPD) test data.
 
-This application provides an elegant, glassmorphic React frontend that guides users through selecting their testing mode (Upload or Access), choosing run/calibration files, configuring plotting parameters, and submitting them to a robust Python Flask backend. The backend utilizes `matplotlib`, `skrf`, `numpy`, and `pandas` to generate comprehensive S-Parameter (VSWR/S21) and NPD density plots, outputting PNG visualizations for review.
+This application provides an elegant, glassmorphic React frontend that guides users through selecting their testing mode (Upload or Access), choosing run/calibration files, configuring plotting parameters, and submitting them to a robust Python Flask backend. The backend utilizes `skrf`, `numpy`, and `pandas` to process raw S-Parameter (VSWR/S21) and NPD density data, outputting trace payloads to the frontend. The frontend uses `react-plotly.js` to render interactive SVG plots dynamically with built-in data thinning for large datasets.
 
 ## Features
 
 - **Test Modes**: Supports Test 1 (Thermal NPD), Test 2 (Benchtop Single Run), and Test 3 (Benchtop Array).
 - **File Upload & Navigation**: Users can browse the local file system or drag-and-drop entire run directories using native browser APIs.
+- **Interactive Plotting**: Lightning fast, interactive plots rendered via Plotly on the frontend, avoiding heavy backend Matplotlib generation.
 - **Plot Configuration**: Customizable frequency bounds, gain requirements, S21 bounds, and NPD bounds.
-- **Python Plotting Engine**: Advanced signal processing, nan-filtering, array operations, and calibration line-loss subtractions.
+- **Python Data Engine**: Advanced signal processing, nan-filtering, array operations, and calibration line-loss subtractions.
 - **Automated Routing**: Backend intelligently routes files into `SN`, `LMO`, and `Run` directory structures.
 
 ## Project Structure
