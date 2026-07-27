@@ -98,9 +98,9 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, excl
 
     if is_npd:
         if is_benchtop:
-            cal_types = ["Base", "Bulkhead", "SpecA"]
+            cal_types = ["Base"]
         else:
-            cal_types = ["Base", "Bulkhead", "SpecA"]
+            cal_types = ["Base"]
     else:
         # Only use Cap for Tile Benchtop (which has a Cap number). Arrays use Hat.
         if is_benchtop and ident_num is not None:
