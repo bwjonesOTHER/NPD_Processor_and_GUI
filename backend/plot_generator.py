@@ -439,7 +439,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 "type": "scatter",
                 "mode": "lines",
                 "name": "User Average",
-                "line": {"color": "black", "dash": "dash", "width": 2.5}
+                "line": {"color": "white", "dash": "dash", "width": 2.5}
             })
         upper = avg + u_bound_npd
         lower = avg - l_bound_npd
@@ -600,7 +600,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
                 "type": "scatter",
                 "mode": "lines",
                 "name": "User Average",
-                "line": {"color": "black", "dash": "dash", "width": 2.5}
+                "line": {"color": "white", "dash": "dash", "width": 2.5}
             })
             
         upper_bound = avg + u_bound_s21
