@@ -289,9 +289,9 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False):
         pass
 
     if not cal_files_to_load:
-        return None, None
+        return None, None, []
 
-    return freq_ref, total_loss
+    return freq_ref, total_loss, cal_files_to_load
 
 
 def load_excel_average(average_data_path, plot_type, title_suffix):
@@ -366,8 +366,9 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         if len(noise) == 0 or len(freq) == 0:
             return np.array([]), np.array([])
             
+        cal_files_used = []
         if apply_cal:
-            freq_cal, total_loss_db = get_calibration_loss(file, current_cal_folder, test_type, plot_s12)
+            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(file, current_cal_folder, test_type, plot_s12)
             if freq_cal is not None:
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
@@ -375,13 +376,13 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         if n_avg > 1:
             noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
             freq = freq[int(n_avg / 2):int(1 - n_avg / 2):1]
-        return freq, noise
+        return freq, noise, cal_files_used
 
     ref_freq_full = None
     for file in all_files:
         serial = extract_serial(file)
         file_cal_folder = cal_folder
-        freq, noise = load_np_data(file, file_cal_folder)
+        freq, noise, cal_files_used = load_np_data(file, file_cal_folder)
         if len(freq) == 0:
             continue
             
@@ -404,12 +405,14 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
 
         color_idx = len(traces) % 10
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+        
+        cal_names_str = ",".join([os.path.basename(p).replace(".s2p","") for p in cal_files_used]) if cal_files_used else "NoCal"
         traces.append({
             "x": sliced_freq.tolist(),
             "y": sliced_noise.tolist(),
             "type": "scatter",
             "mode": "lines",
-            "name": serial[-21:-4:1],
+            "name": f"{serial[-21:-4:1]} [{cal_names_str}]",
             "line": {"color": colors[color_idx]}
         })
         start_idx = np.searchsorted(freq, freq_min)
