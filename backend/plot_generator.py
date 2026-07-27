@@ -349,7 +349,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     ref_freq_full = None
     for file in all_files:
         serial = extract_serial(file)
-        file_cal_folder = cal_folder if file in filesB else ""
+        file_cal_folder = cal_folder
         freq, noise = load_np_data(file, file_cal_folder)
         if len(freq) == 0:
             continue
@@ -526,7 +526,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         freq_ghz = net.f / 1e9
         raw_s21 = net.s_db[:, 1, 0]
         serial = extract_serial(fpath)
-        file_cal_folder = cal_folder if fpath in filesB else ""
+        file_cal_folder = cal_folder
 
         freq_cal, total_loss_db = None, None
         if apply_cal:
