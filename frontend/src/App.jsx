@@ -472,7 +472,7 @@ function App() {
           calFolder: sessionData?.paths?.cal || formData.calPath,
           benchPath: sessionData?.paths?.bench,
           tempPath: sessionData?.paths?.temp,
-          tempCalPath: sessionData?.paths?.temp_cal,
+          tempCalPath: sessionData?.paths?.tempCal,
           runs: sessionData?.paths?.runs || [],
           testType: testType,
           serial_number: formData.serialNumber,
