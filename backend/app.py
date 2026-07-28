@@ -315,7 +315,9 @@ def upload_files():
 
 @app.route('/api/upload_test_data', methods=['POST'])
 def upload_test_data():
-    test_type = request.form.get('test_type', '1')
+    test_type = request.form.get('test_type')
+    if not test_type:
+        test_type = request.form.get('testType', '1')
     
     base_path = os.path.join(os.getcwd(), 'uploads', f'Test{test_type}')
     
