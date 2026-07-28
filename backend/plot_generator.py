@@ -112,6 +112,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             cal_types = ["Base", "Hat", "Bulkhead"]
             
     search_dirs = []
+    is_temp = "temp" in filepath.lower() or "npdovertemp" in filepath.lower()
     
     # Prioritize Cable Loss folder in the run's parent directory first
     run_folder = os.path.dirname(filepath)
