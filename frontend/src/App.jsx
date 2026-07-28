@@ -574,6 +574,19 @@ function App() {
               <h2>Data Source & Info</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Upload your test data and provide metadata.</p>
 
+              {testType !== 1 && (
+                <>
+                  <div className="form-group">
+                    <label>Serial Number (Required for specific devices, e.g., SN1234)</label>
+                    <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleInputChange} placeholder="e.g. SN1234 or EM-1234" />
+                  </div>
+                  <div className="form-group">
+                    <label>PMA Area (e.g., Area1)</label>
+                    <input type="text" name="pmaArea" value={formData.pmaArea} onChange={handleInputChange} placeholder="e.g. Area1" />
+                  </div>
+                </>
+              )}
+
               {testType === 2 ? (
                 <>
                   <div className="form-group">
