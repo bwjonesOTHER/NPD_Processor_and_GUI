@@ -17,7 +17,17 @@ const filterValidFiles = (files) => {
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [testType, setTestType] = useState(null);
-  const [test2Files, setTest2Files] = useState({ bench: null, temp: null, cal: null, tempCal: null });
+  const [test2Files, setTest2Files] = useState({
+    bench: null,
+    temp: null,
+    cal: null,
+    tempCal: null,
+  });
+  const [test3Files, setTest3Files] = useState({
+    runA: null,
+    runB: null,
+    cal: null
+  });
   const [generalFiles, setGeneralFiles] = useState(null);
   const [sessionData, setSessionData] = useState(null);
   const [isConnected, setIsConnected] = useState(true); // Always true now since we removed SharePoint
@@ -293,68 +303,63 @@ function App() {
         if (test2Files.temp) Array.from(test2Files.temp).forEach(f => data.append('temp_files', f));
         if (test2Files.cal) Array.from(test2Files.cal).forEach(f => data.append('cal_files', f));
         if (test2Files.tempCal) Array.from(test2Files.tempCal).forEach(f => data.append('temp_cal_files', f));
-      } else {
+      } else if (testType === 3) {
+        if (!test3Files.runA || !test3Files.runB || !test3Files.cal) {
+          alert('Run 1, Run 2, and Calibration folders are required for Test 3');
+          setIsUploadingSource(false);
+          return;
+        }
+        Array.from(test3Files.runA).forEach(f => data.append('runA_files', f));
+        Array.from(test3Files.runB).forEach(f => data.append('runB_files', f));
+        Array.from(test3Files.cal).forEach(f => data.append('cal_files', f));
+      } else if (testType === 4) {
         if (!generalFiles || generalFiles.length === 0) {
-          alert('Test Data Folder is required');
+          alert('Test Data Folder is required for Test 4');
           setIsUploadingSource(false);
           return;
         }
         Array.from(generalFiles).forEach(f => data.append('general_files', f));
+      } else if (testType === 1) {
+        if (runs.filter(r => r !== '').length === 0) {
+          alert('Please upload at least one run folder for Test 1');
+          setIsUploadingSource(false);
+          return;
+        }
+        // Test 1 files are already uploaded in chunks via the multi-run UI.
+        // We just need to submit the file info.
       }
 
-      const res = await fetch(`${API_BASE}/upload_test_data`, {
-        method: 'POST',
-        body: data
-      });
-      
-      const json = await res.json();
-      if (!json.success) {
-        alert(json.error || 'Failed to upload test data');
-        setIsUploadingSource(false);
-        return;
+      if (testType === 2 || testType === 3 || testType === 4) {
+        const res = await fetch(`${API_BASE}/upload_test_data`, {
+          method: 'POST',
+          body: data
+        });
+        
+        const json = await res.json();
+        if (!json.success) {
+          alert(json.error || 'Failed to upload test data');
+          setIsUploadingSource(false);
+          return;
+        }
+        
+        // Ensure sessionData includes the generated paths
+        setSessionData(json);
+      } else if (testType === 1) {
+        // For Test 1, mimic the session data format so runs are preserved
+        setSessionData({
+          paths: { runs: runs.filter(r => r !== '') }
+        });
       }
       
-      // Update session data with paths and metadata
-      setSessionData(json);
-      
-      // If Test 2 extracted metadata, apply it
-      if (testType === 2 && json.metadata) {
-        setFormData(prev => ({
-          ...prev,
-          serialNumber: json.metadata.sn || prev.serialNumber,
-          pmaArea: json.metadata.pmaArea || prev.pmaArea
-        }));
-      }
-      
-      setCurrentStep(2);
-    } catch (err) {
-      alert("Error uploading data: " + err.message);
-    } finally {
-      setIsUploadingSource(false);
-    }
-  };
-
-  const handleReferenceFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setIsUploadingRefFile(true);
-    try {
-      const data = new FormData();
-      data.append('file', file);
-      const res = await fetch(`${API_BASE}/upload_reference_file`, { method: 'POST', body: data });
-      const json = await res.json();
-      if (json.success && json.path) {
-        setPlotParams(prev => ({ ...prev, average_data_path: json.path }));
-      } else {
-        alert("Upload error: " + (json.error || 'Unknown error'));
+      const submitRes = await submitFileInfo();
+      if (submitRes.success) {
+        setCurrentStep(4);
       }
     } catch (err) {
       console.error(err);
-      alert("Upload error: " + err.message);
+      alert("Error uploading files: " + err.message);
     } finally {
-      setIsUploadingRefFile(false);
-      e.target.value = ''; // Reset input
+      setIsUploadingSource(false);
     }
   };
 
@@ -459,23 +464,12 @@ function App() {
 
   const handleTestTypeNext = (mode) => {
     setUploadMode(mode);
-    if (testType === 2 || testType === 4) {
-      setCurrentStep(1); // Test 2 and Test 4 now ALWAYS use Step 1
-      return;
-    }
-    
-    if (mode === 'access') {
-      setCurrentStep(3); // Test 1 and 3 skip to Select Runs
-    } else {
-      setCurrentStep(1); // Upload mode goes to Step 1
-    }
+    setCurrentStep(1);
   };
 
   const steps = [
     { id: 0, title: 'Test Type' },
     { id: 1, title: 'Data Source & Info' },
-    { id: 2, title: 'Upload Files' },
-    ...(testType === 1 || testType === 3 ? [{ id: 3, title: 'Select Runs' }] : []),
     { id: 4, title: 'Process' },
   ];
 
@@ -541,6 +535,7 @@ function App() {
             </div>
           )}
 
+          
           {currentStep === 1 && (
             <div className="step-card">
               <h2>Data Source & Info</h2>
@@ -565,29 +560,174 @@ function App() {
                     <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, tempCal: e.target.files}))} />
                   </div>
                 </>
-              ) : (
+              ) : testType === 3 ? (
+                <>
+                  <div className="form-group">
+                    <label>Run 1 (Run A) Folder</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest3Files(prev => ({...prev, runA: e.target.files}))} />
+                  </div>
+                  <div className="form-group">
+                    <label>Run 2 (Run B) Folder</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest3Files(prev => ({...prev, runB: e.target.files}))} />
+                  </div>
+                  <div className="form-group">
+                    <label>Calibration (Cable Loss) Folder</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest3Files(prev => ({...prev, cal: e.target.files}))} />
+                  </div>
+                </>
+              ) : testType === 4 ? (
                 <>
                   <div className="form-group">
                     <label>Test Data Folder</label>
                     <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setGeneralFiles(e.target.files)} />
                   </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-group">
+                    <label>Run Number (#)</label>
+                    <input type="text" name="runNumber" value={formData.runNumber} onChange={handleInputChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Cap Number (##)</label>
+                    <input type="text" name="capNumber" value={formData.capNumber} onChange={handleInputChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>LMO Number (####-##)</label>
+                    <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
+                  </div>
                   
-                  {testType === 1 && (
-                    <>
-                      <div className="form-group">
-                        <label>Run Number (#)</label>
-                        <input type="text" name="runNumber" value={formData.runNumber} onChange={handleInputChange} />
+                  <div className="form-group" style={{ marginTop: '2rem' }}>
+                    <label style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'block' }}>Upload Run Folders</label>
+                    
+                    <div 
+                      style={{
+                        border: '2px dashed var(--border-color)',
+                        borderRadius: '12px',
+                        padding: '2rem',
+                        textAlign: 'center',
+                        cursor: uploadingRun ? 'not-allowed' : 'pointer',
+                        background: 'var(--panel-bg)',
+                        transition: 'background 0.2s',
+                        opacity: uploadingRun ? 0.7 : 1,
+                        marginBottom: '1rem'
+                      }}
+                      onClick={() => {
+                        !uploadingRun && test1RunsInputRef.current?.click();
+                      }}
+                    >
+                      {uploadingRun ? (
+                        <Activity size={30} className="spinner" color="var(--accent)" style={{marginBottom: '0.5rem'}} />
+                      ) : (
+                        <UploadCloud size={30} color="var(--accent)" style={{marginBottom: '0.5rem'}} />
+                      )}
+                      <div>
+                        <strong style={{ fontSize: '1rem', color: 'var(--text-main)' }}>
+                          {uploadingRun ? "Uploading..." : "Click to select and upload a run folder"}
+                        </strong>
+                        {!uploadingRun && <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                          (Click multiple times to add more runs!)
+                        </p>}
                       </div>
-                      <div className="form-group">
-                        <label>Cap Number (##)</label>
-                        <input type="text" name="capNumber" value={formData.capNumber} onChange={handleInputChange} />
+                      <input 
+                        type="file" 
+                        webkitdirectory="true" 
+                        directory="true"
+                        multiple={true}
+                        ref={test1RunsInputRef} 
+                        style={{ display: 'none' }} 
+                        onChange={async (e) => {
+                            if (!e.target.files || e.target.files.length === 0) return;
+                            setUploadingRun(true);
+                            const filesArray = filterValidFiles(e.target.files);
+                            
+                            if (filesArray.length === 0) {
+                              setUploadingRun(false);
+                              alert("No valid data files (.csv, .xlsx, etc.) found in the selected folder.");
+                              return;
+                            }
+                            
+                            const validRuns = runs.filter(r => r !== '');
+                            const runIndex = validRuns.length;
+                            
+                            try {
+                              const CHUNK_SIZE = 50;
+                              let finalUploadPath = '';
+                              
+                              for (let i = 0; i < filesArray.length; i += CHUNK_SIZE) {
+                                const chunk = filesArray.slice(i, i + CHUNK_SIZE);
+                                const data = new FormData();
+                                
+                                chunk.forEach(f => {
+                                  data.append('files', f);
+                                  data.append('paths', f.webkitRelativePath || f.name);
+                                });
+                                
+                                data.append('run_index', runIndex);
+                                const extractedFolderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : '';
+                                if (extractedFolderName) {
+                                  data.append('folder_name', extractedFolderName);
+                                }
+                                data.append('chunk_index', i === 0 ? '0' : '1');
+                                data.append('testType', testType);
+                                
+                                const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
+                                if (!res.ok) {
+                                  const errText = await res.text();
+                                  throw new Error(`HTTP ${res.status}: ${errText}`);
+                                }
+                                
+                                const json = await res.json();
+                                if (json.status !== 'success') {
+                                  throw new Error(json.error || 'Upload failed');
+                                }
+                                finalUploadPath = json.upload_path;
+                              }
+                              
+                              const folderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : filesArray[0].name;
+                              setRuns([...validRuns, finalUploadPath]);
+                              setRunNames(prev => {
+                                const newNames = [...prev];
+                                newNames[runIndex] = folderName;
+                                return newNames;
+                              });
+                            } catch (err) {
+                              console.error(err);
+                              alert("Upload error: " + err.message);
+                            }
+                            if (test1RunsInputRef.current) test1RunsInputRef.current.value = "";
+                            setUploadingRun(false);
+                          }} 
+                        />
+                    </div>
+
+                    {runs.filter(r => r !== '').length > 0 && (
+                      <div style={{ background: 'var(--panel-bg)', padding: '1rem', borderRadius: '8px' }}>
+                        <h3 style={{ marginBottom: '0.75rem', fontSize: '1rem' }}>Added Folders ({runs.filter(r => r !== '').length})</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {runs.filter(r => r !== '').map((runPath, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', wordBreak: 'break-all' }}>
+                                <strong>{runNames[idx] || `Run ${idx + 1}: `}</strong> 
+                                {runPath.split(/[\\/]/).pop() || runPath}
+                              </span>
+                              <button 
+                                className="icon-btn" 
+                                onClick={() => {
+                                  setRuns(prev => prev.filter(r => r !== '').filter((_, i) => i !== idx));
+                                  setRunNames(prev => prev.filter((_, i) => i !== idx));
+                                }}
+                                style={{ color: '#ff6b6b', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
+                                title="Remove Run"
+                              >
+                                <XCircle size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="form-group">
-                        <label>LMO Number (####-##)</label>
-                        <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
-                      </div>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
 
@@ -602,207 +742,7 @@ function App() {
             </div>
           )}
 
-          {currentStep === 2 && (
-            <div className="step-card">
-              <h2>Upload Data Files</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select all relevant data files (.csv + .s2p).</p>
-
-              <div 
-                className="file-upload-zone"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleFileDrop}
-                onClick={() => document.getElementById('fileInput').click()}
-              >
-                <Upload className="file-upload-icon" />
-                <p>Drag & drop files here, or click to select</p>
-                <input 
-                  type="file" 
-                  id="fileInput" 
-                  multiple 
-                  style={{ display: 'none' }} 
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              {files.length > 0 && (
-                <div style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
-                  <h4 style={{ margin: '0 0 0.5rem 0' }}>Selected Files ({files.length})</h4>
-                  <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                    {files.slice(0, 5).map((f, i) => <li key={i}>{f.name}</li>)}
-                    {files.length > 5 && <li>...and {files.length - 5} more</li>}
-                  </ul>
-                </div>
-              )}
-
-              <div className="btn-group">
-                <button className="secondary" onClick={() => setCurrentStep(1)}>Back</button>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button onClick={uploadFiles} disabled={files.length === 0 || (testType === 2 && uploadMode !== 'upload' && !formData.basePath)} className="primary">Upload Files</button>
-                  {testType === 2 && (
-                    <button onClick={() => setCurrentStep(4)} className="primary" style={{ background: 'var(--success)' }}>Proceed to Configuration <ChevronRight size={18} style={{ verticalAlign: 'middle' }} /></button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 3 && (testType === 1 || testType === 3) && (
-            <div className="step-card">
-              <h2>Select Runs</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Select runs to process.</p>
-
-              {(testType === 1 || testType === 3) && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  <div 
-                    style={{
-                      border: '2px dashed var(--border-color)',
-                      borderRadius: '12px',
-                      padding: '3rem 2rem',
-                      textAlign: 'center',
-                      cursor: uploadingRun ? 'not-allowed' : 'pointer',
-                      background: 'var(--panel-bg)',
-                      transition: 'background 0.2s',
-                      opacity: uploadingRun ? 0.7 : 1
-                    }}
-                    onClick={() => {
-                      if (testType === 3 && runs.filter(r => r !== '').length >= 3) {
-                        alert("You have already uploaded all 3 required folders (Run A, Run B, Calibration).");
-                        return;
-                      }
-                      !uploadingRun && test1RunsInputRef.current?.click();
-                    }}
-                  >
-                    {uploadingRun ? (
-                      <Activity size={40} className="spinner" color="var(--accent)" style={{marginBottom: '1rem'}} />
-                    ) : (
-                      <UploadCloud size={40} color="var(--accent)" style={{marginBottom: '1rem'}} />
-                    )}
-                    <div>
-                      <strong style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                        {uploadingRun ? "Uploading..." : testType === 3 ? (
-                          runs.filter(r => r !== '').length === 0 ? "Click to select Run A folder" :
-                          runs.filter(r => r !== '').length === 1 ? "Click to select Run B folder" :
-                          "Click to select Calibration (Cable Loss) folder"
-                        ) : "Click to select and upload a run folder"}
-                      </strong>
-                      {!uploadingRun && <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                        {testType === 3 ? "(Upload folders in order: Run A, then Run B, then Calibration)" : "(Click multiple times to add more runs!)"}
-                      </p>}
-                    </div>
-                    <input 
-                      type="file" 
-                      webkitdirectory="true" 
-                      directory="true"
-                      multiple={true}
-                      ref={test1RunsInputRef} 
-                      style={{ display: 'none' }} 
-                      onChange={async (e) => {
-                          if (!e.target.files || e.target.files.length === 0) return;
-                          setUploadingRun(true);
-                          const filesArray = filterValidFiles(e.target.files);
-                          
-                          if (filesArray.length === 0) {
-                            setUploadingRun(false);
-                            alert("No valid data files (.csv, .xlsx, etc.) found in the selected folder.");
-                            return;
-                          }
-                          
-                          const validRuns = runs.filter(r => r !== '');
-                          const runIndex = validRuns.length;
-                          
-                          try {
-                            const CHUNK_SIZE = 50;
-                            let finalUploadPath = '';
-                            
-                            for (let i = 0; i < filesArray.length; i += CHUNK_SIZE) {
-                              const chunk = filesArray.slice(i, i + CHUNK_SIZE);
-                              const data = new FormData();
-                              
-                              chunk.forEach(f => {
-                                data.append('files', f);
-                                data.append('paths', f.webkitRelativePath || f.name);
-                              });
-                              
-                              data.append('run_index', runIndex);
-                              const extractedFolderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : '';
-                              if (extractedFolderName) {
-                                data.append('folder_name', extractedFolderName);
-                              }
-                              data.append('chunk_index', i === 0 ? '0' : '1');
-                              data.append('testType', testType);
-                              
-                              const res = await fetch(`${API_BASE}/upload_run`, { method: 'POST', body: data });
-                              if (!res.ok) {
-                                const errText = await res.text();
-                                throw new Error(`HTTP ${res.status}: ${errText}`);
-                              }
-                              
-                              const json = await res.json();
-                              if (json.status !== 'success') {
-                                throw new Error(json.error || 'Upload failed');
-                              }
-                              finalUploadPath = json.upload_path;
-                            }
-                            
-                            const folderName = filesArray[0].webkitRelativePath ? filesArray[0].webkitRelativePath.split('/')[0] : filesArray[0].name;
-                            setRuns([...validRuns, finalUploadPath]);
-                            setRunNames(prev => {
-                              const newNames = [...prev];
-                              newNames[runIndex] = folderName;
-                              return newNames;
-                            });
-                          } catch (err) {
-                            console.error(err);
-                            alert("Upload error: " + err.message);
-                          }
-                          if (test1RunsInputRef.current) test1RunsInputRef.current.value = "";
-                          setUploadingRun(false);
-                        }} 
-                      />
-                  </div>
-
-                  {runs.filter(r => r !== '').length > 0 && (
-                    <div style={{ background: 'var(--panel-bg)', padding: '1.5rem', borderRadius: '12px' }}>
-                      <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Added Folders ({runs.filter(r => r !== '').length})</h3>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {runs.filter(r => r !== '').map((runPath, idx) => (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '0.75rem 1rem', borderRadius: '8px' }}>
-                            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', wordBreak: 'break-all' }}>
-                              <strong>
-                                {testType === 3 
-                                  ? (idx === 0 ? 'Run A: ' : idx === 1 ? 'Run B: ' : 'Calibration: ') 
-                                  : (runNames[idx] || `Run ${idx + 1}: `)}
-                              </strong> 
-                              {runPath.split(/[\\\\/]/).pop() || runPath}
-                            </span>
-                            <button 
-                              className="icon-btn" 
-                              onClick={() => {
-                                setRuns(prev => prev.filter(r => r !== '').filter((_, i) => i !== idx));
-                                setRunNames(prev => prev.filter((_, i) => i !== idx));
-                              }}
-                              style={{ color: '#ff6b6b', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
-                              title="Remove Run"
-                            >
-                              <XCircle size={20} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-
-              <div className="btn-group" style={{ marginTop: '2rem' }}>
-                <button className="secondary" onClick={() => setCurrentStep(2)}>Back</button>
-                <button onClick={submitRuns}>Continue</button>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
+{currentStep === 4 && (
             <div className="step-card glass" style={{ border: 'none', padding: '2rem' }}>
               <h2>Plot Configuration</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Configure parameters for generating plots.</p>
