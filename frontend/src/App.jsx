@@ -945,7 +945,7 @@ function App() {
               <div className="btn-group" style={{ display: 'flex', gap: '1rem' }}>
                 <button 
                   className="secondary" 
-                  onClick={() => setCurrentStep(testType === 2 ? 2 : testType === 4 ? 1 : 3)}
+                  onClick={() => setCurrentStep(1)}
                 >
                   Back
                 </button>
