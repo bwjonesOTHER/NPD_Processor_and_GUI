@@ -180,8 +180,8 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
                         is_same_file = os.path.splitext(os.path.basename(file))[0].lower() == os.path.splitext(os.path.basename(filepath))[0].lower()
                         is_base_speca_exclude = (cal_norm == "base" and "speca" in name_norm)
                         
-                        has_cal_norm = cal_norm in name_norm
-                        already_loaded = any(cal_norm in os.path.basename(p).lower().replace(" ", "").replace("_", "") for p in cal_files_to_load)
+                        has_cal_norm = cal_norm in name_norm or (cal_norm == "speca" and "sacable" in name_norm)
+                        already_loaded = any((cal_norm in os.path.basename(p).lower().replace(" ", "").replace("_", "")) or (cal_norm == "speca" and "sacable" in os.path.basename(p).lower().replace(" ", "").replace("_", "")) for p in cal_files_to_load)
                         
                         if cal_type == "SpecA":
                             try:
@@ -233,7 +233,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             # SpecA is an amplifier. It has gain (e.g. +20 dB). Its "loss" should be -20 dB.
             # Cables are passive. Their S21 is usually negative (e.g. -2 dB). Their "loss" should be +2 dB.
             # If a cable is saved as Insertion Loss (e.g. +2 dB), we still want +2 dB.
-            if "speca" in f.lower():
+            if "speca" in f.lower() or "sacable" in f.lower():
                 if plot_s12:
                     loss_db = -net.s_db[:, 0, 1] # S12
                 else:
