@@ -16,7 +16,7 @@ def upload_test_data():
     os.makedirs(session_dir, exist_ok=True)
     
     # Categories of files we expect
-    categories = ['bench', 'temp', 'cal', 'general']
+    categories = ['bench', 'temp', 'cal', 'temp_cal', 'general']
     paths = {}
     
     for cat in categories:

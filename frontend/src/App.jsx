@@ -17,7 +17,7 @@ const filterValidFiles = (files) => {
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [testType, setTestType] = useState(null);
-  const [test2Files, setTest2Files] = useState({ bench: null, temp: null, cal: null });
+  const [test2Files, setTest2Files] = useState({ bench: null, temp: null, cal: null, tempCal: null });
   const [generalFiles, setGeneralFiles] = useState(null);
   const [sessionData, setSessionData] = useState(null);
   const [isConnected, setIsConnected] = useState(true); // Always true now since we removed SharePoint
@@ -292,6 +292,7 @@ function App() {
         Array.from(test2Files.bench).forEach(f => data.append('bench_files', f));
         if (test2Files.temp) Array.from(test2Files.temp).forEach(f => data.append('temp_files', f));
         if (test2Files.cal) Array.from(test2Files.cal).forEach(f => data.append('cal_files', f));
+        if (test2Files.tempCal) Array.from(test2Files.tempCal).forEach(f => data.append('temp_cal_files', f));
       } else {
         if (!generalFiles || generalFiles.length === 0) {
           alert('Test Data Folder is required');
@@ -435,6 +436,7 @@ function App() {
           calFolder: sessionData?.paths?.cal || formData.calPath,
           benchPath: sessionData?.paths?.bench,
           tempPath: sessionData?.paths?.temp,
+          tempCalPath: sessionData?.paths?.temp_cal,
           serial_number: formData.serialNumber,
           pmaArea: formData.pmaArea
         })
@@ -555,8 +557,12 @@ function App() {
                     <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, temp: e.target.files}))} />
                   </div>
                   <div className="form-group">
-                    <label>Calibration Files Folder (Optional)</label>
+                    <label>Bench Calibration Files Folder (Optional)</label>
                     <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, cal: e.target.files}))} />
+                  </div>
+                  <div className="form-group">
+                    <label>Temp Calibration Files Folder (Optional)</label>
+                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, tempCal: e.target.files}))} />
                   </div>
                 </>
               ) : (

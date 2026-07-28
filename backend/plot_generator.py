@@ -319,7 +319,7 @@ def load_excel_average(average_data_path, plot_type, title_suffix):
     except Exception as e:
         return None, None
 
-def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=False):
+def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=1, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=False, temp_cal_folder=None):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -360,7 +360,8 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     ref_freq_full = None
     for file in all_files:
         serial = extract_serial(file)
-        file_cal_folder = cal_folder
+        is_temp = file in filesA if test_type == 2 else False
+        file_cal_folder = temp_cal_folder if (is_temp and temp_cal_folder) else cal_folder
         
         # Super Smart Fallback: if this is a Temp trace, use the first Bench trace (if any) as a reference to find its nested Cable Loss
         ref_path = filesB[0] if file in filesA and filesB else None
@@ -525,7 +526,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     }
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=False):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=False, temp_cal_folder=None):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -541,7 +542,8 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         freq_ghz = net.f / 1e9
         raw_s21 = net.s_db[:, 1, 0]
         serial = extract_serial(fpath)
-        file_cal_folder = cal_folder
+        is_temp = fpath in filesA if test_type == 2 else False
+        file_cal_folder = temp_cal_folder if (is_temp and temp_cal_folder) else cal_folder
 
         freq_cal, total_loss_db, cal_files_used = None, None, []
         if apply_cal:
@@ -1343,6 +1345,8 @@ def generate_plots(params):
     y_upper_npd = float(params.get('y_upper_npd')) if params.get('y_upper_npd') is not None else None
     y_lower_npd = float(params.get('y_lower_npd')) if params.get('y_lower_npd') is not None else None
     output_folder = params.get('outputFolder', '/tmp')
+    cal_folder = params.get('calFolder')
+    temp_cal_folder = params.get('tempCalPath')
     average_data_path = params.get('average_data_path', "")
     apply_npd_cal = params.get('apply_npd_cal', False)
     plot_s12 = params.get('plot_s12', False)
@@ -1409,17 +1413,17 @@ def generate_plots(params):
                 
             average_data_path_to_use = average_data_path if name != "All Temps" else ""
                 
-            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
+            p1 = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12, temp_cal_folder=temp_cal_folder)
             if p1: 
                 generated_plots.append(p1)
                 np_averages[name] = (p1.get("freq"), p1.get("avg"))
                 
-            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
+            p1_den = plotNPD(npdA, npdB, name, freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12, temp_cal_folder=temp_cal_folder)
             if p1_den and p1_den.get("freq") is not None:
                 generated_plots.append(p1_den)
                 npd_averages[name] = (p1_den.get("freq"), p1_den.get("avg"))
                 
-            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21, plot_s12=plot_s12)
+            p2 = plotS21(sparA, sparB, name, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, apply_cal=True, average_data_path=average_data_path_to_use, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21, plot_s12=plot_s12, temp_cal_folder=temp_cal_folder)
             if p2: 
                 generated_plots.append(p2)
                 s21_averages[name] = (p2.get("freq"), p2.get("avg"))
@@ -1527,11 +1531,11 @@ def generate_plots(params):
 
         
         apply_bench_cal_npd = True if (test_type == 2 or test_type == 3) else False
-        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal_npd, test_type=test_type, average_data_path=average_data_path, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12)
+        p1 = plotNPD(npdA, npdB, "Benchtop", freq_min, freq_max, u_bound_npd, l_bound_npd, reqS11Val, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=apply_bench_cal_npd, test_type=test_type, average_data_path=average_data_path, y_upper_npd=y_upper_npd, y_lower_npd=y_lower_npd, plot_s12=plot_s12, temp_cal_folder=temp_cal_folder)
         if p1: generated_plots.append(p1)
 
         apply_bench_cal_s21 = True if (test_type == 2 or test_type == 3) else False
-        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal_s21, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21, plot_s12=plot_s12)
+        p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal_s21, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21, plot_s12=plot_s12, temp_cal_folder=temp_cal_folder)
         if p2: generated_plots.append(p2)
 
     return generated_plots
