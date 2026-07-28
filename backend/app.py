@@ -130,8 +130,6 @@ def submit_file_info():
     # Store base path based on input
     write_txt("path.txt", base_path)
     
-    upload_path = ""
-    
     if test == 1:
         run_num = data.get('runNumber', '').strip()
         cap_num = data.get('capNumber', '').strip()
@@ -151,7 +149,7 @@ def submit_file_info():
         pma = data.get('pmaArea', '').strip()
         sn = data.get('serialNumber', '').strip()
         lmo_num = data.get('lmoNumber', '').strip()
-        upload_mode = data.get('uploadMode', 'access')
+        upload_mode = data.get('uploadMode', 'upload') or 'upload'
         exact_lmo_folder = data.get('exactLmoFolder', '').strip()
         
         write_txt("PMA_Area.txt", pma)
@@ -249,7 +247,7 @@ def submit_file_info():
         sn_folder = f"SN{sn_int:04d}_LMO{lmo_num}" if sn else f"UnknownSN_LMO{lmo_num}"
         upload_path = os.path.join(base_path, sn_folder)
         
-        upload_mode = data.get('uploadMode', 'access')
+        upload_mode = data.get('uploadMode', 'upload') or 'upload'
         if upload_mode == 'upload':
             base_path = os.path.join(os.getcwd(), 'uploads')
             upload_path = os.path.join(base_path, sn_folder)
