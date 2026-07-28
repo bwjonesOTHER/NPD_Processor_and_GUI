@@ -316,6 +316,7 @@ function App() {
     try {
       const data = new FormData();
       data.append('test_type', testType);
+      data.append('uploadMode', uploadMode);
       
       if (testType === 2) {
         if (!test2Files.bench || test2Files.bench.length === 0) {
