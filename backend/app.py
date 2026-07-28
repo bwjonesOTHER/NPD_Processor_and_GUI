@@ -361,7 +361,10 @@ def upload_test_data():
         
     return jsonify({
         "success": True,
-        "paths": paths
+        "paths": paths,
+        "debug_form_keys": list(request.form.keys()),
+        "debug_files_keys": list(request.files.keys()),
+        "debug_test_type": test_type
     })
 
 @app.route('/api/upload_run', methods=['GET', 'POST', 'OPTIONS'], strict_slashes=False)

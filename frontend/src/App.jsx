@@ -368,7 +368,7 @@ function App() {
         }
 
         if (testType === 3 && (!json.paths || !json.paths.runs)) {
-          alert("CRITICAL ERROR: The server accepted the files but did not return the expected 'runs' paths. This means your backend python server is out of date and thinks you are running Test 1. Please ensure your git pull succeeded and you have completely restarted the .bat file!");
+          alert(`CRITICAL ERROR: The server accepted the files but did not return the expected 'runs' paths.\nServer saw test_type: ${json.debug_test_type}\nServer form keys: ${JSON.stringify(json.debug_form_keys)}\nServer files keys: ${JSON.stringify(json.debug_files_keys)}`);
           setIsUploadingSource(false);
           return;
         }
