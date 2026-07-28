@@ -1539,4 +1539,13 @@ def generate_plots(params):
         p2 = plotS21(sparA, sparB, "Benchtop", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=test_type, apply_cal=apply_bench_cal_s21, average_data_path=average_data_path, y_upper_s21=y_upper_s21, y_lower_s21=y_lower_s21, plot_s12=plot_s12, temp_cal_folder=temp_cal_folder)
         if p2: generated_plots.append(p2)
 
+    if not generated_plots:
+        debug_str = f"Zero plots generated.\nTest Type: {test_type}\nfolderA: {folderA}\nfolderB: {folderB}\nRuns: {runs}\n"
+        if test_type in [2, 3]:
+            debug_str += f"npdA len: {len(npdA) if 'npdA' in locals() else 'N/A'}, npdB len: {len(npdB) if 'npdB' in locals() else 'N/A'}\n"
+            debug_str += f"sparA len: {len(sparA) if 'sparA' in locals() else 'N/A'}, sparB len: {len(sparB) if 'sparB' in locals() else 'N/A'}\n"
+            if 'raw_npdA' in locals(): debug_str += f"raw_npdA len: {len(raw_npdA)}\n"
+            if 'raw_npdB' in locals(): debug_str += f"raw_npdB len: {len(raw_npdB)}\n"
+        raise Exception(debug_str)
+        
     return generated_plots
