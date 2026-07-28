@@ -704,6 +704,24 @@ def api_generate_plots():
         if not path:
             path = read_txt("path.txt")
         params['runs'] = [path] if path else []
+        
+        # Auto-extract SN and Area if missing
+        bench_dir = params.get('benchPath') or path
+        if bench_dir and os.path.isdir(bench_dir):
+            import re
+            sn_pattern = re.compile(r'(?:SN|EM-)[_-]?(\d+)', re.IGNORECASE)
+            area_pattern = re.compile(r'Area[_-]?(\d+)', re.IGNORECASE)
+            for root, dirs, files in os.walk(bench_dir):
+                for f in files:
+                    if not params.get('serial_number'):
+                        m = sn_pattern.search(f)
+                        if m: params['serial_number'] = m.group(0)
+                    if not params.get('pmaArea'):
+                        m = area_pattern.search(f)
+                        if m: params['pmaArea'] = f"Area{m.group(1)}"
+                if params.get('serial_number') and params.get('pmaArea'):
+                    break
+        
         if not params.get('serial_number'):
             params['serial_number'] = read_txt("serialNumber.txt")
         if not params.get('pmaArea'):
@@ -716,6 +734,25 @@ def api_generate_plots():
             run_a = read_txt("RunA_Path.txt")
             run_b = read_txt("RunB_Path.txt")
             params['runs'] = [run for run in [run_a, run_b] if run]
+            
+        # Auto-extract SN and Area if missing
+        if params.get('runs') and len(params.get('runs')) > 0:
+            run_dir = params.get('runs')[0]
+            if run_dir and os.path.isdir(run_dir):
+                import re
+                sn_pattern = re.compile(r'(?:SN|EM-)[_-]?(\d+)', re.IGNORECASE)
+                area_pattern = re.compile(r'Area[_-]?(\d+)', re.IGNORECASE)
+                for root, dirs, files in os.walk(run_dir):
+                    for f in files:
+                        if not params.get('serial_number'):
+                            m = sn_pattern.search(f)
+                            if m: params['serial_number'] = m.group(0)
+                        if not params.get('pmaArea'):
+                            m = area_pattern.search(f)
+                            if m: params['pmaArea'] = f"Area{m.group(1)}"
+                    if params.get('serial_number') and params.get('pmaArea'):
+                        break
+                        
         if not params.get('serial_number'):
             params['serial_number'] = read_txt("serialNumber.txt")
         
