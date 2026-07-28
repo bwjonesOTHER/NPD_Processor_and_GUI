@@ -245,7 +245,8 @@ def submit_file_info():
     elif test == 3:
         sn = data.get('serialNumber', '').strip()
         lmo_num = data.get('lmoNumber', '').strip()
-        sn_folder = f"SN{int(sn):04d}_LMO{lmo_num}"
+        sn_int = int(sn) if sn.isdigit() else 0
+        sn_folder = f"SN{sn_int:04d}_LMO{lmo_num}" if sn else f"UnknownSN_LMO{lmo_num}"
         upload_path = os.path.join(base_path, sn_folder)
         
         upload_mode = data.get('uploadMode', 'access')
