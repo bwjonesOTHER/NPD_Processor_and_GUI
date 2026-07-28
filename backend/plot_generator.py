@@ -1542,7 +1542,6 @@ def generate_plots(params):
     if not generated_plots:
         debug_str = f"Zero plots generated.\nTest Type: {test_type}\nfolderA: {folderA}\nfolderB: {folderB}\nRuns: {runs}\n"
         try:
-            import os
             debug_str += f"folderA contents: {os.listdir(folderA)[:10] if os.path.isdir(folderA) else 'NOT A DIR'}\n"
             debug_str += f"folderB contents: {os.listdir(folderB)[:10] if os.path.isdir(folderB) else 'NOT A DIR'}\n"
         except Exception as e:
