@@ -113,11 +113,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             
     search_dirs = []
     
-    # Prioritize the global cal folder first to guarantee both traces use identical cables
-    if cal_folder and os.path.isdir(cal_folder):
-        search_dirs.append(cal_folder)
-    
-    # Then fallback to local run folder
+    # Prioritize Cable Loss folder in the run's parent directory first
     run_folder = os.path.dirname(filepath)
     if run_folder and os.path.isdir(run_folder):
         search_dirs.append(run_folder)
@@ -153,20 +149,10 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             if bench_grandparent != grandparent and os.path.isdir(bench_grandparent):
                 search_dirs.append(bench_grandparent)
                 
-        # Super Smart Fallback: Use the Bench trace's path to find the correct nested Cable Loss folder
-        if reference_filepath:
-            ref_run_folder = os.path.dirname(reference_filepath)
-            if ref_run_folder and os.path.isdir(ref_run_folder):
-                search_dirs.append(ref_run_folder)
-                
-                ref_parent = os.path.dirname(ref_run_folder)
-                if ref_parent and os.path.isdir(ref_parent):
-                    search_dirs.append(ref_parent)
-                    
-                ref_grandparent = os.path.dirname(ref_parent)
-                if ref_grandparent and os.path.isdir(ref_grandparent):
-                    search_dirs.append(ref_grandparent)
-            
+    # Then fallback to global cal folder if provided
+    if cal_folder and os.path.isdir(cal_folder):
+        search_dirs.append(cal_folder)
+
     cal_files_to_load = []
     found_base_bulk = False
 
@@ -1414,14 +1400,10 @@ def generate_plots(params):
         if found_cal:
             cal_folder = found_cal
 
-    # If still not found, search benchPath and tempPath dynamically for Cable Loss
+    # If still not found, search benchPath dynamically for Cable Loss
     if not cal_folder or not os.path.exists(cal_folder):
         bench_path = params.get('benchPath', "")
-        temp_path = params.get('tempPath', "")
-        
         cal_folder = find_best_cal(bench_path, test_type)
-        if not cal_folder:
-            cal_folder = find_best_cal(temp_path, test_type)
 
     
     generated_plots = []
