@@ -97,7 +97,10 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
     ident_num = cap_match.group(1) if cap_match else None
 
     if is_npd:
-        if is_benchtop:
+        is_temp = "temp" in filepath.lower() or "npdovertemp" in filepath.lower()
+        if is_temp:
+            cal_types = ["Base", "Bulkhead"]
+        elif is_benchtop:
             cal_types = ["Base", "Bulkhead", "SpecA"]
         else:
             cal_types = ["Base", "Bulkhead", "SpecA"]
