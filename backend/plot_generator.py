@@ -623,7 +623,7 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=
 # ============================================================
 _OTA_COLORS = ["blue", "orange", "green", "red", "purple", "cyan", "magenta", "brown", "gold", "black"]
 _OTA_NP_YLIM = (-130, -80)
-_OTA_NPD_YLIM = (-170, -120)
+_OTA_NPD_YLIM = (-170, -140)
 _OTA_S21_YLIM = (-105, 5)
 _OTA_XLIM = (2.0, 5.0)
 
