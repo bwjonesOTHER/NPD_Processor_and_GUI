@@ -1541,6 +1541,13 @@ def generate_plots(params):
 
     if not generated_plots:
         debug_str = f"Zero plots generated.\nTest Type: {test_type}\nfolderA: {folderA}\nfolderB: {folderB}\nRuns: {runs}\n"
+        try:
+            import os
+            debug_str += f"folderA contents: {os.listdir(folderA)[:10] if os.path.isdir(folderA) else 'NOT A DIR'}\n"
+            debug_str += f"folderB contents: {os.listdir(folderB)[:10] if os.path.isdir(folderB) else 'NOT A DIR'}\n"
+        except Exception as e:
+            debug_str += f"Error reading folders: {e}\n"
+            
         if test_type in [2, 3]:
             debug_str += f"npdA len: {len(npdA) if 'npdA' in locals() else 'N/A'}, npdB len: {len(npdB) if 'npdB' in locals() else 'N/A'}\n"
             debug_str += f"sparA len: {len(sparA) if 'sparA' in locals() else 'N/A'}, sparB len: {len(sparB) if 'sparB' in locals() else 'N/A'}\n"
