@@ -467,6 +467,7 @@ function App() {
           tempPath: sessionData?.paths?.temp,
           tempCalPath: sessionData?.paths?.temp_cal,
           runs: sessionData?.paths?.runs || [],
+          testType: testType,
           serial_number: formData.serialNumber,
           pmaArea: formData.pmaArea
         })

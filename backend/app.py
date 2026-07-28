@@ -654,9 +654,13 @@ def debug_tree():
 @app.route('/api/generate_plots', methods=['POST'])
 def api_generate_plots():
     """Endpoint to trigger the backend Python plotting scripts based on test type."""
-    test = request.args.get('testType', type=int)
     params = request.json or {}
-    
+    test = request.args.get('testType', type=int)
+    if test is None:
+        test = params.get('testType')
+        if test is not None:
+            test = int(test)
+            
     import tempfile
     import shutil
     import math
