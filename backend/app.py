@@ -9,7 +9,6 @@ import sys
 import shutil
 import subprocess
 import base64
-from upload_logic import upload_bp
 
 backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
@@ -57,9 +56,8 @@ _ensure_dependencies()
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
-app = Flask(__name__, static_folder='../frontend/dist', static_url_path='/')
-app.register_blueprint(upload_bp)
-
+app = Flask(__name__, static_folder=os.path.join(os.getcwd(), 'frontend', 'dist'))
+CORS(app)
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
 if hasattr(app.request_class, 'max_form_parts'):
