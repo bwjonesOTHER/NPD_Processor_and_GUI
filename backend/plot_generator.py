@@ -125,32 +125,10 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
         grandparent = os.path.dirname(parent_run)
         if grandparent and os.path.isdir(grandparent):
             search_dirs.append(grandparent)
-
-        # Smart fallback: if this is a temp file, look in the corresponding bench folder for Cable Loss
-        def to_bench(p):
-            parts = p.split(os.sep)
-            for i in range(len(parts)-1, -1, -1):
-                if parts[i] == 'temp':
-                    parts[i] = 'bench'
-                    break
-            return os.sep.join(parts)
-            
-        bench_run_folder = to_bench(run_folder)
-        if bench_run_folder != run_folder and os.path.isdir(bench_run_folder):
-            search_dirs.append(bench_run_folder)
-            
-        if parent_run:
-            bench_parent = to_bench(parent_run)
-            if bench_parent != parent_run and os.path.isdir(bench_parent):
-                search_dirs.append(bench_parent)
                 
-        if grandparent:
-            bench_grandparent = to_bench(grandparent)
-            if bench_grandparent != grandparent and os.path.isdir(bench_grandparent):
-                search_dirs.append(bench_grandparent)
-                
-    # Then fallback to global cal folder if provided
-    if cal_folder and os.path.isdir(cal_folder):
+    # Then fallback to global cal folder if provided, but ONLY for Bench traces.
+    # The uploaded calibration file is only for Bench traces, so Temp should skip this fallback.
+    if cal_folder and os.path.isdir(cal_folder) and not is_temp:
         search_dirs.append(cal_folder)
 
     cal_files_to_load = []
