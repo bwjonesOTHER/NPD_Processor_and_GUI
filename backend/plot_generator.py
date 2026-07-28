@@ -112,6 +112,11 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             cal_types = ["Base", "Hat", "Bulkhead"]
             
     search_dirs = []
+    
+    # HIGHEST PRIORITY: Explicitly provided cal folder
+    if cal_folder and os.path.isdir(cal_folder):
+        search_dirs.append(cal_folder)
+        
     is_temp = "temp" in filepath.lower() or "npdovertemp" in filepath.lower()
     
     # Prioritize Cable Loss folder in the run's parent directory first
@@ -126,10 +131,6 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
         grandparent = os.path.dirname(parent_run)
         if grandparent and os.path.isdir(grandparent):
             search_dirs.append(grandparent)
-                
-    # Then fallback to global cal folder if provided
-    if cal_folder and os.path.isdir(cal_folder):
-        search_dirs.append(cal_folder)
 
     cal_files_to_load = []
     found_base_bulk = False
