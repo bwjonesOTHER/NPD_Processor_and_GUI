@@ -366,6 +366,12 @@ function App() {
           setIsUploadingSource(false);
           return;
         }
+
+        if (testType === 3 && (!json.paths || !json.paths.runs)) {
+          alert("CRITICAL ERROR: The server accepted the files but did not return the expected 'runs' paths. This means your backend python server is out of date and thinks you are running Test 1. Please ensure your git pull succeeded and you have completely restarted the .bat file!");
+          setIsUploadingSource(false);
+          return;
+        }
         
         // Ensure sessionData includes the generated paths
         setSessionData(json);
