@@ -324,26 +324,26 @@ function App() {
           setIsUploadingSource(false);
           return;
         }
-        Array.from(test2Files.bench).forEach(f => data.append('bench_files', f));
-        if (test2Files.temp) Array.from(test2Files.temp).forEach(f => data.append('temp_files', f));
-        if (test2Files.cal) Array.from(test2Files.cal).forEach(f => data.append('cal_files', f));
-        if (test2Files.tempCal) Array.from(test2Files.tempCal).forEach(f => data.append('temp_cal_files', f));
+        Array.from(test2Files.bench).forEach(f => data.append('bench_files', f, f.webkitRelativePath || f.name));
+        if (test2Files.temp) Array.from(test2Files.temp).forEach(f => data.append('temp_files', f, f.webkitRelativePath || f.name));
+        if (test2Files.cal) Array.from(test2Files.cal).forEach(f => data.append('cal_files', f, f.webkitRelativePath || f.name));
+        if (test2Files.tempCal) Array.from(test2Files.tempCal).forEach(f => data.append('temp_cal_files', f, f.webkitRelativePath || f.name));
       } else if (testType === 3) {
         if (!test3Files.runA || !test3Files.runB || !test3Files.cal) {
           alert('Run 1, Run 2, and Calibration folders are required for Test 3');
           setIsUploadingSource(false);
           return;
         }
-        Array.from(test3Files.runA).forEach(f => data.append('runA_files', f));
-        Array.from(test3Files.runB).forEach(f => data.append('runB_files', f));
-        Array.from(test3Files.cal).forEach(f => data.append('cal_files', f));
+        Array.from(test3Files.runA).forEach(f => data.append('runA_files', f, f.webkitRelativePath || f.name));
+        Array.from(test3Files.runB).forEach(f => data.append('runB_files', f, f.webkitRelativePath || f.name));
+        Array.from(test3Files.cal).forEach(f => data.append('cal_files', f, f.webkitRelativePath || f.name));
       } else if (testType === 4) {
         if (!generalFiles || generalFiles.length === 0) {
           alert('Test Data Folder is required for Test 4');
           setIsUploadingSource(false);
           return;
         }
-        Array.from(generalFiles).forEach(f => data.append('general_files', f));
+        Array.from(generalFiles).forEach(f => data.append('general_files', f, f.webkitRelativePath || f.name));
       } else if (testType === 1) {
         if (runs.filter(r => r !== '').length === 0) {
           alert('Please upload at least one run folder for Test 1');
