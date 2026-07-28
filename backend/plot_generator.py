@@ -97,10 +97,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
     ident_num = cap_match.group(1) if cap_match else None
 
     if is_npd:
-        is_temp = "temp" in filepath.lower() or "npdovertemp" in filepath.lower()
-        if is_temp:
-            cal_types = ["Base", "Bulkhead"]
-        elif is_benchtop:
+        if is_benchtop:
             cal_types = ["Base", "Bulkhead", "SpecA"]
         else:
             cal_types = ["Base", "Bulkhead", "SpecA"]
@@ -116,7 +113,11 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             
     search_dirs = []
     
-    # Prioritize Cable Loss folder in the run's parent directory first
+    # Prioritize the global cal folder first to guarantee both traces use identical cables
+    if cal_folder and os.path.isdir(cal_folder):
+        search_dirs.append(cal_folder)
+    
+    # Then fallback to local run folder
     run_folder = os.path.dirname(filepath)
     if run_folder and os.path.isdir(run_folder):
         search_dirs.append(run_folder)
@@ -166,10 +167,6 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
                 if ref_grandparent and os.path.isdir(ref_grandparent):
                     search_dirs.append(ref_grandparent)
             
-    # Then fallback to global cal folder if provided
-    if cal_folder and os.path.isdir(cal_folder):
-        search_dirs.append(cal_folder)
-
     cal_files_to_load = []
     found_base_bulk = False
 
