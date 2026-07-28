@@ -281,6 +281,30 @@ function App() {
     }
   };
   
+  const handleReferenceFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploadingRefFile(true);
+    try {
+      const data = new FormData();
+      data.append('file', file);
+      const res = await fetch(`${API_BASE}/upload_reference_file`, { method: 'POST', body: data });
+      const json = await res.json();
+      if (json.success && json.path) {
+        setPlotParams(prev => ({ ...prev, average_data_path: json.path }));
+      } else {
+        alert("Upload error: " + (json.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload error: " + err.message);
+    } finally {
+      setIsUploadingRefFile(false);
+      e.target.value = ''; // Reset input
+    }
+  };
+
   const handleFileChange = (e) => {
     if (e.target.files) {
       setFiles(filterValidFiles(e.target.files));
