@@ -1607,25 +1607,79 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
     import glob
     import os
     
+    # Sanitize bound params: convert empty strings to None, strings to floats
+    def safe_float(v, default=None):
+        if v is None or v == '':
+            return default
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return default
+    
+    u_bound_npd = safe_float(u_bound_npd, 2)
+    l_bound_npd = safe_float(l_bound_npd, 2)
+    u_bound_s21 = safe_float(u_bound_s21, 2)
+    l_bound_s21 = safe_float(l_bound_s21, 2)
+    freq_min = safe_float(freq_min, 0.1)
+    freq_max = safe_float(freq_max, 50)
+    
     data_plots = []
     vswr_plots = []
     
     if not os.path.exists(data_folder):
         return data_plots, vswr_plots
         
-    csv_files = glob.glob(os.path.join(data_folder, "*.csv"))
-    s2p_files = glob.glob(os.path.join(data_folder, "*.s2p"))
+    csv_files = sorted(glob.glob(os.path.join(data_folder, "*.csv")))
+    s2p_files = sorted(glob.glob(os.path.join(data_folder, "*.s2p")))
     
     if csv_files:
+        # Plot CSV files as NP
+        p_np = plotNPD(csv_files, [], "Data", freq_min, freq_max, u_bound_npd, l_bound_npd, None, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=bool(cal_folder), test_type=5, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=plot_s12)
+        if p_np:
+            data_plots.append(p_np)
         # Plot CSV files as NPD
-        p_npd = plotNPD(csv_files, [], "Data", freq_min, freq_max, u_bound_npd, l_bound_npd, None, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=True, test_type=5, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=plot_s12)
+        p_npd = plotNPD(csv_files, [], "Data", freq_min, freq_max, u_bound_npd, l_bound_npd, None, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=bool(cal_folder), test_type=5, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=plot_s12)
         if p_npd:
             data_plots.append(p_npd)
             
     if s2p_files:
-        # Plot S2P files as S21/VSWR
-        p_s21 = plotS21(s2p_files, [], "VSWR", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=5, apply_cal=False, average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=plot_s12)
+        # Plot S2P files as S21
+        p_s21 = plotS21(s2p_files, [], "Data", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=5, apply_cal=bool(cal_folder), average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=plot_s12)
         if p_s21:
-            vswr_plots.append(p_s21)
+            data_plots.append(p_s21)
+        
+        # Plot S2P files as VSWR (inline — no separate plotVSWR function exists)
+        vswr_traces = []
+        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+        for i, fpath in enumerate(s2p_files):
+            try:
+                net = rf.Network(fpath)
+                freq_ghz = net.f / 1e9
+                s11_mag = np.abs(net.s[:, 0, 0])
+                vswr_val = (1 + s11_mag) / (1 - np.clip(s11_mag, 0, 0.9999))
+                vswr_traces.append({
+                    "x": freq_ghz.tolist(),
+                    "y": vswr_val.tolist(),
+                    "type": "scatter",
+                    "mode": "lines",
+                    "name": os.path.basename(fpath),
+                    "line": {"color": colors[i % len(colors)]}
+                })
+            except Exception:
+                pass
+        if vswr_traces:
+            vswr_layout = {
+                "title": "VSWR",
+                "xaxis": {"title": "Frequency (GHz)"},
+                "yaxis": {"title": "VSWR", "range": [1, 6]},
+                "showlegend": True,
+                "legend": {"x": 1.05, "y": 1},
+                "shapes": [
+                    {"type": "line", "x0": freq_min, "x1": freq_min, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}},
+                    {"type": "line", "x0": freq_max, "x1": freq_max, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}}
+                ]
+            }
+            vswr_plots.append({"data": vswr_traces, "layout": vswr_layout, "title": "VSWR"})
             
     return data_plots, vswr_plots
+

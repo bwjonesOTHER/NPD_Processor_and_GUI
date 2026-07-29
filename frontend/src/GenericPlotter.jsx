@@ -261,14 +261,9 @@ export default function GenericPlotter({ API_BASE, onBack }) {
       
       {/* Main Content */}
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div className="step-card" style={{ marginBottom: '1rem', padding: '1rem' }}>
-          <div className="step-header">
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-              <Activity color="var(--accent)" size={24} />
-              Generic Plotter
-            </h2>
-            <span className="badge">Test 5</span>
-          </div>
+        <div className="step-card" style={{ background: 'var(--panel-bg)', padding: '1.5rem 2rem', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0 }}>Generic Plotter</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 0, marginTop: '0.25rem' }}>Upload CSV or S2P files and generate plots.</p>
         </div>
         <div style={{ background: 'var(--panel-bg)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'flex-end' }}>
