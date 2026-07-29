@@ -359,7 +359,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     ref_freq_full = None
     for file in all_files:
         serial = extract_serial(file)
-        is_temp = file in filesA if test_type == 2 else False
+        is_temp = True if test_type == 1 else (file in filesA if test_type == 2 else False)
         file_cal_folder = temp_cal_folder if (is_temp and temp_cal_folder) else cal_folder
         
         # Super Smart Fallback: if this is a Temp trace, use the first Bench trace (if any) as a reference to find its nested Cable Loss
@@ -541,7 +541,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         freq_ghz = net.f / 1e9
         raw_s21 = net.s_db[:, 1, 0]
         serial = extract_serial(fpath)
-        is_temp = fpath in filesA if test_type == 2 else False
+        is_temp = True if test_type == 1 else (fpath in filesA if test_type == 2 else False)
         file_cal_folder = temp_cal_folder if (is_temp and temp_cal_folder) else cal_folder
 
         freq_cal, total_loss_db, cal_files_used = None, None, []
