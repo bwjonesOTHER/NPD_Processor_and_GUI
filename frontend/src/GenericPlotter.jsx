@@ -349,25 +349,38 @@ export default function GenericPlotter({ API_BASE, onBack }) {
             </div>
             <div className="input-group">
               <label>Plot Options</label>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', height: '38px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', margin: 0, fontWeight: 'normal', fontSize: '0.9rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={!!plotParams.plot_s12}
-                    onChange={e => setPlotParams({...plotParams, plot_s12: e.target.checked})}
-                    style={{ width: '16px', height: '16px', margin: 0 }}
-                  />
-                  <span>Use S12</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', margin: 0, fontWeight: 'normal', fontSize: '0.9rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={!!plotParams.plot_density}
-                    onChange={e => setPlotParams({...plotParams, plot_density: e.target.checked})}
-                    style={{ width: '16px', height: '16px', margin: 0 }}
-                  />
-                  <span>Plot NPD</span>
-                </label>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', minHeight: '38px', marginTop: '0.2rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SpecAn Cal</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', margin: 0, fontWeight: 'normal', fontSize: '0.9rem' }}>
+                    <span>S21</span>
+                    <span className="toggle-switch" style={{ transform: 'scale(0.85)', margin: '0' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!plotParams.plot_s12}
+                        onChange={e => setPlotParams({...plotParams, plot_s12: e.target.checked})}
+                      />
+                      <span className="toggle-switch-track"></span>
+                    </span>
+                    <span>S12</span>
+                  </label>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Data Type</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', margin: 0, fontWeight: 'normal', fontSize: '0.9rem' }}>
+                    <span>NP</span>
+                    <span className="toggle-switch" style={{ transform: 'scale(0.85)', margin: '0' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!plotParams.plot_density}
+                        onChange={e => setPlotParams({...plotParams, plot_density: e.target.checked})}
+                      />
+                      <span className="toggle-switch-track"></span>
+                    </span>
+                    <span>NPD</span>
+                  </label>
+                </div>
                 {hasS2P && (
                   <select 
                     value={plotParams.plot_trace_s2p} 
