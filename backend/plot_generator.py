@@ -1597,7 +1597,7 @@ def generate_plots(params):
         raise Exception(debug_str)
     return generated_plots
 
-def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=None, n_avg=1, plot_s12=False, u_bound_npd=None, l_bound_npd=None, u_bound_s21=None, l_bound_s21=None):
+def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=None, n_avg=1, plot_s12=False, plot_density=False, average_data_path="", u_bound_npd=None, l_bound_npd=None, u_bound_s21=None, l_bound_s21=None):
     """
     Plots generic CSV and S2P files found in the data_folder.
     CSV files are plotted using the plotNPD logic (applying calibration if available).
