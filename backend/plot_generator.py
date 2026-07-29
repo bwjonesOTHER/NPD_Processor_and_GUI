@@ -349,7 +349,6 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         if apply_cal:
             freq_cal, total_loss_db, cal_files_used = get_calibration_loss(file, current_cal_folder, test_type, plot_s12, reference_filepath=ref_path)
             if freq_cal is not None:
-                print(f"DEBUG Loaded Cals for {os.path.basename(file)}: {cal_files_used}", flush=True)
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
             
@@ -553,7 +552,6 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
 
         s21_corr = raw_s21
         if freq_cal is not None:
-            print(f"DEBUG Loaded Cals for {os.path.basename(fpath)}: {cal_files_used}", flush=True)
             s21_corr = raw_s21 + np.interp(freq_ghz, freq_cal, total_loss_db)
 
         sliced_freq = freq_ghz
