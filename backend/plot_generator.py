@@ -227,9 +227,11 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             freq_ghz = net.f / 1e9
             
             # SpecA is an amplifier. It has gain (e.g. +20 dB). Its "loss" should be -20 dB.
-            # Cables are passive. Their S21 is usually negative (e.g. -2 dB). Their "loss" should be +2 dB.
+            # Cables and adapters are passive. Their S21 is usually negative (e.g. -2 dB). Their "loss" should be +2 dB.
             # If a cable is saved as Insertion Loss (e.g. +2 dB), we still want +2 dB.
-            if "speca" in f.lower() or "sacable" in f.lower():
+            is_amplifier = ("speca" in f.lower() or "sacable" in f.lower()) and "adapter" not in f.lower()
+            
+            if is_amplifier:
                 if plot_s12:
                     loss_db = -net.s_db[:, 0, 1] # S12
                 else:
