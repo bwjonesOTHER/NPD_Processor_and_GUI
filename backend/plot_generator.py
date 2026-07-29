@@ -202,6 +202,14 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
                 found_base_bulk = True
             cal_files_to_load.append(f)
 
+    # Include any user-uploaded Additional Cal files
+    additional_cal_path = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
+    if os.path.exists(additional_cal_path):
+        import glob
+        for add_file in glob.glob(os.path.join(additional_cal_path, '*.s2p')):
+            if os.path.isfile(add_file):
+                cal_files_to_load.append(add_file)
+
     # Always generate debug output
     debug_path = os.path.join(os.path.dirname(os.getcwd()), "calibration_debug_used_files.txt")
     if not os.path.exists(os.path.dirname(os.getcwd())):

@@ -130,73 +130,36 @@ function App() {
 
 
 
-  const handleExportPlots = async () => {
-    if (images.length === 0) return;
-    try {
-      const zip = new JSZip();
-      for (let i = 0; i < images.length; i++) {
-        if (plotRefs.current[i]) {
-          const imgData = await plotRefs.current[i].toImage();
-          if (imgData) {
-            const base64Data = imgData.data.split(',')[1];
-            zip.file(imgData.filename, base64Data, { base64: true });
-          }
-        }
-      }
-      
-      const content = await zip.generateAsync({ type: 'blob' });
-      const url = window.URL.createObjectURL(content);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'NPD_Plots.zip';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      alert("Failed to export plots: " + err.message);
+  const [isUploadingAdditionalCal, setIsUploadingAdditionalCal] = useState(false);
+  const [additionalCalCount, setAdditionalCalCount] = useState(0);
+
+  const handleUploadAdditionalCalFiles = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploadingAdditionalCal(true);
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
     }
-  };
 
-  const handleSavePlots = async () => {
-    if (images.length === 0) return;
     try {
-      // Collect image data from all Plotly components
-      const plotImages = [];
-      for (let i = 0; i < images.length; i++) {
-        if (plotRefs.current[i]) {
-          const imgData = await plotRefs.current[i].toImage();
-          if (imgData) {
-            plotImages.push(imgData);
-          }
-        }
-      }
-
-      let targetFolder = outputFolder;
-      if (!targetFolder) {
-        const res = await fetch(`${API_BASE}/choose_directory`);
-        const dirData = await res.json();
-        if (!dirData.success) {
-          if (dirData.error && dirData.error !== "No directory selected") {
-            alert(`Error selecting output folder: ${dirData.error}`);
-          }
-          return;
-        }
-        targetFolder = dirData.path;
-      }
-      const resSave = await fetch(`${API_BASE}/save_plots`, {
+      const res = await fetch(`${API_BASE}/upload_additional_cal`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputFolder: targetFolder, plots: plotImages })
+        body: formData
       });
-      const data = await resSave.json();
-      if (data.success) {
-        alert(`Successfully saved ${data.saved.length} plots to ${targetFolder}`);
+      const data = await res.json();
+      if (res.ok) {
+        setAdditionalCalCount(data.count || files.length);
+        alert(`Successfully uploaded ${data.count || files.length} additional cal file(s).`);
       } else {
-        alert(`Error saving plots: ${data.error}`);
+        alert("Failed to upload additional cal files: " + (data.error || 'Unknown error'));
       }
     } catch (err) {
-      alert("Failed to save plots: " + err.message);
+      alert("Error uploading additional cal files: " + err.message);
+    } finally {
+      setIsUploadingAdditionalCal(false);
+      e.target.value = null; // reset input
     }
   };
 
@@ -887,11 +850,28 @@ function App() {
 
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
-                      
-                      <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
-                        <Download size={16} />
-                        Export All Plots (.zip)
+                      <input 
+                        type="file" 
+                        multiple 
+                        id="additionalCalInput" 
+                        style={{ display: 'none' }} 
+                        onChange={handleUploadAdditionalCalFiles} 
+                        accept=".s2p" 
+                      />
+                      <button 
+                        onClick={() => document.getElementById('additionalCalInput').click()} 
+                        className="btn-primary" 
+                        style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}
+                        disabled={isUploadingAdditionalCal}
+                      >
+                        <UploadCloud size={16} />
+                        {isUploadingAdditionalCal ? 'Uploading...' : 'Upload Additional Cal Files'}
                       </button>
+                      {additionalCalCount > 0 && (
+                        <span style={{ alignSelf: 'center', fontSize: '0.9rem', color: 'var(--success, #10b981)' }}>
+                          Loaded {additionalCalCount} extra cal file(s)
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>

@@ -323,6 +323,13 @@ def upload_test_data():
             except:
                 pass
                 
+    additional_cal_path = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
+    if os.path.exists(additional_cal_path):
+        try:
+            shutil.rmtree(additional_cal_path)
+        except:
+            pass
+                
     def save_files(files_list, subfolder):
         dest_folder = os.path.join(base_path, subfolder)
         os.makedirs(dest_folder, exist_ok=True)
@@ -400,6 +407,14 @@ def upload_run_files():
                     pass
         if os.path.exists(dest_folder):
             shutil.rmtree(dest_folder)
+            
+        if run_index == '0':
+            additional_cal_path = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
+            if os.path.exists(additional_cal_path):
+                try:
+                    shutil.rmtree(additional_cal_path)
+                except:
+                    pass
         
     os.makedirs(dest_folder, exist_ok=True)
     
@@ -421,6 +436,29 @@ def upload_run_files():
             saved_files.append(relative_path)
             
     return jsonify({"status": "success", "upload_path": dest_folder, "saved": saved_files})
+
+@app.route('/api/upload_additional_cal', methods=['POST'])
+def upload_additional_cal():
+    if 'files' not in request.files:
+        return jsonify({"error": "No files part"}), 400
+    
+    files = request.files.getlist('files')
+    dest_folder = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
+    
+    # Clear directory to prevent stale additional cal files from leaking
+    import shutil
+    if os.path.exists(dest_folder):
+        shutil.rmtree(dest_folder, ignore_errors=True)
+    os.makedirs(dest_folder, exist_ok=True)
+    
+    saved_count = 0
+    for file in files:
+        if file.filename:
+            filepath = os.path.join(dest_folder, os.path.basename(file.filename))
+            file.save(filepath)
+            saved_count += 1
+            
+    return jsonify({"success": True, "count": saved_count})
 
 @app.route('/api/folders', methods=['GET'])
 def get_folders():
