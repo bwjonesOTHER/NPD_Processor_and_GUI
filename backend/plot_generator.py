@@ -1346,6 +1346,9 @@ def generate_plots(params):
     output_folder = params.get('outputFolder', '/tmp')
     cal_folder = params.get('calFolder')
     temp_cal_folder = params.get('tempCalPath')
+    if not temp_cal_folder and os.path.exists("Temp_Cal_Path.txt"):
+        with open("Temp_Cal_Path.txt", "r") as f:
+            temp_cal_folder = f.read().strip()
     average_data_path = params.get('average_data_path', "")
     apply_npd_cal = params.get('apply_npd_cal', False)
     plot_s12 = params.get('plot_s12', False)

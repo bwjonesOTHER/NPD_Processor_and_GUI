@@ -446,6 +446,10 @@ def select_runs():
         if calPath:
             write_txt("Cal_Path.txt", calPath)
             
+        tempCalPath = data.get('tempCalPath', '')
+        if tempCalPath:
+            write_txt("Temp_Cal_Path.txt", tempCalPath)
+            
         return jsonify({"status": "success"})
         
     return jsonify({"status": "success"})
