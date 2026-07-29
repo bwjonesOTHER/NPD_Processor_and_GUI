@@ -129,19 +129,8 @@ def submit_file_info():
     write_txt("path.txt", base_path)
     
     if test == 1:
-        run_num = data.get('runNumber', '').strip()
-        cap_num = data.get('capNumber', '').strip()
-        lmo_num = data.get('lmoNumber', '').strip()
-        base_path = os.path.join(os.getcwd(), 'uploads')
-        
-        # Construct the requested folder structure: Run_[runNumber] [LMONumber]/Cap_[capNumber]
-        # Using .strip() inside the f-string just in case any field was left blank, though it shouldn't be.
-        run_folder = f"Run_{run_num} {lmo_num}".strip()
-        cap_folder = f"Cap_{cap_num}".strip()
-        
-        upload_path = os.path.join(base_path, run_folder, cap_folder)
-        os.makedirs(upload_path, exist_ok=True)
-        write_txt("upload_path.txt", upload_path)
+        # Test 1 files are handled entirely by upload_run API endpoints and don't need upload_path.txt
+        return jsonify({"status": "success", "success": True, "upload_path": ""})
         
     elif test == 2:
         pma = data.get('pmaArea', '').strip()

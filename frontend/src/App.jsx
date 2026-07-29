@@ -617,18 +617,6 @@ function App() {
                 </>
               ) : (
                 <>
-                  <div className="form-group">
-                    <label>Run Number (#)</label>
-                    <input type="text" name="runNumber" value={formData.runNumber} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Cap Number (##)</label>
-                    <input type="text" name="capNumber" value={formData.capNumber} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>LMO Number (####-##)</label>
-                    <input type="text" name="lmoNumber" value={formData.lmoNumber} onChange={handleInputChange} />
-                  </div>
                   
                   <div className="form-group" style={{ marginTop: '2rem' }}>
                     <label style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'block' }}>Upload Run Folders</label>
