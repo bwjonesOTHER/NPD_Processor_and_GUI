@@ -436,7 +436,7 @@ export default function GenericPlotter({ API_BASE, onBack }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {currentImages.map((img, idx) => (
               <div key={idx} style={{ background: 'var(--panel-bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <div style={{ width: '100%', height: '1000px' }}>
+                <div style={{ width: '100%', height: '700px' }}>
                   <InteractivePlot ref={el => currentRefs.current[idx] = el} plotData={img} />
                 </div>
               </div>
