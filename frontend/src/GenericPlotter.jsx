@@ -94,6 +94,35 @@ export default function GenericPlotter({ API_BASE, onBack }) {
     }
   };
 
+  const [isDraggingData, setIsDraggingData] = useState(false);
+  const [isDraggingCal, setIsDraggingCal] = useState(false);
+
+  const handleDragOver = (e, setDragging) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+  
+  const handleDragLeave = (e, setDragging) => {
+    e.preventDefault();
+    setDragging(false);
+  };
+  
+  const handleDropData = (e) => {
+    e.preventDefault();
+    setIsDraggingData(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleDataUpload({ target: { files: e.dataTransfer.files } });
+    }
+  };
+  
+  const handleDropCal = (e) => {
+    e.preventDefault();
+    setIsDraggingCal(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleCalUpload({ target: { files: e.dataTransfer.files } });
+    }
+  };
+
   const generatePlots = async () => {
     if (dataFiles.length === 0) {
       setError("Please upload at least one File (CSV or S2P).");
@@ -173,10 +202,22 @@ export default function GenericPlotter({ API_BASE, onBack }) {
           <input type="file" multiple id="genericDataUpload" style={{ display: 'none' }} onChange={handleDataUpload} />
           <div 
             onClick={() => document.getElementById('genericDataUpload').click()}
-            style={{ border: '2px dashed var(--border)', padding: '2rem 1rem', textAlign: 'center', borderRadius: '8px', cursor: 'pointer', background: 'rgba(0,0,0,0.2)', marginBottom: '1rem' }}
+            onDragOver={(e) => handleDragOver(e, setIsDraggingData)}
+            onDragLeave={(e) => handleDragLeave(e, setIsDraggingData)}
+            onDrop={handleDropData}
+            style={{ 
+              border: `2px dashed ${isDraggingData ? 'var(--accent)' : 'var(--border)'}`, 
+              padding: '2rem 1rem', 
+              textAlign: 'center', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              background: isDraggingData ? 'rgba(var(--accent-rgb), 0.1)' : 'rgba(0,0,0,0.2)', 
+              marginBottom: '1rem',
+              transition: 'all 0.2s ease'
+            }}
           >
-            <UploadCloud size={32} color="var(--accent)" style={{ marginBottom: '0.5rem' }} />
-            <div>Click to upload Files</div>
+            <UploadCloud size={32} color={isDraggingData ? "var(--text)" : "var(--accent)"} style={{ marginBottom: '0.5rem' }} />
+            <div>{isDraggingData ? "Drop Files Here" : "Click or Drag Files here"}</div>
           </div>
           {dataFiles.length > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
@@ -192,10 +233,22 @@ export default function GenericPlotter({ API_BASE, onBack }) {
           <input type="file" multiple id="genericCalUpload" style={{ display: 'none' }} onChange={handleCalUpload} accept=".s2p" />
           <div 
             onClick={() => document.getElementById('genericCalUpload').click()}
-            style={{ border: '2px dashed var(--border)', padding: '2rem 1rem', textAlign: 'center', borderRadius: '8px', cursor: 'pointer', background: 'rgba(0,0,0,0.2)', marginBottom: '1rem' }}
+            onDragOver={(e) => handleDragOver(e, setIsDraggingCal)}
+            onDragLeave={(e) => handleDragLeave(e, setIsDraggingCal)}
+            onDrop={handleDropCal}
+            style={{ 
+              border: `2px dashed ${isDraggingCal ? 'var(--accent)' : 'var(--border)'}`, 
+              padding: '2rem 1rem', 
+              textAlign: 'center', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              background: isDraggingCal ? 'rgba(var(--accent-rgb), 0.1)' : 'rgba(0,0,0,0.2)', 
+              marginBottom: '1rem',
+              transition: 'all 0.2s ease'
+            }}
           >
-            <UploadCloud size={32} color="var(--accent)" style={{ marginBottom: '0.5rem' }} />
-            <div>Click to upload Cal files</div>
+            <UploadCloud size={32} color={isDraggingCal ? "var(--text)" : "var(--accent)"} style={{ marginBottom: '0.5rem' }} />
+            <div>{isDraggingCal ? "Drop Cal Files Here" : "Click or Drag Cal files here"}</div>
           </div>
           {calFiles.length > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
