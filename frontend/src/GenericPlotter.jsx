@@ -16,10 +16,13 @@ export default function GenericPlotter({ API_BASE, onBack }) {
   
   const [activeTab, setActiveTab] = useState('data'); // 'data' or 'vswr'
   
+  const [isUploadingRefFile, setIsUploadingRefFile] = useState(false);
+  
   const [plotParams, setPlotParams] = useState({
     freq_min: '',
     freq_max: '',
     plot_s12: false,
+    plot_density: false,
     n_avg: 1,
     y_upper_npd: '',
     y_lower_npd: '',
@@ -28,7 +31,8 @@ export default function GenericPlotter({ API_BASE, onBack }) {
     y_upper_s21: '',
     y_lower_s21: '',
     u_bound_s21: '',
-    l_bound_s21: ''
+    l_bound_s21: '',
+    average_data_path: ''
   });
 
   const dataPlotRefs = useRef([]);
@@ -120,6 +124,28 @@ export default function GenericPlotter({ API_BASE, onBack }) {
     setIsDraggingCal(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleCalUpload({ target: { files: e.dataTransfer.files } });
+    }
+  };
+
+  const handleReferenceFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploadingRefFile(true);
+    try {
+      const data = new FormData();
+      data.append('file', file);
+      const res = await fetch(`${API_BASE}/upload_reference_file`, { method: 'POST', body: data });
+      const json = await res.json();
+      if (json.success && json.path) {
+        setPlotParams(prev => ({ ...prev, average_data_path: json.path }));
+      } else {
+        alert('Upload error: ' + (json.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Upload error: ' + err.message);
+    } finally {
+      setIsUploadingRefFile(false);
+      e.target.value = '';
     }
   };
 
@@ -277,6 +303,32 @@ export default function GenericPlotter({ API_BASE, onBack }) {
               <input type="number" step="1" min="1" value={plotParams.n_avg} onChange={e => setPlotParams({...plotParams, n_avg: e.target.value})} placeholder="1" />
             </div>
             <div className="input-group">
+              <label>Average Data File</label>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={isUploadingRefFile}
+                  onClick={() => document.getElementById('genericRefFileInput').click()}
+                  style={{ padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
+                >
+                  {isUploadingRefFile ? 'Uploading...' : 'Upload File'}
+                </button>
+                <span style={{ fontSize: '0.8rem', color: plotParams.average_data_path ? 'var(--text-main)' : 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {plotParams.average_data_path
+                    ? plotParams.average_data_path.split(/[/\\]/).pop()
+                    : 'No file selected'}
+                </span>
+              </div>
+              <input
+                type="file"
+                id="genericRefFileInput"
+                accept=".xlsx,.xls,.csv"
+                style={{ display: 'none' }}
+                onChange={handleReferenceFileUpload}
+              />
+            </div>
+            <div className="input-group">
               <label>S21 Upper Bound Offset</label>
               <input type="number" step="0.1" value={plotParams.u_bound_s21} onChange={e => setPlotParams({...plotParams, u_bound_s21: e.target.value})} placeholder="2" />
             </div>
@@ -294,8 +346,8 @@ export default function GenericPlotter({ API_BASE, onBack }) {
             </div>
             <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
               <label htmlFor="generic_plot_s12" className="toggle-row-label">
-                Use S12 of SpecAn Calibration
-                <span className="toggle-row-hint">Check to use the S12 parameter of the SpecAn calibration file instead of S21.</span>
+                Use S12 instead of S21
+                <span className="toggle-row-hint">Use the S12 parameter of calibration files instead of S21.</span>
               </label>
               <span className="toggle-switch">
                 <input
@@ -303,6 +355,21 @@ export default function GenericPlotter({ API_BASE, onBack }) {
                   id="generic_plot_s12"
                   checked={!!plotParams.plot_s12}
                   onChange={e => setPlotParams({...plotParams, plot_s12: e.target.checked})}
+                />
+                <span className="toggle-switch-track"></span>
+              </span>
+            </div>
+            <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
+              <label htmlFor="generic_plot_density" className="toggle-row-label">
+                Plot NPD instead of NP
+                <span className="toggle-row-hint">Plot Noise Power Density (dBm/Hz) instead of Noise Power (dBm).</span>
+              </label>
+              <span className="toggle-switch">
+                <input
+                  type="checkbox"
+                  id="generic_plot_density"
+                  checked={!!plotParams.plot_density}
+                  onChange={e => setPlotParams({...plotParams, plot_density: e.target.checked})}
                 />
                 <span className="toggle-switch-track"></span>
               </span>

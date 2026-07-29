@@ -1606,6 +1606,9 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
     """
     import glob
     import os
+    import pandas as pd
+    import numpy as np
+    import skrf as rf
     
     # Sanitize bound params: convert empty strings to None, strings to floats
     def safe_float(v, default=None):
@@ -1620,8 +1623,8 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
     l_bound_npd = safe_float(l_bound_npd, 2)
     u_bound_s21 = safe_float(u_bound_s21, 2)
     l_bound_s21 = safe_float(l_bound_s21, 2)
-    freq_min = safe_float(freq_min, 0.1)
-    freq_max = safe_float(freq_max, 50)
+    freq_min = safe_float(freq_min, None)
+    freq_max = safe_float(freq_max, None)
     
     data_plots = []
     vswr_plots = []
@@ -1632,19 +1635,50 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
     csv_files = sorted(glob.glob(os.path.join(data_folder, "*.csv")))
     s2p_files = sorted(glob.glob(os.path.join(data_folder, "*.s2p")))
     
+    # Auto-detect frequency range if not provided
+    if freq_min is None or freq_max is None:
+        auto_min = float('inf')
+        auto_max = float('-inf')
+        
+        if csv_files:
+            try:
+                df = pd.read_csv(csv_files[0], on_bad_lines='skip', encoding='latin1', engine='python', names=range(10))
+                num_df = df.apply(pd.to_numeric, errors='coerce')
+                freq = num_df.values[:, 0]
+                freq = freq[~np.isnan(freq)]
+                if len(freq) > 0:
+                    if freq[0] > 100:
+                        freq = freq / 1e9
+                    auto_min = min(auto_min, float(freq.min()))
+                    auto_max = max(auto_max, float(freq.max()))
+            except Exception:
+                pass
+                
+        if s2p_files:
+            try:
+                net = rf.Network(s2p_files[0])
+                freq = net.f / 1e9
+                auto_min = min(auto_min, float(freq.min()))
+                auto_max = max(auto_max, float(freq.max()))
+            except Exception:
+                pass
+                
+        if auto_min != float('inf'):
+            if freq_min is None: freq_min = auto_min
+            if freq_max is None: freq_max = auto_max
+        else:
+            if freq_min is None: freq_min = 0.1
+            if freq_max is None: freq_max = 50
+    
     if csv_files:
-        # Plot CSV files as NP
-        p_np = plotNPD(csv_files, [], "Data", freq_min, freq_max, u_bound_npd, l_bound_npd, None, n_avg, cal_folder, output_folder, plot_density=False, apply_cal=bool(cal_folder), test_type=5, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=plot_s12)
+        # Plot CSV files as NPD/NP based on plot_density
+        p_np = plotNPD(csv_files, [], "Data", freq_min, freq_max, u_bound_npd, l_bound_npd, None, n_avg, cal_folder, output_folder, plot_density=plot_density, apply_cal=bool(cal_folder), test_type=5, average_data_path=average_data_path, y_upper_npd=None, y_lower_npd=None, plot_s12=plot_s12)
         if p_np:
             data_plots.append(p_np)
-        # Plot CSV files as NPD
-        p_npd = plotNPD(csv_files, [], "Data", freq_min, freq_max, u_bound_npd, l_bound_npd, None, n_avg, cal_folder, output_folder, plot_density=True, apply_cal=bool(cal_folder), test_type=5, average_data_path="", y_upper_npd=None, y_lower_npd=None, plot_s12=plot_s12)
-        if p_npd:
-            data_plots.append(p_npd)
             
     if s2p_files:
         # Plot S2P files as S21
-        p_s21 = plotS21(s2p_files, [], "Data", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=5, apply_cal=bool(cal_folder), average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=plot_s12)
+        p_s21 = plotS21(s2p_files, [], "Data", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=5, apply_cal=bool(cal_folder), average_data_path=average_data_path, y_upper_s21=None, y_lower_s21=None, plot_s12=plot_s12)
         if p_s21:
             data_plots.append(p_s21)
         
@@ -1682,4 +1716,3 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
             vswr_plots.append({"data": vswr_traces, "layout": vswr_layout, "title": "VSWR"})
             
     return data_plots, vswr_plots
-

@@ -849,10 +849,13 @@ def api_generate_plots():
             freq_max = float(params.get('freq_max')) if params.get('freq_max') not in [None, ""] else None
             n_avg = int(params.get('n_avg', 1)) if params.get('n_avg') not in [None, ""] else 1
             plot_s12 = bool(params.get('plot_s12', False))
+            plot_density = bool(params.get('plot_density', False))
+            average_data_path = params.get('average_data_path', '')
             
             data_plots, vswr_plots = plot_generator.plotGeneric(
                 data_folder, cal_folder, temp_out_dir,
                 freq_min=freq_min, freq_max=freq_max, n_avg=n_avg, plot_s12=plot_s12,
+                plot_density=plot_density, average_data_path=average_data_path,
                 u_bound_npd=params.get('u_bound_npd'), l_bound_npd=params.get('l_bound_npd'),
                 u_bound_s21=params.get('u_bound_s21'), l_bound_s21=params.get('l_bound_s21')
             )
