@@ -952,22 +952,6 @@ function App() {
                       <div key={idx} style={{ background: 'var(--panel-bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ width: '100%', height: '300px', position: 'relative' }}>
                           <InteractivePlot ref={el => plotRefs.current[idx] = el} plotData={img} />
-                          
-                          <div 
-                            style={{ position: 'absolute', top: 5, right: 35, cursor: 'pointer', background: 'rgba(0,0,0,0.5)', padding: '4px', borderRadius: '4px', zIndex: 10 }}
-                            onClick={() => {
-                              const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(img));
-                              const downloadAnchorNode = document.createElement('a');
-                              downloadAnchorNode.setAttribute("href", dataStr);
-                              downloadAnchorNode.setAttribute("download", img.filename.replace('.png', '.json'));
-                              document.body.appendChild(downloadAnchorNode);
-                              downloadAnchorNode.click();
-                              downloadAnchorNode.remove();
-                            }}
-                            title="Download Debug JSON"
-                          >
-                            <span style={{color: 'white', fontSize: '10px', fontWeight: 'bold'}}>JSON</span>
-                          </div>
 
                           <div 
                             style={{ position: 'absolute', top: 5, right: 5, cursor: 'pointer', background: 'rgba(0,0,0,0.5)', padding: '4px', borderRadius: '4px', zIndex: 10 }}
