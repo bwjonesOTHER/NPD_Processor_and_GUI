@@ -344,35 +344,28 @@ export default function GenericPlotter({ API_BASE, onBack }) {
               <label>NPD Lower Bound Offset</label>
               <input type="number" step="0.1" value={plotParams.l_bound_npd} onChange={e => setPlotParams({...plotParams, l_bound_npd: e.target.value})} placeholder="2" />
             </div>
-            <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
-              <label htmlFor="generic_plot_s12" className="toggle-row-label">
-                Use S12 instead of S21
-                <span className="toggle-row-hint">Use the S12 parameter of calibration files instead of S21.</span>
-              </label>
-              <span className="toggle-switch">
-                <input
-                  type="checkbox"
-                  id="generic_plot_s12"
-                  checked={!!plotParams.plot_s12}
-                  onChange={e => setPlotParams({...plotParams, plot_s12: e.target.checked})}
-                />
-                <span className="toggle-switch-track"></span>
-              </span>
-            </div>
-            <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
-              <label htmlFor="generic_plot_density" className="toggle-row-label">
-                Plot NPD instead of NP
-                <span className="toggle-row-hint">Plot Noise Power Density (dBm/Hz) instead of Noise Power (dBm).</span>
-              </label>
-              <span className="toggle-switch">
-                <input
-                  type="checkbox"
-                  id="generic_plot_density"
-                  checked={!!plotParams.plot_density}
-                  onChange={e => setPlotParams({...plotParams, plot_density: e.target.checked})}
-                />
-                <span className="toggle-switch-track"></span>
-              </span>
+            <div className="input-group">
+              <label>Plot Options</label>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', height: '38px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', margin: 0, fontWeight: 'normal', fontSize: '0.9rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!plotParams.plot_s12}
+                    onChange={e => setPlotParams({...plotParams, plot_s12: e.target.checked})}
+                    style={{ width: '16px', height: '16px', margin: 0 }}
+                  />
+                  <span>Use S12</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', margin: 0, fontWeight: 'normal', fontSize: '0.9rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!plotParams.plot_density}
+                    onChange={e => setPlotParams({...plotParams, plot_density: e.target.checked})}
+                    style={{ width: '16px', height: '16px', margin: 0 }}
+                  />
+                  <span>Plot NPD</span>
+                </label>
+              </div>
             </div>
           </div>
 
