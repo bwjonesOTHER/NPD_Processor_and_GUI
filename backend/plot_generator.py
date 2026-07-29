@@ -127,10 +127,6 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
         parent_run = os.path.dirname(run_folder)
         if parent_run and os.path.isdir(parent_run):
             search_dirs.append(parent_run)
-            
-        grandparent = os.path.dirname(parent_run)
-        if grandparent and os.path.isdir(grandparent):
-            search_dirs.append(grandparent)
 
     cal_files_to_load = []
     found_base_bulk = False

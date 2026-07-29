@@ -314,6 +314,15 @@ def upload_test_data():
         shutil.rmtree(base_path)
     os.makedirs(base_path, exist_ok=True)
     
+    # Clean up previous state files to prevent cross-contamination
+    import glob
+    for txt_file in glob.glob("*.txt"):
+        if txt_file not in ["requirements.txt", "debug_log.txt", "SelectedRuns.txt"]:
+            try:
+                os.remove(txt_file)
+            except:
+                pass
+                
     def save_files(files_list, subfolder):
         dest_folder = os.path.join(base_path, subfolder)
         os.makedirs(dest_folder, exist_ok=True)
@@ -382,8 +391,16 @@ def upload_run_files():
         dest_folder = os.path.join(base_path, f'Run_{run_index}')
     
     # Clean up old files to conserve disk space ONLY on the first chunk
-    if chunk_index == '0' and os.path.exists(dest_folder):
-        shutil.rmtree(dest_folder)
+    if chunk_index == '0':
+        import glob
+        for txt_file in glob.glob("*.txt"):
+            if txt_file not in ["requirements.txt", "debug_log.txt", "SelectedRuns.txt"]:
+                try:
+                    os.remove(txt_file)
+                except:
+                    pass
+        if os.path.exists(dest_folder):
+            shutil.rmtree(dest_folder)
         
     os.makedirs(dest_folder, exist_ok=True)
     
