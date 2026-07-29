@@ -2,7 +2,7 @@ import React, { useRef, useImperativeHandle, forwardRef, useState } from 'react'
 import Plot from 'react-plotly.js';
 import Plotly from 'plotly.js-dist-min';
 
-const InteractivePlot = forwardRef(({ plotData, height = '300px', onPlotError }, ref) => {
+const InteractivePlot = forwardRef(({ plotData, height = '100%', onPlotError }, ref) => {
   const plotRef = useRef(null);
   const [renderError, setRenderError] = useState(null);
 
