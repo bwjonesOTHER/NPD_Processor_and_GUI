@@ -511,6 +511,34 @@ function App() {
     { id: 1, title: 'Data Source & Info' },
     { id: 4, title: 'Process' },
   ];
+  const renderFolderUpload = (id, label, files, onChangeHandler, isOptional = false) => (
+    <div className="form-group" style={{ marginBottom: '1rem' }}>
+      <label style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '0.5rem', display: 'block' }}>
+        {label} {isOptional ? <span style={{color: 'var(--text-muted)', fontSize: '0.85rem'}}>(Optional)</span> : <span style={{color: 'var(--accent)', fontSize: '0.85rem'}}>(Required)</span>}
+      </label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+        <input 
+          type="file" 
+          id={id} 
+          webkitdirectory="true" 
+          directory="true" 
+          multiple 
+          style={{ display: 'none' }} 
+          onChange={onChangeHandler} 
+        />
+        <button 
+          onClick={() => document.getElementById(id).click()} 
+          className="btn-secondary" 
+          style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
+        >
+          <UploadCloud size={16} /> Choose Folder
+        </button>
+        <span style={{ fontSize: '0.9rem', color: files && files.length > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+          {files && files.length > 0 ? `${files.length} files selected` : 'No folder selected'}
+        </span>
+      </div>
+    </div>
+  );
 
   return (
     <div className="container" style={{ maxWidth: 'min(1800px, 96vw)' }}>
@@ -590,44 +618,20 @@ function App() {
 
               {testType === 2 ? (
                 <>
-                  <div className="form-group">
-                    <label>Bench Data Folder (Required)</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, bench: e.target.files}))} />
-                  </div>
-                  <div className="form-group">
-                    <label>Temp Data Folder (Optional)</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, temp: e.target.files}))} />
-                  </div>
-                  <div className="form-group">
-                    <label>Bench Calibration Files Folder (Optional)</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, cal: e.target.files}))} />
-                  </div>
-                  <div className="form-group">
-                    <label>Temp Calibration Files Folder (Optional)</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest2Files(prev => ({...prev, tempCal: e.target.files}))} />
-                  </div>
+                  {renderFolderUpload('t2_bench', 'Bench Data Folder', test2Files.bench, (e) => setTest2Files(prev => ({...prev, bench: e.target.files})), false)}
+                  {renderFolderUpload('t2_temp', 'Temp Data Folder', test2Files.temp, (e) => setTest2Files(prev => ({...prev, temp: e.target.files})), true)}
+                  {renderFolderUpload('t2_cal', 'Bench Calibration Files Folder', test2Files.cal, (e) => setTest2Files(prev => ({...prev, cal: e.target.files})), true)}
+                  {renderFolderUpload('t2_temp_cal', 'Temp Calibration Files Folder', test2Files.tempCal, (e) => setTest2Files(prev => ({...prev, tempCal: e.target.files})), true)}
                 </>
               ) : testType === 3 ? (
                 <>
-                  <div className="form-group">
-                    <label>Run 1 (Run A) Folder</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest3Files(prev => ({...prev, runA: e.target.files}))} />
-                  </div>
-                  <div className="form-group">
-                    <label>Run 2 (Run B) Folder</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest3Files(prev => ({...prev, runB: e.target.files}))} />
-                  </div>
-                  <div className="form-group">
-                    <label>Calibration (Cable Loss) Folder</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setTest3Files(prev => ({...prev, cal: e.target.files}))} />
-                  </div>
+                  {renderFolderUpload('t3_runA', 'Run 1 (Run A) Folder', test3Files.runA, (e) => setTest3Files(prev => ({...prev, runA: e.target.files})), false)}
+                  {renderFolderUpload('t3_runB', 'Run 2 (Run B) Folder', test3Files.runB, (e) => setTest3Files(prev => ({...prev, runB: e.target.files})), false)}
+                  {renderFolderUpload('t3_cal', 'Calibration (Cable Loss) Folder', test3Files.cal, (e) => setTest3Files(prev => ({...prev, cal: e.target.files})), false)}
                 </>
               ) : testType === 4 ? (
                 <>
-                  <div className="form-group">
-                    <label>Test Data Folder</label>
-                    <input type="file" webkitdirectory="true" directory="true" multiple onChange={(e) => setGeneralFiles(e.target.files)} />
-                  </div>
+                  {renderFolderUpload('t4_data', 'Test Data Folder', generalFiles, (e) => setGeneralFiles(e.target.files), false)}
                 </>
               ) : (
                 <>
