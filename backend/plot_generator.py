@@ -120,13 +120,16 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
     is_temp = "temp" in filepath.lower() or "npdovertemp" in filepath.lower()
     
     # Prioritize Cable Loss folder in the run's parent directory first
-    run_folder = os.path.dirname(filepath)
-    if run_folder and os.path.isdir(run_folder):
-        search_dirs.append(run_folder)
-        
-        parent_run = os.path.dirname(run_folder)
-        if parent_run and os.path.isdir(parent_run):
-            search_dirs.append(parent_run)
+    current_dir = os.path.dirname(filepath)
+    while current_dir and os.path.isdir(current_dir):
+        if os.path.basename(current_dir) == "uploads":
+            break
+        if current_dir not in search_dirs:
+            search_dirs.append(current_dir)
+        new_dir = os.path.dirname(current_dir)
+        if new_dir == current_dir:
+            break
+        current_dir = new_dir
 
     cal_files_to_load = []
     found_base_bulk = False
