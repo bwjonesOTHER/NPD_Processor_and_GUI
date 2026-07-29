@@ -89,7 +89,7 @@ def find_cal_file(folders, cap_num, cal_type):
 
     return None
 
-def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, reference_filepath=None):
+def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, reference_filepath=None, data_file_index=0):
     is_npd = filepath.lower().endswith('.csv')
     is_benchtop = test_type == 3
 
@@ -149,23 +149,16 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             f = find_cal_file(search_dirs, ident_num, cal_type)
             
         if not f:
-            # Fallback: if not found by strict cap_num, just find ANY file containing this cal_type
+            # Fallback: if not found by strict cap_num, collect all matching files
+            matches_for_this_type = []
             for sdir in search_dirs:
-                if f: break
+                if matches_for_this_type: break
                 for root, dirs, files in os.walk(sdir):
-                    if f: break
-                    
-                    # ONLY ONCE PER SEARCH: debug print all files we see in this directory
-                    if cal_type == "SpecA":
-                        try:
-                            with open("debug_cal_loss.txt", "a") as df:
-                                df.write(f"\n--- DEBUG FILES IN {root} ---\n")
-                                for _df in files:
-                                    df.write(f"  {_df}\n")
-                        except: pass
+                    if matches_for_this_type: break
                     
                     # Sort files: prioritize files starting with a number, and sort descending (newest first)
-                    files.sort(key=lambda x: (1 if x and x[0].isdigit() else 0, x), reverse=True)
+                    # For matching multiple cal files with multiple data files, alphabetical sorting is better for 1-to-1 mapping
+                    files.sort()
                     
                     for file in files:
                         if not file.lower().endswith('.s2p'):
@@ -183,24 +176,18 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
                         
                         has_cal_norm = cal_norm in name_norm or (cal_norm == "speca" and "sacable" in name_norm)
                         already_loaded = any((cal_norm in os.path.basename(p).lower().replace(" ", "").replace("_", "")) or (cal_norm == "speca" and "sacable" in os.path.basename(p).lower().replace(" ", "").replace("_", "")) for p in cal_files_to_load)
-                        
-                        if cal_type == "SpecA":
-                            try:
-                                with open("debug_cal_loss.txt", "a") as df:
-                                    df.write(f"  [SpecA eval] {name}\n")
-                                    df.write(f"    is_excluded_data: {is_excluded_data}\n")
-                                    df.write(f"    is_excluded_sec: {is_excluded_sec}\n")
-                                    df.write(f"    is_excluded_red: {is_excluded_red}\n")
-                                    df.write(f"    has_cal_norm: {has_cal_norm}\n")
-                                    df.write(f"    already_loaded: {already_loaded}\n")
-                            except: pass
 
                         if is_excluded_data or is_excluded_sec or is_excluded_red or is_same_file or is_base_speca_exclude:
                             continue
                             
                         if has_cal_norm and not already_loaded:
-                            f = os.path.join(root, file)
-                            break
+                            matches_for_this_type.append(os.path.join(root, file))
+
+            if matches_for_this_type:
+                if len(matches_for_this_type) > 1 and data_file_index > 0:
+                    f = matches_for_this_type[min(data_file_index, len(matches_for_this_type) - 1)]
+                else:
+                    f = matches_for_this_type[0]
                             
         if f:
             if cal_type == "Base" and "bulk" in os.path.basename(f).lower():
@@ -362,7 +349,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     all_labels = []
     all_freqs = []
 
-    def load_np_data(file, current_cal_folder, ref_path=None):
+    def load_np_data(file, current_cal_folder, ref_path=None, data_file_index=0):
         df_all = pd.read_csv(file, on_bad_lines='skip', encoding='latin1', engine='python', names=range(10))
         num_df = df_all.apply(pd.to_numeric, errors='coerce')
         freq = remove_nan(num_df.values[:, 0], remove_infinite=True)
@@ -386,7 +373,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
             
         cal_files_used = []
         if apply_cal:
-            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(file, current_cal_folder, test_type, plot_s12, reference_filepath=ref_path)
+            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(file, current_cal_folder, test_type, plot_s12, reference_filepath=ref_path, data_file_index=data_file_index)
             if freq_cal is not None and len(freq_cal) > 0:
                 freq_cal = np.asarray(freq_cal, dtype=np.float64)
                 total_loss_db = np.asarray(total_loss_db, dtype=np.float64)
@@ -399,7 +386,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         return freq, noise, cal_files_used
 
     ref_freq_full = None
-    for file in all_files:
+    for idx, file in enumerate(all_files):
         serial = extract_serial(file)
         is_temp = True if test_type == 1 else (file in filesA if test_type == 2 else False)
         file_cal_folder = temp_cal_folder if (is_temp and temp_cal_folder) else cal_folder
@@ -407,7 +394,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         # Super Smart Fallback: if this is a Temp trace, use the first Bench trace (if any) as a reference to find its nested Cable Loss
         ref_path = filesB[0] if file in filesA and filesB else None
         
-        freq, noise, cal_files_used = load_np_data(file, file_cal_folder, ref_path=ref_path)
+        freq, noise, cal_files_used = load_np_data(file, file_cal_folder, ref_path=ref_path, data_file_index=idx)
         if len(freq) == 0:
             continue
             
@@ -578,7 +565,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     traces = []
     ref_freq_ghz = None
 
-    for fpath in all_files:
+    for idx, fpath in enumerate(all_files):
         net = rf.Network(fpath)
         freq_ghz = net.f / 1e9
         
@@ -598,7 +585,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         freq_cal, total_loss_db, cal_files_used = None, None, []
         if apply_cal:
             ref_path = filesB[0] if fpath in filesA and filesB else None
-            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(fpath, file_cal_folder, test_type, plot_s12, reference_filepath=ref_path)
+            freq_cal, total_loss_db, cal_files_used = get_calibration_loss(fpath, file_cal_folder, test_type, plot_s12, reference_filepath=ref_path, data_file_index=idx)
 
         freq_ghz = np.asarray(freq_ghz, dtype=np.float64)
         raw_s21 = np.asarray(raw_s21, dtype=np.float64)
