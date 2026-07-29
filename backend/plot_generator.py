@@ -562,13 +562,15 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
 _NPD_DELTA_BAND = (2.7, 4.1)
 
 
-def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=None, ambient_label="Ambient"):
+def plot_npd_delta(ambient, other, other_label, bounds, output_folder, n_avg=20, date_str=None, ambient_label="Ambient"):
     """Plots NPD delta = -(ambient - other) (Hot/Hot2 or Cold/Cold2) as its
     own single trace against a fixed [lower, upper] dBm/Hz pass/fail range
     - kept separate per-comparison (not overlaid together like
     plot_temp_deltas) since the Hot and Cold bounds differ. ambient_label
     lets this cover both the Ambient/Hot/Cold and Ambient2/Hot2/Cold2
-    repeat-run comparisons."""
+    repeat-run comparisons. The delta itself is smoothed with the same
+    moving-average method (_ota_smooth) used for the NPD traces it's
+    built from."""
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     a_freq, a_vals = ambient
     o_freq, o_vals = other
@@ -578,6 +580,8 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=
     min_len = min(len(a_vals), len(o_vals))
     freq = a_freq[:min_len]
     delta = -1 * (a_vals[:min_len] - o_vals[:min_len])
+    delta = _ota_smooth(delta, n_avg)
+    freq = freq[:len(delta)]
 
     lower, upper = bounds
     mask = (freq >= _NPD_DELTA_BAND[0]) & (freq <= _NPD_DELTA_BAND[1])
@@ -1050,11 +1054,11 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     for amb_label, hot_label, cold_label in [("Ambient", "Hot", "Cold"), ("Ambient2", "Hot2", "Cold2")]:
         if amb_label in npd_avg_by_label and hot_label in npd_avg_by_label:
             dp_hot = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[hot_label], hot_label,
-                                     (-0.7, -0.2), output_folder, date_str=date_str, ambient_label=amb_label)
+                                     (-0.8, 0.1), output_folder, n_avg=n_avg, date_str=date_str, ambient_label=amb_label)
             if dp_hot: generated.append(dp_hot)
         if amb_label in npd_avg_by_label and cold_label in npd_avg_by_label:
             dp_cold = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[cold_label], cold_label,
-                                      (0.4, 1.3), output_folder, date_str=date_str, ambient_label=amb_label)
+                                      (0.1, 2.0), output_folder, n_avg=n_avg, date_str=date_str, ambient_label=amb_label)
             if dp_cold: generated.append(dp_cold)
 
     return generated
