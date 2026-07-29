@@ -756,7 +756,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
         "type": "scatter",
         "mode": "lines",
         "name": "Ambient",
-        "line": {"color": "black", "dash": "solid"},
+        "line": {"color": "white", "dash": "solid"},
         "yaxis": "y1"
     })
     traces.append({
