@@ -215,6 +215,12 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             if os.path.isfile(add_file):
                 add_name = os.path.basename(add_file).lower()
                 
+                # Prevent SpecA from being applied to non-NPD plots (e.g., S21 or NP)
+                is_speca_add = "speca" in add_name or "sacable" in add_name
+                if is_speca_add and not is_npd:
+                    continue
+                    
+                
                 # Check if this additional file is meant to OVERRIDE a standard file
                 override_index = -1
                 for i, existing in enumerate(cal_files_to_load):
