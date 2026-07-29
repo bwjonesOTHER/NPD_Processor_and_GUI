@@ -879,42 +879,44 @@ function App() {
                 </div>
               )}
 
-              <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Additional Calibration Files</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <input 
-                    type="file" 
-                    multiple 
-                    id="additionalCalInput" 
-                    style={{ display: 'none' }} 
-                    onChange={handleUploadAdditionalCalFiles} 
-                    accept=".s2p" 
-                  />
-                  <button 
-                    onClick={() => document.getElementById('additionalCalInput').click()} 
-                    className="btn-primary" 
-                    style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', fontSize: '1.1rem' }}
-                    disabled={isUploadingAdditionalCal}
-                  >
-                    <UploadCloud size={20} />
-                    {isUploadingAdditionalCal ? 'Uploading...' : 'Upload Additional Cal Files'}
-                  </button>
-                  {additionalCalCount > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '1rem', color: 'var(--success, #10b981)' }}>
-                        Loaded {additionalCalCount} extra cal file(s)
-                      </span>
-                      <button 
-                        onClick={handleDeleteAdditionalCalFiles}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--error, #ef4444)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
-                        title="Delete additional cal files"
-                      >
-                        <XCircle size={18} />
-                      </button>
-                    </div>
-                  )}
+              {!['2', '3', '4'].includes(testType) && (
+                <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Additional Calibration Files</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <input 
+                      type="file" 
+                      multiple 
+                      id="additionalCalInput" 
+                      style={{ display: 'none' }} 
+                      onChange={handleUploadAdditionalCalFiles} 
+                      accept=".s2p" 
+                    />
+                    <button 
+                      onClick={() => document.getElementById('additionalCalInput').click()} 
+                      className="btn-primary" 
+                      style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', fontSize: '1.1rem' }}
+                      disabled={isUploadingAdditionalCal}
+                    >
+                      <UploadCloud size={20} />
+                      {isUploadingAdditionalCal ? 'Uploading...' : 'Upload Additional Cal Files'}
+                    </button>
+                    {additionalCalCount > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1rem', color: 'var(--success, #10b981)' }}>
+                          Loaded {additionalCalCount} extra cal file(s)
+                        </span>
+                        <button 
+                          onClick={handleDeleteAdditionalCalFiles}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--error, #ef4444)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
+                          title="Delete additional cal files"
+                        >
+                          <XCircle size={18} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <button className="btn-primary" onClick={startProcessing} disabled={isProcessing} style={{ marginTop: '2rem' }}>
                 {isProcessing ? <Activity className="animate-spin" size={18} /> : <Play size={18} />}
