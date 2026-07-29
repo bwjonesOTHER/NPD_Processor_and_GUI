@@ -100,7 +100,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
         if is_benchtop:
             cal_types = ["Base", "Bulkhead", "SpecA"]
         else:
-            cal_types = ["Base", "Bulkhead", "SpecA"]
+            cal_types = ["Base", "Hat", "Bulkhead", "SpecA"]
     else:
         # Only use Cap for Tile Benchtop (which has a Cap number). Arrays use Hat.
         if is_benchtop and ident_num is not None:
