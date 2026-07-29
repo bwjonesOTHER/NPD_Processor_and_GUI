@@ -852,7 +852,7 @@ def api_generate_plots():
             plot_density = bool(params.get('plot_density', False))
             average_data_path = params.get('average_data_path', '')
             
-            data_plots, vswr_plots = plot_generator.plotGeneric(
+            csv_plots, s2p_plots = plot_generator.plotGeneric(
                 data_folder, cal_folder, temp_out_dir,
                 freq_min=freq_min, freq_max=freq_max, n_avg=n_avg, plot_s12=plot_s12,
                 plot_density=plot_density, average_data_path=average_data_path,
@@ -862,8 +862,8 @@ def api_generate_plots():
             shutil.rmtree(temp_out_dir, ignore_errors=True)
             return jsonify({
                 "success": True, 
-                "plots_data": sanitize_for_json(data_plots), 
-                "plots_vswr": sanitize_for_json(vswr_plots),
+                "plots_csv": sanitize_for_json(csv_plots), 
+                "plots_s2p": sanitize_for_json(s2p_plots),
                 "warnings": plot_generator.get_warnings()
             })
             
