@@ -1627,10 +1627,11 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
     freq_max = safe_float(freq_max, None)
     
     csv_plots = []
-    s2p_plots = []
+    s21_plots = []
+    vswr_plots = []
     
     if not os.path.exists(data_folder):
-        return csv_plots, s2p_plots
+        return csv_plots, s21_plots, vswr_plots
         
     csv_files = sorted(glob.glob(os.path.join(data_folder, "*.csv")))
     s2p_files = sorted(glob.glob(os.path.join(data_folder, "*.s2p")))
@@ -1680,7 +1681,7 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
         # Plot S2P files as S21
         p_s21 = plotS21(s2p_files, [], "Data", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=5, apply_cal=bool(cal_folder), average_data_path=average_data_path, y_upper_s21=None, y_lower_s21=None, plot_s12=plot_s12)
         if p_s21:
-            s2p_plots.append(p_s21)
+            s21_plots.append(p_s21)
         
         # Plot S2P files as VSWR (inline — no separate plotVSWR function exists)
         vswr_traces = []
@@ -1713,6 +1714,6 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
                     {"type": "line", "x0": freq_max, "x1": freq_max, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}}
                 ]
             }
-            s2p_plots.append({"data": vswr_traces, "layout": vswr_layout, "title": "VSWR"})
+            vswr_plots.append({"data": vswr_traces, "layout": vswr_layout, "title": "VSWR"})
             
-    return csv_plots, s2p_plots
+    return csv_plots, s21_plots, vswr_plots

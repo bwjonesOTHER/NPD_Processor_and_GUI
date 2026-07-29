@@ -12,9 +12,10 @@ export default function GenericPlotter({ API_BASE, onBack }) {
   const [error, setError] = useState(null);
   
   const [imagesCSV, setImagesCSV] = useState([]);
-  const [imagesS2P, setImagesS2P] = useState([]);
+  const [imagesS21, setImagesS21] = useState([]);
+  const [imagesVSWR, setImagesVSWR] = useState([]);
   
-  const [activeTab, setActiveTab] = useState('csv'); // 'csv' or 's2p'
+  const [activeTab, setActiveTab] = useState('csv'); // 'csv', 's21', or 'vswr'
   
   const [isUploadingRefFile, setIsUploadingRefFile] = useState(false);
   
@@ -36,6 +37,7 @@ export default function GenericPlotter({ API_BASE, onBack }) {
   });
 
   const dataPlotRefs = useRef([]);
+  const s21PlotRefs = useRef([]);
   const vswrPlotRefs = useRef([]);
 
   const handleDataUpload = async (e) => {
@@ -166,9 +168,12 @@ export default function GenericPlotter({ API_BASE, onBack }) {
       const data = await res.json();
       if (res.ok) {
         setImagesCSV(data.plots_csv || []);
-        setImagesS2P(data.plots_s2p || []);
-        if ((data.plots_csv || []).length === 0 && (data.plots_s2p || []).length > 0) {
-          setActiveTab('s2p');
+        setImagesS21(data.plots_s21 || []);
+        setImagesVSWR(data.plots_vswr || []);
+        if ((data.plots_csv || []).length === 0 && (data.plots_s21 || []).length > 0) {
+          setActiveTab('s21');
+        } else if ((data.plots_csv || []).length === 0 && (data.plots_s21 || []).length === 0 && (data.plots_vswr || []).length > 0) {
+          setActiveTab('vswr');
         } else {
           setActiveTab('csv');
         }
@@ -183,8 +188,8 @@ export default function GenericPlotter({ API_BASE, onBack }) {
   };
 
   const exportZip = async () => {
-    const images = activeTab === 'csv' ? imagesCSV : imagesS2P;
-    const refs = activeTab === 'csv' ? dataPlotRefs : vswrPlotRefs;
+    const images = activeTab === 'csv' ? imagesCSV : activeTab === 's21' ? imagesS21 : imagesVSWR;
+    const refs = activeTab === 'csv' ? dataPlotRefs : activeTab === 's21' ? s21PlotRefs : vswrPlotRefs;
     if (images.length === 0) return;
     
     try {
@@ -211,8 +216,8 @@ export default function GenericPlotter({ API_BASE, onBack }) {
     }
   };
 
-  const currentImages = activeTab === 'csv' ? imagesCSV : imagesS2P;
-  const currentRefs = activeTab === 'csv' ? dataPlotRefs : vswrPlotRefs;
+  const currentImages = activeTab === 'csv' ? imagesCSV : activeTab === 's21' ? imagesS21 : imagesVSWR;
+  const currentRefs = activeTab === 'csv' ? dataPlotRefs : activeTab === 's21' ? s21PlotRefs : vswrPlotRefs;
 
   return (
     <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
@@ -380,7 +385,7 @@ export default function GenericPlotter({ API_BASE, onBack }) {
         {error && <div style={{ color: 'var(--error)', marginBottom: '1rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '8px' }}>{error}</div>}
         
         {/* Tabs */}
-        {(imagesCSV.length > 0 || imagesS2P.length > 0) && (
+        {(imagesCSV.length > 0 || imagesS21.length > 0 || imagesVSWR.length > 0) && (
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
             <button 
               onClick={() => setActiveTab('csv')} 
@@ -389,10 +394,16 @@ export default function GenericPlotter({ API_BASE, onBack }) {
               CSV (NP/NPD) ({imagesCSV.length})
             </button>
             <button 
-              onClick={() => setActiveTab('s2p')} 
-              style={{ background: 'none', border: 'none', padding: '0.5rem 1rem', borderBottom: activeTab === 's2p' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 's2p' ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600 }}
+              onClick={() => setActiveTab('s21')} 
+              style={{ background: 'none', border: 'none', padding: '0.5rem 1rem', borderBottom: activeTab === 's21' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 's21' ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600 }}
             >
-              S2P (S21/VSWR) ({imagesS2P.length})
+              S21 ({imagesS21.length})
+            </button>
+            <button 
+              onClick={() => setActiveTab('vswr')} 
+              style={{ background: 'none', border: 'none', padding: '0.5rem 1rem', borderBottom: activeTab === 'vswr' ? '2px solid var(--accent)' : '2px solid transparent', color: activeTab === 'vswr' ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600 }}
+            >
+              VSWR ({imagesVSWR.length})
             </button>
             
             <div style={{ marginLeft: 'auto', marginBottom: '0.5rem' }}>
@@ -408,7 +419,7 @@ export default function GenericPlotter({ API_BASE, onBack }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {currentImages.map((img, idx) => (
               <div key={idx} style={{ background: 'var(--panel-bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <div style={{ width: '100%', height: '500px' }}>
+                <div style={{ width: '100%', height: '1000px' }}>
                   <InteractivePlot ref={el => currentRefs.current[idx] = el} plotData={img} />
                 </div>
               </div>
