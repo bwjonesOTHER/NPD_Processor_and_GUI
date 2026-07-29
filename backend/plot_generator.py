@@ -23,6 +23,21 @@ import glob
 # override - see generate_plots()).
 DEFAULT_AVERAGE_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "NPD_AVERAGED_DATA.csv")
 
+# NPD CSV smoothing window depends on the sweep's actual frequency step,
+# not a fixed/GUI-supplied n_avg - a finer step (more points over the same
+# span) needs a wider window to get comparable smoothing, a coarse step
+# needs none. Computed per-file, since different files/folders can use
+# different steps. This only applies to NPD/NP data read from .csv files -
+# S21/S22 smoothing (from .s2p files) is unaffected and keeps using the
+# passed-in n_avg.
+_NPD_STEP_TO_NAVG = [(0.3, 83), (1.0, 25), (25.0, 1)]
+
+def n_avg_for_freq_step(freq):
+    if len(freq) < 2:
+        return 1
+    step_mhz = abs(np.median(np.diff(freq))) * 1000.0  # freq is in GHz
+    return min(_NPD_STEP_TO_NAVG, key=lambda pair: abs(pair[0] - step_mhz))[1]
+
 def remove_nan(arr, remove_infinite=False):
     if not isinstance(arr, np.ndarray):
         raise TypeError("Input must be a NumPy array.")
@@ -270,9 +285,10 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
             
-        if n_avg > 1:
-            noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
-            freq = freq[int(n_avg / 2):int(1 - n_avg / 2):1]
+        npd_n_avg = n_avg_for_freq_step(freq)
+        if npd_n_avg > 1:
+            noise = np.convolve(noise, np.ones(npd_n_avg) / npd_n_avg, mode='valid')
+            freq = freq[int(npd_n_avg / 2):int(1 - npd_n_avg / 2):1]
         return freq, noise
 
     ref_freq_full = None
@@ -562,15 +578,16 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
 _NPD_DELTA_BAND = (2.7, 4.1)
 
 
-def plot_npd_delta(ambient, other, other_label, bounds, output_folder, n_avg=20, date_str=None, ambient_label="Ambient"):
+def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=None, ambient_label="Ambient"):
     """Plots NPD delta = -(ambient - other) (Hot/Hot2 or Cold/Cold2) as its
     own single trace against a fixed [lower, upper] dBm/Hz pass/fail range
     - kept separate per-comparison (not overlaid together like
     plot_temp_deltas) since the Hot and Cold bounds differ. ambient_label
     lets this cover both the Ambient/Hot/Cold and Ambient2/Hot2/Cold2
     repeat-run comparisons. The delta itself is smoothed with the same
-    moving-average method (_ota_smooth) used for the NPD traces it's
-    built from."""
+    method used for the NPD traces it's built from - the window is picked
+    from the data's own frequency step (see n_avg_for_freq_step), not a
+    fixed/GUI-supplied n_avg."""
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     a_freq, a_vals = ambient
     o_freq, o_vals = other
@@ -580,7 +597,7 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, n_avg=20,
     min_len = min(len(a_vals), len(o_vals))
     freq = a_freq[:min_len]
     delta = -1 * (a_vals[:min_len] - o_vals[:min_len])
-    delta = _ota_smooth(delta, n_avg)
+    delta = _ota_smooth(delta, n_avg_for_freq_step(freq))
     freq = freq[:len(delta)]
 
     lower, upper = bounds
@@ -843,7 +860,7 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         freq, raw = _ota_load_csv(f, 2 if plot_density else 1)
         if len(freq) == 0:
             continue
-        smoothed = _ota_smooth(raw, n_avg)
+        smoothed = _ota_smooth(raw, n_avg_for_freq_step(freq))
         freq_smooth = freq[:len(smoothed)]
 
         # NP/NPD only needs the SpecAn cal file — Base/Hat don't apply to it
@@ -1054,11 +1071,11 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     for amb_label, hot_label, cold_label in [("Ambient", "Hot", "Cold"), ("Ambient2", "Hot2", "Cold2")]:
         if amb_label in npd_avg_by_label and hot_label in npd_avg_by_label:
             dp_hot = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[hot_label], hot_label,
-                                     (-0.8, 0.1), output_folder, n_avg=n_avg, date_str=date_str, ambient_label=amb_label)
+                                     (-0.8, 0.1), output_folder, date_str=date_str, ambient_label=amb_label)
             if dp_hot: generated.append(dp_hot)
         if amb_label in npd_avg_by_label and cold_label in npd_avg_by_label:
             dp_cold = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[cold_label], cold_label,
-                                      (0.1, 2.0), output_folder, n_avg=n_avg, date_str=date_str, ambient_label=amb_label)
+                                      (0.1, 2.0), output_folder, date_str=date_str, ambient_label=amb_label)
             if dp_cold: generated.append(dp_cold)
 
     return generated

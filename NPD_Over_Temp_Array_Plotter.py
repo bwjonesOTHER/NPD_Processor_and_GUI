@@ -60,10 +60,28 @@ my_colors = [
     "cyan", "magenta", "brown", "gold", "black"
 ]
 
-def smooth(x):
+def smooth(x, n_avg=n_avg):
     if len(x) < n_avg:
         return x
     return np.convolve(x, np.ones(n_avg)/n_avg, mode="valid")
+
+# NPD CSV smoothing window depends on the sweep's actual frequency step -
+# a finer step (more points over the same span) needs a wider window to
+# get comparable smoothing; a coarse step needs none. Computed per-file
+# since different files/folders can use different steps.
+_NPD_STEP_TO_NAVG = [(0.3, 83), (1.0, 25), (25.0, 1)]
+
+def n_avg_for_freq_step(freq):
+    if len(freq) < 2:
+        return 1
+    step_mhz = abs(np.median(np.diff(freq))) * 1000.0  # freq is in GHz
+    return min(_NPD_STEP_TO_NAVG, key=lambda pair: abs(pair[0] - step_mhz))[1]
+
+def smooth_npd(freq, values):
+    npd_n_avg = n_avg_for_freq_step(freq)
+    values_smooth = smooth(values, npd_n_avg)
+    freq_smooth = freq[: len(values_smooth)]
+    return freq_smooth, values_smooth
 
 def _dedupe_pri_red(files, limit=2):
     # De-dupe: on case-insensitive filesystems (Windows), "*.csv" and "*.CSV"
@@ -136,8 +154,7 @@ def plot_npd(files, title_suffix):
         npd_raw = df.iloc[:, 1].values
         freq = freq[np.isfinite(freq)]
         npd_raw = npd_raw[np.isfinite(npd_raw)]
-        npd_smooth = smooth(npd_raw)
-        freq_smooth = freq[:len(npd_smooth)]
+        freq_smooth, npd_smooth = smooth_npd(freq, npd_raw)
         corrected = npd_smooth
         if APPLY_NPD_CAL:
             corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
@@ -241,8 +258,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         npd_raw = df.iloc[:, 1].values
         freq = freq[np.isfinite(freq)]
         npd_raw = npd_raw[np.isfinite(npd_raw)]
-        npd_smooth = smooth(npd_raw)
-        freq_smooth = freq[:len(npd_smooth)]
+        freq_smooth, npd_smooth = smooth_npd(freq, npd_raw)
         corrected = npd_smooth
         if APPLY_NPD_CAL:
             corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
