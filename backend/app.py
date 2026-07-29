@@ -313,6 +313,15 @@ def upload_test_data():
         import shutil
         shutil.rmtree(base_path)
     os.makedirs(base_path, exist_ok=True)
+    
+    # Clean up previous state files to prevent cross-contamination
+    import glob
+    for txt_file in glob.glob("*.txt"):
+        if txt_file not in ["requirements.txt", "debug_log.txt", "SelectedRuns.txt"]:
+            try:
+                os.remove(txt_file)
+            except:
+                pass
                 
     def save_files(files_list, subfolder):
         dest_folder = os.path.join(base_path, subfolder)
@@ -382,6 +391,13 @@ def upload_run_files():
         dest_folder = os.path.join(base_path, f'Run_{run_index}')
     
     if chunk_index == '0':
+        import glob
+        for txt_file in glob.glob("*.txt"):
+            if txt_file not in ["requirements.txt", "debug_log.txt", "SelectedRuns.txt"]:
+                try:
+                    os.remove(txt_file)
+                except:
+                    pass
         if os.path.exists(dest_folder):
             shutil.rmtree(dest_folder)
         
@@ -438,18 +454,6 @@ def select_runs():
     
     # Legacy support for Test 3
     if 'runA' in data and 'runB' in data:
-        # Test 2 / 3
-        write_txt("RunA_Path.txt", data['runA'])
-        write_txt("RunB_Path.txt", data['runB'])
-        
-        calPath = data.get('calPath', '')
-        if calPath:
-            write_txt("Cal_Path.txt", calPath)
-            
-        tempCalPath = data.get('tempCalPath', '')
-        if tempCalPath:
-            write_txt("Temp_Cal_Path.txt", tempCalPath)
-            
         return jsonify({"status": "success"})
         
     return jsonify({"status": "success"})

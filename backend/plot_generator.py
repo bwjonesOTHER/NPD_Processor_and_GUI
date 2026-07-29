@@ -235,18 +235,11 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
                 else:
                     loss_db = -net.s_db[:, 1, 0] # - (+20) = -20
             else:
-                if not (is_npd and test_type == 1):
-                    # Physically correct math for S21 plots and Test 3 (which lacks the test1 backward bug)
-                    if plot_s12:
-                        loss_db = np.abs(net.s_db[:, 0, 1])
-                    else:
-                        loss_db = np.abs(net.s_db[:, 1, 0])
+                # Physically correct math for S21 plots and Test 3 (which lacks the test1 backward bug)
+                if plot_s12:
+                    loss_db = np.abs(net.s_db[:, 0, 1])
                 else:
-                    # Legacy backward math ONLY for Test 1 NP/NPD plots to match old python script
-                    if plot_s12:
-                        loss_db = -net.s_db[:, 0, 1]
-                    else:
-                        loss_db = -net.s_db[:, 1, 0]
+                    loss_db = np.abs(net.s_db[:, 1, 0])
             
             
             if freq_ref is None:
@@ -1346,20 +1339,14 @@ def generate_plots(params):
     output_folder = params.get('outputFolder', '/tmp')
     cal_folder = params.get('calFolder')
     temp_cal_folder = params.get('tempCalPath')
-    if not temp_cal_folder and os.path.exists("Temp_Cal_Path.txt"):
-        with open("Temp_Cal_Path.txt", "r") as f:
-            temp_cal_folder = f.read().strip()
     average_data_path = params.get('average_data_path', "")
     apply_npd_cal = params.get('apply_npd_cal', False)
     plot_s12 = params.get('plot_s12', False)
 
     # Figure out calibration folder
-    cal_folder = params.get('calFolder', "")
+    cal_folder = params.get('calPath')
     if not cal_folder and len(runs) > 2 and runs[2]:
         cal_folder = runs[2]
-    elif not cal_folder and os.path.exists("Cal_Path.txt"):
-        with open("Cal_Path.txt", "r") as f:
-            cal_folder = f.read().strip()
     if not cal_folder and folderA:
         inner_cal_sn = os.path.join(folderA, "Cable Loss", "SN006")
         inner_cal = os.path.join(folderA, "Cable Loss")
