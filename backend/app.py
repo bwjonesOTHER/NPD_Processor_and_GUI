@@ -460,6 +460,14 @@ def upload_additional_cal():
             
     return jsonify({"success": True, "count": saved_count})
 
+@app.route('/api/delete_additional_cal', methods=['POST'])
+def delete_additional_cal():
+    dest_folder = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
+    import shutil
+    if os.path.exists(dest_folder):
+        shutil.rmtree(dest_folder, ignore_errors=True)
+    return jsonify({"success": True})
+
 @app.route('/api/folders', methods=['GET'])
 def get_folders():
     """Endpoint to fetch directory structures for frontend browser tree."""

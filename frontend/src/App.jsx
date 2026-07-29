@@ -163,6 +163,20 @@ function App() {
     }
   };
 
+  const handleDeleteAdditionalCalFiles = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/delete_additional_cal`, { method: 'POST' });
+      if (res.ok) {
+        setAdditionalCalCount(0);
+      } else {
+        const data = await res.json();
+        alert("Failed to delete additional cal files: " + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert("Error deleting additional cal files: " + err.message);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -868,9 +882,18 @@ function App() {
                         {isUploadingAdditionalCal ? 'Uploading...' : 'Upload Additional Cal Files'}
                       </button>
                       {additionalCalCount > 0 && (
-                        <span style={{ alignSelf: 'center', fontSize: '0.9rem', color: 'var(--success, #10b981)' }}>
-                          Loaded {additionalCalCount} extra cal file(s)
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.9rem', color: 'var(--success, #10b981)' }}>
+                            Loaded {additionalCalCount} extra cal file(s)
+                          </span>
+                          <button 
+                            onClick={handleDeleteAdditionalCalFiles}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--error, #ef4444)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
+                            title="Delete additional cal files"
+                          >
+                            <XCircle size={16} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
