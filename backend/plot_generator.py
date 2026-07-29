@@ -567,7 +567,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
     }
 
 
-def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=False, temp_cal_folder=None):
+def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=1, apply_cal=True, average_data_path="", y_upper_s21=None, y_lower_s21=None, plot_s12=False, temp_cal_folder=None, plot_trace_s2p="S21"):
     all_files = filesA + filesB
     if not all_files:
         return None
@@ -581,7 +581,16 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
     for fpath in all_files:
         net = rf.Network(fpath)
         freq_ghz = net.f / 1e9
-        raw_s21 = net.s_db[:, 1, 0]
+        
+        if plot_trace_s2p == "S11":
+            raw_s21 = net.s_db[:, 0, 0]
+        elif plot_trace_s2p == "S12":
+            raw_s21 = net.s_db[:, 0, 1]
+        elif plot_trace_s2p == "S22":
+            raw_s21 = net.s_db[:, 1, 1]
+        else:
+            raw_s21 = net.s_db[:, 1, 0]
+            
         serial = extract_serial(fpath)
         is_temp = True if test_type == 1 else (fpath in filesA if test_type == 2 else False)
         file_cal_folder = temp_cal_folder if (is_temp and temp_cal_folder) else cal_folder
@@ -709,13 +718,14 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         y_min_bound = max(-40, y_min_val)
         y_max_bound = y_max_val + max(2, (y_max_val - y_min_bound) * 0.05) # Add 5% padding to top
         y_range = [y_min_bound, y_max_bound]
-
-    title = f'S21 Calibrated {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'S21 {title_suffix}, {status}'
+    status = "PASS" if not failed_files else f"FAIL ({', '.join(failed_files)})"
+    
+    title = f'{plot_trace_s2p} Calibrated {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'{plot_trace_s2p} {title_suffix}, {status}'
     
     layout = {
         "title": title,
         "xaxis": {"title": "Frequency (GHz)"},
-        "yaxis": {"title": "S21 (dB)", "range": y_range},
+        "yaxis": {"title": f"{plot_trace_s2p} (dB)", "range": y_range},
         "showlegend": True,
         "legend": {"x": 1.05, "y": 1},
         "shapes": [
@@ -1597,7 +1607,7 @@ def generate_plots(params):
         raise Exception(debug_str)
     return generated_plots
 
-def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=None, n_avg=1, plot_s12=False, plot_density=False, average_data_path="", u_bound_npd=None, l_bound_npd=None, u_bound_s21=None, l_bound_s21=None):
+def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=None, n_avg=1, plot_s12=False, plot_density=False, average_data_path="", u_bound_npd=None, l_bound_npd=None, u_bound_s21=None, l_bound_s21=None, plot_trace_s2p="S21"):
     """
     Plots generic CSV and S2P files found in the data_folder.
     CSV files are plotted using the plotNPD logic (applying calibration if available).
@@ -1679,41 +1689,8 @@ def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=
             
     if s2p_files:
         # Plot S2P files as S21
-        p_s21 = plotS21(s2p_files, [], "Data", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=5, apply_cal=bool(cal_folder), average_data_path=average_data_path, y_upper_s21=None, y_lower_s21=None, plot_s12=plot_s12)
+        p_s21 = plotS21(s2p_files, [], "Data", freq_min, freq_max, u_bound_s21, l_bound_s21, cal_folder, output_folder, test_type=5, apply_cal=bool(cal_folder), average_data_path=average_data_path, y_upper_s21=None, y_lower_s21=None, plot_s12=plot_s12, plot_trace_s2p=plot_trace_s2p)
         if p_s21:
             s21_plots.append(p_s21)
-        
-        # Plot S2P files as VSWR (inline — no separate plotVSWR function exists)
-        vswr_traces = []
-        colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
-        for i, fpath in enumerate(s2p_files):
-            try:
-                net = rf.Network(fpath)
-                freq_ghz = net.f / 1e9
-                s11_mag = np.abs(net.s[:, 0, 0])
-                vswr_val = (1 + s11_mag) / (1 - np.clip(s11_mag, 0, 0.9999))
-                vswr_traces.append({
-                    "x": freq_ghz.tolist(),
-                    "y": vswr_val.tolist(),
-                    "type": "scatter",
-                    "mode": "lines",
-                    "name": os.path.basename(fpath),
-                    "line": {"color": colors[i % len(colors)]}
-                })
-            except Exception:
-                pass
-        if vswr_traces:
-            vswr_layout = {
-                "title": "VSWR",
-                "xaxis": {"title": "Frequency (GHz)"},
-                "yaxis": {"title": "VSWR", "range": [1, 6]},
-                "showlegend": True,
-                "legend": {"x": 1.05, "y": 1},
-                "shapes": [
-                    {"type": "line", "x0": freq_min, "x1": freq_min, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}},
-                    {"type": "line", "x0": freq_max, "x1": freq_max, "y0": 0, "y1": 1, "yref": "paper", "line": {"color": "green", "width": 2}}
-                ]
-            }
-            vswr_plots.append({"data": vswr_traces, "layout": vswr_layout, "title": "VSWR"})
             
-    return csv_plots, s21_plots, vswr_plots
+    return csv_plots, s21_plots

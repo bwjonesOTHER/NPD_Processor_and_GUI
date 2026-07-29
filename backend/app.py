@@ -851,20 +851,21 @@ def api_generate_plots():
             plot_s12 = bool(params.get('plot_s12', False))
             plot_density = bool(params.get('plot_density', False))
             average_data_path = params.get('average_data_path', '')
+            plot_trace_s2p = params.get('plot_trace_s2p', 'S21')
             
-            csv_plots, s21_plots, vswr_plots = plot_generator.plotGeneric(
+            csv_plots, s21_plots = plot_generator.plotGeneric(
                 data_folder, cal_folder, temp_out_dir,
                 freq_min=freq_min, freq_max=freq_max, n_avg=n_avg, plot_s12=plot_s12,
                 plot_density=plot_density, average_data_path=average_data_path,
                 u_bound_npd=params.get('u_bound_npd'), l_bound_npd=params.get('l_bound_npd'),
-                u_bound_s21=params.get('u_bound_s21'), l_bound_s21=params.get('l_bound_s21')
+                u_bound_s21=params.get('u_bound_s21'), l_bound_s21=params.get('l_bound_s21'),
+                plot_trace_s2p=plot_trace_s2p
             )
             shutil.rmtree(temp_out_dir, ignore_errors=True)
             return jsonify({
                 "success": True, 
                 "plots_csv": sanitize_for_json(csv_plots), 
                 "plots_s21": sanitize_for_json(s21_plots),
-                "plots_vswr": sanitize_for_json(vswr_plots),
                 "warnings": plot_generator.get_warnings()
             })
             
