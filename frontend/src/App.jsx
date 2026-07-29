@@ -861,20 +861,58 @@ function App() {
                   </div>
                 )}
                 
-                <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="plot_s12" className="toggle-row-label">
-                    Use S12 of SpecAn Calibration
-                    <span className="toggle-row-hint">Check to use the S12 parameter of the SpecAn calibration file instead of S21.</span>
-                  </label>
-                  <span className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      id="plot_s12"
-                      checked={!!plotParams.plot_s12}
-                      onChange={(e) => setPlotParams(prev => ({ ...prev, plot_s12: e.target.checked }))}
-                    />
-                    <span className="toggle-switch-track"></span>
-                  </span>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '2rem', padding: '0.75rem', background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SpecAn Cal</span>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', margin: 0, fontWeight: 'normal', fontSize: '0.9rem' }}>
+                      <span>S21</span>
+                      <span className="toggle-switch" style={{ transform: 'scale(0.85)', margin: '0' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!plotParams.plot_s12}
+                          onChange={(e) => setPlotParams(prev => ({ ...prev, plot_s12: e.target.checked }))}
+                        />
+                        <span className="toggle-switch-track"></span>
+                      </span>
+                      <span>S12</span>
+                    </label>
+                  </div>
+                  
+                  {!['2', '3', '4'].includes(testType) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <input 
+                        type="file" 
+                        multiple 
+                        id="additionalCalInput" 
+                        style={{ display: 'none' }} 
+                        onChange={handleUploadAdditionalCalFiles} 
+                        accept=".s2p" 
+                      />
+                      <button 
+                        onClick={() => document.getElementById('additionalCalInput').click()} 
+                        className="btn-primary" 
+                        style={{ padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}
+                        disabled={isUploadingAdditionalCal}
+                      >
+                        <UploadCloud size={14} />
+                        {isUploadingAdditionalCal ? 'Uploading...' : 'Extra Cal Files'}
+                      </button>
+                      {additionalCalCount > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}>
+                            {additionalCalCount} loaded
+                          </span>
+                          <button 
+                            onClick={handleDeleteAdditionalCalFiles}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
+                            title="Delete additional cal files"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -888,44 +926,7 @@ function App() {
                 </div>
               )}
 
-              {!['2', '3', '4'].includes(testType) && (
-                <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                  <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Additional Calibration Files</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <input 
-                      type="file" 
-                      multiple 
-                      id="additionalCalInput" 
-                      style={{ display: 'none' }} 
-                      onChange={handleUploadAdditionalCalFiles} 
-                      accept=".s2p" 
-                    />
-                    <button 
-                      onClick={() => document.getElementById('additionalCalInput').click()} 
-                      className="btn-primary" 
-                      style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', fontSize: '1.1rem' }}
-                      disabled={isUploadingAdditionalCal}
-                    >
-                      <UploadCloud size={20} />
-                      {isUploadingAdditionalCal ? 'Uploading...' : 'Upload Additional Cal Files'}
-                    </button>
-                    {additionalCalCount > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1rem', color: 'var(--success, #10b981)' }}>
-                          Loaded {additionalCalCount} extra cal file(s)
-                        </span>
-                        <button 
-                          onClick={handleDeleteAdditionalCalFiles}
-                          style={{ background: 'transparent', border: 'none', color: 'var(--error, #ef4444)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
-                          title="Delete additional cal files"
-                        >
-                          <XCircle size={18} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+
 
               <button className="btn-primary" onClick={startProcessing} disabled={isProcessing} style={{ marginTop: '2rem' }}>
                 {isProcessing ? <Activity className="animate-spin" size={18} /> : <Play size={18} />}
