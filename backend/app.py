@@ -468,6 +468,37 @@ def delete_additional_cal():
         shutil.rmtree(dest_folder, ignore_errors=True)
     return jsonify({"success": True})
 
+@app.route('/api/upload_generic', methods=['POST'])
+def upload_generic():
+    if 'files' not in request.files:
+        return jsonify({"error": "No files part"}), 400
+    
+    upload_type = request.form.get('type', 'data') # 'data' or 'cal'
+    files = request.files.getlist('files')
+    
+    dest_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', upload_type.capitalize())
+    os.makedirs(dest_folder, exist_ok=True)
+    
+    saved_files = []
+    for file in files:
+        if file.filename:
+            filepath = os.path.join(dest_folder, os.path.basename(file.filename))
+            file.save(filepath)
+            saved_files.append(os.path.basename(file.filename))
+            
+    # Return list of current files in directory
+    current_files = os.listdir(dest_folder)
+    return jsonify({"success": True, "files": current_files})
+
+@app.route('/api/clear_generic', methods=['POST'])
+def clear_generic():
+    upload_type = request.args.get('type', 'data')
+    dest_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', upload_type.capitalize())
+    import shutil
+    if os.path.exists(dest_folder):
+        shutil.rmtree(dest_folder, ignore_errors=True)
+    return jsonify({"success": True})
+
 @app.route('/api/folders', methods=['GET'])
 def get_folders():
     """Endpoint to fetch directory structures for frontend browser tree."""
@@ -810,8 +841,32 @@ def api_generate_plots():
         params['runs'] = [path] if path else []
 
     try:
-        # Generate plots returns a list of dicts: [{'path': str, 'status': str}]
-        generated_data = plot_generator.generate_plots(params)
+        if test == 5:
+            data_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', 'Data')
+            cal_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', 'Cal')
+            # Extract generic plot params
+            freq_min = float(params.get('freq_min')) if params.get('freq_min') not in [None, ""] else None
+            freq_max = float(params.get('freq_max')) if params.get('freq_max') not in [None, ""] else None
+            n_avg = int(params.get('n_avg', 1)) if params.get('n_avg') not in [None, ""] else 1
+            plot_s12 = bool(params.get('plot_s12', False))
+            
+            data_plots, vswr_plots = plot_generator.plotGeneric(
+                data_folder, cal_folder, temp_out_dir,
+                freq_min=freq_min, freq_max=freq_max, n_avg=n_avg, plot_s12=plot_s12,
+                u_bound_npd=params.get('u_bound_npd'), l_bound_npd=params.get('l_bound_npd'),
+                u_bound_s21=params.get('u_bound_s21'), l_bound_s21=params.get('l_bound_s21')
+            )
+            shutil.rmtree(temp_out_dir, ignore_errors=True)
+            return jsonify({
+                "success": True, 
+                "plots_data": sanitize_for_json(data_plots), 
+                "plots_vswr": sanitize_for_json(vswr_plots),
+                "warnings": plot_generator.get_warnings()
+            })
+            
+        else:
+            # Generate plots returns a list of dicts: [{'path': str, 'status': str}]
+            generated_data = plot_generator.generate_plots(params)
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -3,6 +3,7 @@ import { Upload, CheckCircle, Terminal, Play, Server, ChevronRight, ChevronLeft,
 import JSZip from 'jszip';
 import './App.css';
 import InteractivePlot from './InteractivePlot';
+import GenericPlotter from './GenericPlotter';
 
 const API_BASE = window.location.port === '5173' ? `http://${window.location.hostname}:5001/api` : '/api';
 
@@ -519,6 +520,9 @@ function App() {
         <div className="app-subtitle">Upload and process NPD test data seamlessly</div>
       </header>
 
+      {testType === 5 && currentStep > 0 ? (
+        <GenericPlotter API_BASE={API_BASE} onBack={() => { setCurrentStep(0); setTestType(null); }} />
+      ) : (
       <div className="wizard-container">
         {/* Sidebar */}
         <div className="wizard-sidebar">
@@ -562,6 +566,11 @@ function App() {
                   <Activity size={32} color="var(--accent)" style={{ marginBottom: '1rem' }} />
                   <h3>Over Temp Array</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Test 4</p>
+                </div>
+                <div className={`test-type-card ${testType === 5 ? 'selected' : ''}`} onClick={() => setTestType(5)}>
+                  <Activity size={32} color="var(--accent)" style={{ marginBottom: '1rem' }} />
+                  <h3>Generic Plotter</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Test 5</p>
                 </div>
               </div>
 
@@ -987,6 +996,7 @@ function App() {
 
         </div>
       </div>
+      )}
 
       {/* LMO Selection Modal */}
       {showLmoModal && (
