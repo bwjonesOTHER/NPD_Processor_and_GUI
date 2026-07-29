@@ -266,24 +266,54 @@ export default function GenericPlotter({ API_BASE, onBack }) {
           <p style={{ color: 'var(--text-muted)', marginBottom: 0, marginTop: '0.25rem' }}>Upload CSV or S2P files and generate plots.</p>
         </div>
         <div style={{ background: 'var(--panel-bg)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ flex: 1, minWidth: '120px' }}>
-              <label>Freq Min (GHz)</label>
+          <div className="form-grid">
+            <div className="input-group">
+              <label>Min Frequency (GHz)</label>
               <input type="number" step="0.1" value={plotParams.freq_min} onChange={e => setPlotParams({...plotParams, freq_min: e.target.value})} placeholder="Auto" />
             </div>
-            <div className="form-group" style={{ flex: 1, minWidth: '120px' }}>
-              <label>Freq Max (GHz)</label>
+            <div className="input-group">
+              <label>Max Frequency (GHz)</label>
               <input type="number" step="0.1" value={plotParams.freq_max} onChange={e => setPlotParams({...plotParams, freq_max: e.target.value})} placeholder="Auto" />
             </div>
-            <div className="form-group" style={{ flex: 1, minWidth: '120px' }}>
-              <label>Averaging (N)</label>
-              <input type="number" min="1" value={plotParams.n_avg} onChange={e => setPlotParams({...plotParams, n_avg: e.target.value})} placeholder="1" />
+            <div className="input-group">
+              <label>Averaging (n_avg)</label>
+              <input type="number" step="1" min="1" value={plotParams.n_avg} onChange={e => setPlotParams({...plotParams, n_avg: e.target.value})} placeholder="1" />
             </div>
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <label>Plot S12</label>
-              <input type="checkbox" checked={plotParams.plot_s12} onChange={e => setPlotParams({...plotParams, plot_s12: e.target.checked})} />
+            <div className="input-group">
+              <label>S21 Upper Bound Offset</label>
+              <input type="number" step="0.1" value={plotParams.u_bound_s21} onChange={e => setPlotParams({...plotParams, u_bound_s21: e.target.value})} placeholder="2" />
             </div>
-            <button className="btn-primary" onClick={generatePlots} disabled={isProcessing || isUploading}>
+            <div className="input-group">
+              <label>S21 Lower Bound Offset</label>
+              <input type="number" step="0.1" value={plotParams.l_bound_s21} onChange={e => setPlotParams({...plotParams, l_bound_s21: e.target.value})} placeholder="2" />
+            </div>
+            <div className="input-group">
+              <label>NPD Upper Bound Offset</label>
+              <input type="number" step="0.1" value={plotParams.u_bound_npd} onChange={e => setPlotParams({...plotParams, u_bound_npd: e.target.value})} placeholder="2" />
+            </div>
+            <div className="input-group">
+              <label>NPD Lower Bound Offset</label>
+              <input type="number" step="0.1" value={plotParams.l_bound_npd} onChange={e => setPlotParams({...plotParams, l_bound_npd: e.target.value})} placeholder="2" />
+            </div>
+            <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
+              <label htmlFor="generic_plot_s12" className="toggle-row-label">
+                Use S12 of SpecAn Calibration
+                <span className="toggle-row-hint">Check to use the S12 parameter of the SpecAn calibration file instead of S21.</span>
+              </label>
+              <span className="toggle-switch">
+                <input
+                  type="checkbox"
+                  id="generic_plot_s12"
+                  checked={!!plotParams.plot_s12}
+                  onChange={e => setPlotParams({...plotParams, plot_s12: e.target.checked})}
+                />
+                <span className="toggle-switch-track"></span>
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <button className="btn-primary" onClick={generatePlots} disabled={isProcessing || isUploading} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {isProcessing ? <Activity className="animate-spin" size={18} /> : <Play size={18} />}
               Generate Plots
             </button>
