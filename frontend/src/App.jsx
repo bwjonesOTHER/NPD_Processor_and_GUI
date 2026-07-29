@@ -130,6 +130,34 @@ function App() {
 
 
 
+  const handleExportPlots = async () => {
+    if (images.length === 0) return;
+    try {
+      const zip = new JSZip();
+      for (let i = 0; i < images.length; i++) {
+        if (plotRefs.current[i]) {
+          const imgData = await plotRefs.current[i].toImage();
+          if (imgData) {
+            const base64Data = imgData.data.split(',')[1];
+            zip.file(imgData.filename, base64Data, { base64: true });
+          }
+        }
+      }
+      
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = window.URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'NPD_Plots.zip';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert("Failed to export plots: " + err.message);
+    }
+  };
+
   const [isUploadingAdditionalCal, setIsUploadingAdditionalCal] = useState(false);
   const [additionalCalCount, setAdditionalCalCount] = useState(0);
 
@@ -851,6 +879,43 @@ function App() {
                 </div>
               )}
 
+              <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Additional Calibration Files</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <input 
+                    type="file" 
+                    multiple 
+                    id="additionalCalInput" 
+                    style={{ display: 'none' }} 
+                    onChange={handleUploadAdditionalCalFiles} 
+                    accept=".s2p" 
+                  />
+                  <button 
+                    onClick={() => document.getElementById('additionalCalInput').click()} 
+                    className="btn-primary" 
+                    style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', fontSize: '1.1rem' }}
+                    disabled={isUploadingAdditionalCal}
+                  >
+                    <UploadCloud size={20} />
+                    {isUploadingAdditionalCal ? 'Uploading...' : 'Upload Additional Cal Files'}
+                  </button>
+                  {additionalCalCount > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1rem', color: 'var(--success, #10b981)' }}>
+                        Loaded {additionalCalCount} extra cal file(s)
+                      </span>
+                      <button 
+                        onClick={handleDeleteAdditionalCalFiles}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--error, #ef4444)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
+                        title="Delete additional cal files"
+                      >
+                        <XCircle size={18} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <button className="btn-primary" onClick={startProcessing} disabled={isProcessing} style={{ marginTop: '2rem' }}>
                 {isProcessing ? <Activity className="animate-spin" size={18} /> : <Play size={18} />}
                 {isProcessing ? 'Generating Plots...' : 'Generate Plots'}
@@ -864,37 +929,10 @@ function App() {
 
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
-                      <input 
-                        type="file" 
-                        multiple 
-                        id="additionalCalInput" 
-                        style={{ display: 'none' }} 
-                        onChange={handleUploadAdditionalCalFiles} 
-                        accept=".s2p" 
-                      />
-                      <button 
-                        onClick={() => document.getElementById('additionalCalInput').click()} 
-                        className="btn-primary" 
-                        style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}
-                        disabled={isUploadingAdditionalCal}
-                      >
-                        <UploadCloud size={16} />
-                        {isUploadingAdditionalCal ? 'Uploading...' : 'Upload Additional Cal Files'}
+                      <button onClick={handleExportPlots} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', fontSize: '0.9rem' }}>
+                        <Download size={16} />
+                        Export All Plots (.zip)
                       </button>
-                      {additionalCalCount > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.9rem', color: 'var(--success, #10b981)' }}>
-                            Loaded {additionalCalCount} extra cal file(s)
-                          </span>
-                          <button 
-                            onClick={handleDeleteAdditionalCalFiles}
-                            style={{ background: 'transparent', border: 'none', color: 'var(--error, #ef4444)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
-                            title="Delete additional cal files"
-                          >
-                            <XCircle size={16} />
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
