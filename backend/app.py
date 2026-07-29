@@ -85,11 +85,32 @@ def read_txt(filename):
             return f.read().strip()
     return ""
 
+# Absolute safety cap on how many files a single directory scan walks
+# through here (hydrate_directory, file-info lookups, and the
+# auto-SN/Area extraction in generate_plots all use this). These scans
+# are meant to cover one test run's worth of data (dozens to low
+# thousands of files at most) - if a search somehow balloons past this,
+# something's wrong with the search root, and it's better to stop early
+# than to hang scanning an unrelated part of the filesystem (e.g. a
+# misresolved network share).
+_DIR_SCAN_FILE_BUDGET = 20000
+
+def _walk_capped(root_dir):
+    """Drop-in replacement for os.walk(root_dir) that bails out early once
+    _DIR_SCAN_FILE_BUDGET total files have been examined across the whole
+    walk."""
+    scanned = 0
+    for root, dirs, files in os.walk(root_dir):
+        yield root, dirs, files
+        scanned += len(files)
+        if scanned > _DIR_SCAN_FILE_BUDGET:
+            return
+
 def hydrate_directory(directory_path):
     """Recursively hydrates the directory structure to build a JSON tree for the frontend browser."""
     if not directory_path or not os.path.exists(directory_path):
         return
-    for root, dirs, files in os.walk(directory_path):
+    for root, dirs, files in _walk_capped(directory_path):
         for file in files:
             if file.lower().endswith('.csv') or file.lower().endswith('.s2p'):
                 file_path = os.path.join(root, file)
@@ -186,7 +207,7 @@ def submit_file_info():
                         for match in matches:
                             match_path = os.path.join(pma_path, match)
                             found_sn = False
-                            for root, dirs, files in os.walk(match_path):
+                            for root, dirs, files in _walk_capped(match_path):
                                 if any(sn in f for f in files) or any(sn in d for d in dirs):
                                     found_sn = True
                                     break
@@ -785,7 +806,7 @@ def api_generate_plots():
             import re
             sn_pattern = re.compile(r'(?:SN|EM-)[_-]?(\d+)', re.IGNORECASE)
             area_pattern = re.compile(r'Area[_-]?(\d+)', re.IGNORECASE)
-            for root, dirs, files in os.walk(bench_dir):
+            for root, dirs, files in _walk_capped(bench_dir):
                 for f in files:
                     if not params.get('serial_number'):
                         m = sn_pattern.search(f)
@@ -816,7 +837,7 @@ def api_generate_plots():
                 import re
                 sn_pattern = re.compile(r'(?:SN|EM-)[_-]?(\d+)', re.IGNORECASE)
                 area_pattern = re.compile(r'Area[_-]?(\d+)', re.IGNORECASE)
-                for root, dirs, files in os.walk(run_dir):
+                for root, dirs, files in _walk_capped(run_dir):
                     for f in files:
                         if not params.get('serial_number'):
                             m = sn_pattern.search(f)

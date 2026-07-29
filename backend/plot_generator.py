@@ -18,6 +18,46 @@ from datetime import datetime
 import pandas as pd
 import glob
 
+# Canonical NPD pass/fail reference-average file, used whenever the
+# frontend hasn't supplied its own average_data_path (upload is still an
+# override - see generate_plots()).
+DEFAULT_AVERAGE_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "NPD_AVERAGED_DATA.csv")
+
+# NPD CSV smoothing window depends on the sweep's actual frequency step,
+# not a fixed/GUI-supplied n_avg - a finer step (more points over the same
+# span) needs a wider window to get comparable smoothing, a coarse step
+# needs none. Computed per-file, since different files/folders can use
+# different steps. This only applies to NPD/NP data read from .csv files -
+# S21/S22 smoothing (from .s2p files) is unaffected and keeps using the
+# passed-in n_avg.
+_NPD_STEP_TO_NAVG = [(0.3, 83), (1.0, 25), (25.0, 1)]
+
+def n_avg_for_freq_step(freq):
+    if len(freq) < 2:
+        return 1
+    step_mhz = abs(np.median(np.diff(freq))) * 1000.0  # freq is in GHz
+    return min(_NPD_STEP_TO_NAVG, key=lambda pair: abs(pair[0] - step_mhz))[1]
+
+# Absolute safety cap on how many files a single directory scan walks
+# through (search_files, find_cal_file, the cal-file fallback search, and
+# find_best_cal all use this). These scans are meant to cover one test
+# run's worth of data (dozens to low thousands of files at most) - if a
+# search somehow balloons past this, something's wrong with the search
+# root, and it's better to stop and find nothing than to hang scanning an
+# unrelated part of the filesystem (e.g. a misresolved network share).
+_DIR_SCAN_FILE_BUDGET = 20000
+
+def _walk_capped(root_dir):
+    """Drop-in replacement for os.walk(root_dir) that bails out early once
+    _DIR_SCAN_FILE_BUDGET total files have been examined across the whole
+    walk."""
+    scanned = 0
+    for root, dirs, files in os.walk(root_dir):
+        yield root, dirs, files
+        scanned += len(files)
+        if scanned > _DIR_SCAN_FILE_BUDGET:
+            return
+
 def remove_nan(arr, remove_infinite=False):
     if not isinstance(arr, np.ndarray):
         raise TypeError("Input must be a NumPy array.")
@@ -35,7 +75,7 @@ def search_files(root_dir, filename_part, serial_number=None):
     matches = []
     if not root_dir or not os.path.isdir(root_dir):
         return matches
-    for dirpath, _, filenames in os.walk(root_dir):
+    for dirpath, _, filenames in _walk_capped(root_dir):
         for file in filenames:
             if filename_part.lower() in file.lower():
                 if serial_number:
@@ -64,7 +104,7 @@ def find_cal_file(folders, cap_num, cal_type):
         return None
 
     for folder in folders:
-        for root, dirs, files in os.walk(folder):
+        for root, dirs, files in _walk_capped(folder):
             for file in files:
                 if not file.lower().endswith('.s2p'):
                     continue
@@ -152,7 +192,7 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             # Fallback: if not found by strict cap_num, just find ANY file containing this cal_type
             for sdir in search_dirs:
                 if f: break
-                for root, dirs, files in os.walk(sdir):
+                for root, dirs, files in _walk_capped(sdir):
                     if f: break
                     
                     # ONLY ONCE PER SEARCH: debug print all files we see in this directory
@@ -308,6 +348,22 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
 def load_excel_average(average_data_path, plot_type, title_suffix):
     if not average_data_path or not os.path.exists(average_data_path):
         return None, None
+
+    # Plain 2-column CSV (Freq, value) reference-average fallback - e.g.
+    # the default NPD_AVERAGED_DATA.csv. Only carries a single (Ambient)
+    # curve, unlike the multi-sheet Excel format below which also has
+    # Hot/Cold columns, so Hot/Cold checks correctly find nothing here
+    # rather than reusing the Ambient curve. Delegates to
+    # _ota_load_avg_reference, which already handles path quoting, header
+    # detection, and (for Excel) searching every sheet for the data.
+    if average_data_path.lower().endswith('.csv'):
+        if "Hot" in title_suffix or "Cold" in title_suffix:
+            return None, None
+        freq, val, err = _ota_load_avg_reference(average_data_path)
+        if err:
+            _warn(f"Reference average file could not be used ({err}): {average_data_path}")
+        return freq, val
+
     try:
         xls = pd.ExcelFile(average_data_path)
         sheet_map = {
@@ -393,8 +449,9 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
                 loss_interp = np.interp(freq, freq_cal, total_loss_db)
                 noise = noise + loss_interp
             
-        if n_avg > 1:
-            noise = np.convolve(noise, np.ones(n_avg) / n_avg, mode='valid')
+        npd_n_avg = n_avg_for_freq_step(freq)
+        if npd_n_avg > 1:
+            noise = np.convolve(noise, np.ones(npd_n_avg) / npd_n_avg, mode='valid')
             freq = freq[:len(noise)]
         return freq, noise, cal_files_used
 
@@ -1071,12 +1128,14 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     traces = []
     plotted = 0
     color_cycle = iter(_OTA_COLORS)
+    all_freqs = []
+    all_raw = []
 
     for f in files:
         freq, raw = _ota_load_csv(f, 2 if plot_density else 1)
         if len(freq) == 0:
             continue
-        smoothed = _ota_smooth(raw, n_avg)
+        smoothed = _ota_smooth(raw, n_avg_for_freq_step(freq))
         freq_smooth = freq[:len(smoothed)]
 
         corrected = smoothed
@@ -1106,9 +1165,20 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
             "line": {"color": color}
         })
         plotted += 1
+        all_freqs.append(freq_smooth)
+        all_raw.append(smoothed)
 
     if plotted == 0:
         return None
+
+    # Per-frequency average of the plotted (uncalibrated) NPD/NP traces,
+    # truncated to the shortest one - used by the Ambient-Hot/Ambient-Cold
+    # NPD delta plots (plot_npd_delta), independent of apply_cal so the
+    # delta always reflects raw dBm/Hz regardless of this plot's own
+    # calibration setting.
+    min_len = min(len(x) for x in all_raw)
+    avg_curve_raw = np.mean([x[:min_len] for x in all_raw], axis=0)
+    avg_curve_freq = all_freqs[0][:min_len]
 
     if avg_freq is not None:
         traces.append({
@@ -1181,7 +1251,9 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
         "filename": filename_safe_title,
         "status": "failed" if failed_files else "passed",
         "traces": traces,
-        "layout": layout
+        "layout": layout,
+        "freq": avg_curve_freq,
+        "avg_raw": avg_curve_raw,
     }
 
 def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None, avg_ref=None, u_bound=None, l_bound=None):
@@ -1296,6 +1368,90 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
         "layout": layout
     }
 
+# NPD (density) delta pass/fail band - only checked within the standard
+# 2.7-4.1 GHz NPD band, same as the reference-average bounds check.
+_NPD_DELTA_BAND = (2.7, 4.1)
+
+def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=None, ambient_label="Ambient"):
+    """Plots NPD delta = -(ambient - other) (Hot/Hot2 or Cold/Cold2) as its
+    own single trace against a fixed [lower, upper] dBm/Hz pass/fail range
+    - kept separate per-comparison since the Hot and Cold bounds differ.
+    ambient_label lets this cover both the Ambient/Hot/Cold and
+    Ambient2/Hot2/Cold2 repeat-run comparisons. The delta itself is
+    smoothed with the same method used for the NPD traces it's built from
+    - the window is picked from the data's own frequency step (see
+    n_avg_for_freq_step), not a fixed/GUI-supplied n_avg. Returns the same
+    {filename, status, traces, layout} shape as the other _ota_plot_*
+    functions, for the interactive Plotly frontend."""
+    date_str = date_str or datetime.now().strftime('%Y%m%d')
+    a_freq, a_vals = ambient
+    o_freq, o_vals = other
+    if a_vals is None or o_vals is None:
+        return None
+
+    min_len = min(len(a_vals), len(o_vals))
+    freq = a_freq[:min_len]
+    delta = -1 * (a_vals[:min_len] - o_vals[:min_len])
+    delta = _ota_smooth(delta, n_avg_for_freq_step(freq))
+    freq = freq[:len(delta)]
+
+    lower, upper = bounds
+    mask = (freq >= _NPD_DELTA_BAND[0]) & (freq <= _NPD_DELTA_BAND[1])
+    status = "Passed"
+    if mask.any() and (np.any(delta[mask] < lower) or np.any(delta[mask] > upper)):
+        status = "Failed"
+
+    traces = [
+        {
+            "x": freq.tolist(), "y": delta.tolist(),
+            "type": "scatter", "mode": "lines",
+            "name": f"{ambient_label} - {other_label}",
+            "line": {"color": "blue"}
+        },
+        {
+            "x": [_NPD_DELTA_BAND[0], _NPD_DELTA_BAND[1]], "y": [upper, upper],
+            "type": "scatter", "mode": "lines",
+            "name": "Upper Bound",
+            "line": {"color": "red", "dash": "dash"}
+        },
+        {
+            "x": [_NPD_DELTA_BAND[0], _NPD_DELTA_BAND[1]], "y": [lower, lower],
+            "type": "scatter", "mode": "lines",
+            "name": "Lower Bound",
+            "line": {"color": "red", "dash": "dash"}
+        },
+        {
+            "x": [_NPD_DELTA_BAND[0], _NPD_DELTA_BAND[0]], "y": [lower, upper],
+            "type": "scatter", "mode": "lines",
+            "name": "Freq Min",
+            "line": {"color": "green"}
+        },
+        {
+            "x": [_NPD_DELTA_BAND[1], _NPD_DELTA_BAND[1]], "y": [lower, upper],
+            "type": "scatter", "mode": "lines",
+            "name": "Freq Max",
+            "line": {"color": "green"}
+        },
+    ]
+
+    title = f"{date_str} NPD Delta {ambient_label}-{other_label}, {status}"
+    layout = {
+        "title": title,
+        "xaxis": {"title": "Frequency (GHz)", "autorange": True},
+        "yaxis": {"title": "Delta NPD (dBm/Hz)", "autorange": True},
+        "showlegend": True,
+        "legend": {"x": 0.5, "y": -0.28, "xanchor": "center", "orientation": "h"}
+    }
+
+    filename_safe_title = f"{date_str}_NPD_Delta_{ambient_label}_{other_label}.png"
+
+    return {
+        "filename": filename_safe_title,
+        "status": status.lower(),
+        "traces": traces,
+        "layout": layout,
+    }
+
 def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=False, average_data_path="", u_bound_npd=None, l_bound_npd=None):
     generated = []
     base_folder = _ota_resolve_data_root(base_folder)
@@ -1337,6 +1493,16 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         ("Cold", cold), ("Cold2", cold2),
         ("Hot", hot), ("Hot2", hot2),
     ]
+    # Per-temperature averaged RAW (uncalibrated) NPD dBm/Hz curve, keyed
+    # by "Ambient"/"Cold"/"Hot" (and their "2" repeat-run counterparts) -
+    # used below for the Ambient-Hot/Ambient-Cold delta pass/fail plots,
+    # independent of apply_npd_cal. For the base (non-"2") labels, the
+    # combined "<Temp> Overlay" run (both repeats) is preferred; the
+    # single-folder run is kept only as a fallback if there's no repeat.
+    # Popped off each plot dict before it's appended to `generated` since
+    # they're raw numpy arrays and this list is eventually JSON-serialized.
+    npd_avg_by_label = {}
+
     for label, folder in folder_specs:
         if not folder:
             continue
@@ -1344,15 +1510,20 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         s21_files = _ota_get_files(folder, ".s2p")
         p = _ota_plot_noise(npd_files, label, freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
                              avg_ref=get_avg("Array NPD", label), u_bound=u_bound_npd, l_bound=l_bound_npd)
-        if p: generated.append(p)
-        
-        # Note: Array S21 bounds are not currently passed into generate_over_temp_array_plots, 
+        if p:
+            freq_raw = p.pop("freq", None)
+            avg_raw = p.pop("avg_raw", None)
+            generated.append(p)
+            if avg_raw is not None:
+                npd_avg_by_label[label] = (freq_raw, avg_raw)
+
+        # Note: Array S21 bounds are not currently passed into generate_over_temp_array_plots,
         # so we will just pass None for bounds here unless they are added.
-        # But wait! S21 bounds might not be available here, they are u_bound_npd. 
-        # We need to pass u_bound_s21 from the caller! But since we can't change the signature easily, 
+        # But wait! S21 bounds might not be available here, they are u_bound_npd.
+        # We need to pass u_bound_s21 from the caller! But since we can't change the signature easily,
         # we'll just omit bounds for S21 for now if they aren't passed.
         # Wait, the signature DOES NOT have u_bound_s21.
-        p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str, 
+        p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str,
                           avg_ref=get_avg("Array S21", label), u_bound=None, l_bound=None)
         if p: generated.append(p)
 
@@ -1361,13 +1532,32 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
             continue
         npd_files = _ota_get_files(folder1, ".csv") + _ota_get_files(folder2, ".csv")
         s21_files = _ota_get_files(folder1, ".s2p") + _ota_get_files(folder2, ".s2p")
-        
+
         p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
                              avg_ref=get_avg("Array NPD", label), u_bound=u_bound_npd, l_bound=l_bound_npd)
-        if p: generated.append(p)
+        if p:
+            freq_raw = p.pop("freq", None)
+            avg_raw = p.pop("avg_raw", None)
+            generated.append(p)
+            if avg_raw is not None:
+                npd_avg_by_label[label] = (freq_raw, avg_raw)
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str,
                           avg_ref=get_avg("Array S21", label), u_bound=None, l_bound=None)
         if p: generated.append(p)
+
+    # NPD (density) Ambient-Hot / Ambient-Cold deltas, pass/fail-checked
+    # against fixed dBm/Hz bounds and plotted separately (not overlaid
+    # together) - see plot_npd_delta(). Four total: Ambient-Hot,
+    # Ambient-Cold, and the same pair again for the "2" repeat run.
+    for amb_label, hot_label, cold_label in [("Ambient", "Hot", "Cold"), ("Ambient2", "Hot2", "Cold2")]:
+        if amb_label in npd_avg_by_label and hot_label in npd_avg_by_label:
+            dp_hot = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[hot_label], hot_label,
+                                     (-0.8, 0.1), output_folder, date_str=date_str, ambient_label=amb_label)
+            if dp_hot: generated.append(dp_hot)
+        if amb_label in npd_avg_by_label and cold_label in npd_avg_by_label:
+            dp_cold = plot_npd_delta(npd_avg_by_label[amb_label], npd_avg_by_label[cold_label], cold_label,
+                                      (0.1, 2.0), output_folder, date_str=date_str, ambient_label=amb_label)
+            if dp_cold: generated.append(dp_cold)
 
     return generated
 
@@ -1416,7 +1606,7 @@ def generate_plots(params):
     def find_best_cal(base_path, test_type):
         best_cal = None
         if not base_path or not os.path.isdir(base_path): return None
-        for root, dirs, files in os.walk(base_path):
+        for root, dirs, files in _walk_capped(base_path):
             if "cableloss" in os.path.basename(root).lower().replace(" ", "").replace("_", ""):
                 # Main ONLY used SN006 for Test 3 (Array). Test 1 and 2 used the outer cables.
                 if test_type == 3:
@@ -1489,9 +1679,13 @@ def generate_plots(params):
     elif test_type == 4:
         # NPD Over Temp Array: folderA is the single root folder containing
         # Ambient/Cold/Hot measurement folders and a Cable Loss folder.
+        # This is the only test that defaults to the project's own
+        # NPD_AVERAGED_DATA.csv when the frontend hasn't supplied its own -
+        # Test 1/2/3 are untouched and still require an explicit upload.
         apply_npd_cal = bool(params.get('apply_npd_cal', False))
+        ota_average_data_path = average_data_path or DEFAULT_AVERAGE_CSV
         generated_plots = generate_over_temp_array_plots(folderA, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=apply_npd_cal,
-                                                           average_data_path=average_data_path, u_bound_npd=u_bound_npd, l_bound_npd=l_bound_npd)
+                                                           average_data_path=ota_average_data_path, u_bound_npd=u_bound_npd, l_bound_npd=l_bound_npd)
 
     else:
         # Benchtop (Test 2 & 3)
