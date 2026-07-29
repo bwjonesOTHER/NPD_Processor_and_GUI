@@ -261,10 +261,7 @@ export default function GenericPlotter({ API_BASE, onBack }) {
       
       {/* Main Content */}
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div className="step-card" style={{ background: 'var(--panel-bg)', padding: '1.5rem 2rem', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0 }}>Generic Plotter</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: 0, marginTop: '0.25rem' }}>Upload CSV or S2P files and generate plots.</p>
-        </div>
+
         <div style={{ background: 'var(--panel-bg)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '1rem' }}>
           <div className="form-grid">
             <div className="input-group">
@@ -348,10 +345,10 @@ export default function GenericPlotter({ API_BASE, onBack }) {
         )}
         
         <div style={{ flexGrow: 1, overflowY: 'auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {currentImages.map((img, idx) => (
               <div key={idx} style={{ background: 'var(--panel-bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                <div style={{ width: '100%', height: '300px' }}>
+                <div style={{ width: '100%', height: '500px' }}>
                   <InteractivePlot ref={el => currentRefs.current[idx] = el} plotData={img} />
                 </div>
               </div>
