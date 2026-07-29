@@ -208,7 +208,26 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
         import glob
         for add_file in glob.glob(os.path.join(additional_cal_path, '*.s2p')):
             if os.path.isfile(add_file):
-                cal_files_to_load.append(add_file)
+                add_name = os.path.basename(add_file).lower()
+                
+                # Check if this additional file is meant to OVERRIDE a standard file
+                override_index = -1
+                for i, existing in enumerate(cal_files_to_load):
+                    ex_name = os.path.basename(existing).lower()
+                    
+                    if "base" in add_name and "base" in ex_name:
+                        override_index = i
+                    elif "hat" in add_name and "hat" in ex_name:
+                        override_index = i
+                    elif "bulk" in add_name and "bulk" in ex_name:
+                        override_index = i
+                    elif ("speca" in add_name or "sacable" in add_name) and ("speca" in ex_name or "sacable" in ex_name):
+                        override_index = i
+                        
+                if override_index != -1:
+                    cal_files_to_load[override_index] = add_file
+                else:
+                    cal_files_to_load.append(add_file)
 
     # Always generate debug output
     debug_path = os.path.join(os.path.dirname(os.getcwd()), "calibration_debug_used_files.txt")
