@@ -343,7 +343,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         else:
             noise = remove_nan(num_df.values[:, 1], remove_infinite=True)
         if len(noise) == 0 or len(freq) == 0:
-            return np.array([]), np.array([])
+            return np.array([]), np.array([]), []
             
         cal_files_used = []
         if apply_cal:
