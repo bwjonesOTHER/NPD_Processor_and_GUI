@@ -6,10 +6,11 @@ This application provides an elegant, glassmorphic React frontend that guides us
 
 ## Features
 
-- **Test Modes**: Supports Test 1 (Thermal NPD), Test 2 (Benchtop Single Run), and Test 3 (Benchtop Array).
+- **Test Modes**: Supports Test 1 (Thermal NPD), Test 2 (Benchtop Single Run), Test 3 (Benchtop Array), Test 4 (Over-Temp Arrays), and Test 5 (Generic Plotter for ad-hoc CSV/S2P files).
 - **File Upload & Navigation**: Users can browse the local file system or drag-and-drop entire run directories using native browser APIs.
 - **Interactive Plotting**: Lightning fast, interactive plots rendered via Plotly on the frontend, avoiding heavy backend Matplotlib generation.
 - **Plot Configuration**: Customizable frequency bounds, gain requirements, S21 bounds, and NPD bounds.
+- **Dynamic Averaging**: Smart backend logic automatically detects frequency step sizes in NPD data and scales moving average smoothing windows for optimal plotting.
 - **Python Data Engine**: Advanced signal processing, nan-filtering, array operations, and calibration line-loss subtractions.
 - **Automated Routing**: Backend intelligently routes files into `SN`, `LMO`, and `Run` directory structures.
 
