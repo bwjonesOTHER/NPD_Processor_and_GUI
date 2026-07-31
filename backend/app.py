@@ -887,7 +887,8 @@ def api_generate_plots():
                 "success": True, 
                 "plots_csv": sanitize_for_json(csv_plots), 
                 "plots_s21": sanitize_for_json(s21_plots),
-                "warnings": plot_generator.get_warnings()
+                "warnings": plot_generator.get_warnings(),
+                "n_avg_used": plot_generator.get_last_npd_n_avg()
             })
             
         else:
@@ -908,7 +909,7 @@ def api_generate_plots():
                 results.append(item)
                     
     shutil.rmtree(temp_out_dir, ignore_errors=True)
-    return jsonify({"success": True, "plots_data": sanitize_for_json(results), "warnings": plot_generator.get_warnings()})
+    return jsonify({"success": True, "plots_data": sanitize_for_json(results), "warnings": plot_generator.get_warnings(), "n_avg_used": plot_generator.get_last_npd_n_avg()})
 
 @app.route('/api/save_plots', methods=['POST'])
 def save_plots():

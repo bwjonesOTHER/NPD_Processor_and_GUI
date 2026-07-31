@@ -32,11 +32,19 @@ DEFAULT_AVERAGE_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspa
 # passed-in n_avg.
 _NPD_STEP_TO_NAVG = [(0.3, 83), (1.0, 25), (25.0, 1)]
 
+_last_npd_n_avg = None
+
+def get_last_npd_n_avg():
+    return _last_npd_n_avg
+
 def n_avg_for_freq_step(freq):
+    global _last_npd_n_avg
     if len(freq) < 2:
+        _last_npd_n_avg = 1
         return 1
     step_mhz = abs(np.median(np.diff(freq))) * 1000.0  # freq is in GHz
-    return min(_NPD_STEP_TO_NAVG, key=lambda pair: abs(pair[0] - step_mhz))[1]
+    _last_npd_n_avg = min(_NPD_STEP_TO_NAVG, key=lambda pair: abs(pair[0] - step_mhz))[1]
+    return _last_npd_n_avg
 
 # Absolute safety cap on how many files a single directory scan walks
 # through (search_files, find_cal_file, the cal-file fallback search, and
@@ -1563,6 +1571,8 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
 
 
 def generate_plots(params):
+    global _last_npd_n_avg
+    _last_npd_n_avg = None
     _warnings.clear()
     test_type = int(params.get('testType', 1))
     runs = params.get('runs', [])
@@ -1800,6 +1810,8 @@ def generate_plots(params):
     return generated_plots
 
 def plotGeneric(data_folder, cal_folder, output_folder, freq_min=None, freq_max=None, n_avg=1, plot_s12=False, plot_density=False, average_data_path="", u_bound_npd=None, l_bound_npd=None, u_bound_s21=None, l_bound_s21=None, plot_trace_s2p="S21"):
+    global _last_npd_n_avg
+    _last_npd_n_avg = None
     """
     Plots generic CSV and S2P files found in the data_folder.
     CSV files are plotted using the plotNPD logic (applying calibration if available).

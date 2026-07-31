@@ -490,6 +490,9 @@ function App() {
       if (data.success) {
         setImages(data.plots_data || []);
         setWarnings(data.warnings || []);
+        if (data.n_avg_used !== undefined && data.n_avg_used !== null) {
+          setPlotParams(prev => ({ ...prev, n_avg: data.n_avg_used }));
+        }
       } else {
         setError(data.error || 'Failed to generate plots');
       }

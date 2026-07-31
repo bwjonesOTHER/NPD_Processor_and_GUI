@@ -168,6 +168,9 @@ export default function GenericPlotter({ API_BASE, onBack }) {
       if (res.ok) {
         setImagesCSV(data.plots_csv || []);
         setImagesS2P(data.plots_s21 || []);
+        if (data.n_avg_used !== undefined && data.n_avg_used !== null) {
+          setPlotParams(prev => ({ ...prev, n_avg: data.n_avg_used }));
+        }
         if ((data.plots_csv || []).length === 0 && (data.plots_s21 || []).length > 0) {
           setActiveTab('s2p');
         } else {
