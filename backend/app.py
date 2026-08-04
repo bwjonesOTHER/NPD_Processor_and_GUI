@@ -918,6 +918,7 @@ def api_generate_plots():
             
         else:
             # Generate plots returns a list of dicts: [{'path': str, 'status': str}]
+            plot_generator._ADDITIONAL_CAL_PATH = _ADDITIONAL_CAL_PATH
             generated_data = plot_generator.generate_plots(params)
     except Exception as e:
         import traceback

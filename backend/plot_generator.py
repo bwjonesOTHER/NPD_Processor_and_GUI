@@ -17,6 +17,11 @@ import numpy as np
 from datetime import datetime
 import pandas as pd
 import glob
+import base64
+import json
+import ast
+
+_ADDITIONAL_CAL_PATH = None
 
 # Canonical NPD pass/fail reference-average file, used whenever the
 # frontend hasn't supplied its own average_data_path (upload is still an
@@ -256,10 +261,10 @@ def get_calibration_loss(filepath, cal_folder, test_type=1, plot_s12=False, refe
             cal_files_to_load.append(f)
 
     # Include any user-uploaded Additional Cal files
-    additional_cal_path = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
-    if os.path.exists(additional_cal_path):
+    global _ADDITIONAL_CAL_PATH
+    if _ADDITIONAL_CAL_PATH and os.path.exists(_ADDITIONAL_CAL_PATH):
         import glob
-        for add_file in glob.glob(os.path.join(additional_cal_path, '*.s2p')):
+        for add_file in glob.glob(os.path.join(_ADDITIONAL_CAL_PATH, '*.s2p')):
             if os.path.isfile(add_file):
                 add_name = os.path.basename(add_file).lower()
                 
