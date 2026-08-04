@@ -59,6 +59,7 @@ const InteractivePlot = forwardRef(({ plotData, height = '100%', onPlotError }, 
 
   const layoutConfig = {
     ...plotData.layout,
+    title: typeof plotData.layout.title === 'string' ? { text: plotData.layout.title } : plotData.layout.title,
     autosize: true,
     margin: { l: 60, r: 40, t: 60, b: 60 },
     paper_bgcolor: 'rgba(0,0,0,0)',
@@ -66,11 +67,13 @@ const InteractivePlot = forwardRef(({ plotData, height = '100%', onPlotError }, 
     font: { color: '#e0e0e0' },
     xaxis: {
       ...(plotData.layout.xaxis || {}),
+      title: (plotData.layout.xaxis && typeof plotData.layout.xaxis.title === 'string') ? { text: plotData.layout.xaxis.title } : (plotData.layout.xaxis?.title || { text: '' }),
       gridcolor: 'rgba(255,255,255,0.1)',
       zerolinecolor: 'rgba(255,255,255,0.2)'
     },
     yaxis: {
       ...(plotData.layout.yaxis || {}),
+      title: (plotData.layout.yaxis && typeof plotData.layout.yaxis.title === 'string') ? { text: plotData.layout.yaxis.title } : (plotData.layout.yaxis?.title || { text: '' }),
       gridcolor: 'rgba(255,255,255,0.1)',
       zerolinecolor: 'rgba(255,255,255,0.2)'
     }
@@ -79,6 +82,7 @@ const InteractivePlot = forwardRef(({ plotData, height = '100%', onPlotError }, 
   if (plotData.layout.yaxis2) {
     layoutConfig.yaxis2 = {
       ...plotData.layout.yaxis2,
+      title: (plotData.layout.yaxis2 && typeof plotData.layout.yaxis2.title === 'string') ? { text: plotData.layout.yaxis2.title } : (plotData.layout.yaxis2?.title || { text: '' }),
       gridcolor: 'rgba(255,255,255,0.1)',
       zerolinecolor: 'rgba(255,255,255,0.2)'
     };
