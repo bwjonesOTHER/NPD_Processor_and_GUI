@@ -605,7 +605,7 @@ def plotNPD(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_npd, l_bou
         else:
             y_range = [-130, -90]
 
-    title = f'Noise Power Density (dBm/Hz) - {title_suffix}, {status}' if plot_density else f'Noise Power (dBm) - {title_suffix}, {status}'
+    title = f'Noise Power Density {title_suffix}, {status}' if plot_density else f'Noise Power {title_suffix}, {status}'
     
     layout = {
         "title": title,
@@ -788,7 +788,7 @@ def plotS21(filesA, filesB, title_suffix, freq_min, freq_max, u_bound_s21, l_bou
         y_min_bound = max(-40, y_min_val)
         y_max_bound = y_max_val + max(2, (y_max_val - y_min_bound) * 0.05) # Add 5% padding to top
         y_range = [y_min_bound, y_max_bound]
-    title = f'{plot_trace_s2p} Calibrated (dB) - {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'{plot_trace_s2p} (dB) - {title_suffix}, {status}'
+    title = f'{plot_trace_s2p} Calibrated {title_suffix}, {status}' if (test_type != 1 and test_type != 3) and apply_cal else f'{plot_trace_s2p} {title_suffix}, {status}'
     
     layout = {
         "title": title,
@@ -899,7 +899,7 @@ def plot_temp_deltas(data_dict, title, ylabel, output_folder, ax1_ylim=None, ax2
     })
     
     layout = {
-        "title": f'{title} Temp Deltas (dB), Passed',
+        "title": f'{title} Temp Deltas, Passed',
         "xaxis": {"title": "Frequency (GHz)"},
         "yaxis": {"title": ylabel},
         "yaxis2": {
