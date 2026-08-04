@@ -60,6 +60,20 @@ app = Flask(__name__, static_folder=os.path.join(os.getcwd(), 'frontend', 'dist'
 CORS(app)
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
+app.config['MAX_FORM_PARTS'] = 50000 # Prevent 413 error when uploading many files (Werkzeug >= 3.0)
+
+from werkzeug.exceptions import HTTPException
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Return JSON instead of HTML for HTTP errors
+    if isinstance(e, HTTPException):
+        return jsonify(success=False, error=e.description), e.code
+
+    # Return JSON for all other unhandled Python exceptions
+    import traceback
+    traceback.print_exc()
+    return jsonify(success=False, error=f"Internal Server Error: {str(e)}"), 500
 if hasattr(app.request_class, 'max_form_parts'):
     # Increase from default 1000 to a large number to support uploading large directories
     class CustomRequest(app.request_class):
