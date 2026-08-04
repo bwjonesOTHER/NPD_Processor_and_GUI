@@ -86,6 +86,30 @@ CORS(app)
 # or from the backend folder. Let's assume root of the project.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+import tempfile
+import time
+import shutil
+
+_GENERIC_PATHS = {'Data': None, 'Cal': None}
+_ADDITIONAL_CAL_PATH = None
+_REFERENCE_FILE_PATH = None
+_RUN_BASE_PATHS = {}
+
+def cleanup_old_temp_dirs():
+    temp_base = tempfile.gettempdir()
+    now = time.time()
+    for item in os.listdir(temp_base):
+        if item.startswith("npd_app_"):
+            item_path = os.path.join(temp_base, item)
+            if os.path.isdir(item_path):
+                # if older than 2 hours
+                if now - os.path.getmtime(item_path) > 7200:
+                    try:
+                        shutil.rmtree(item_path, ignore_errors=False)
+                    except Exception as e:
+                        print(f"Failed to delete old temp dir {item_path}: {e}")
+
+
 def write_txt(filename, content):
     """Writes content to a text file in the current directory."""
     with open(os.path.join(BASE_DIR, filename), "w") as f:
@@ -304,8 +328,8 @@ def upload_reference_file():
     if not file.filename.lower().endswith(('.xlsx', '.xls', '.csv')):
         return jsonify({"success": False, "error": "Expected a .xlsx, .xls, or .csv file"}), 400
 
-    dest_folder = os.path.join(os.getcwd(), 'uploads', 'reference_files')
-    os.makedirs(dest_folder, exist_ok=True)
+    cleanup_old_temp_dirs()
+    dest_folder = tempfile.mkdtemp(prefix="npd_app_ref_")
     filepath = os.path.join(dest_folder, file.filename)
     file.save(filepath)
     return jsonify({"success": True, "path": filepath, "filename": file.filename})
@@ -341,13 +365,8 @@ def upload_test_data():
     if not test_type:
         test_type = request.form.get('testType', '1')
     
-    base_path = os.path.join(os.getcwd(), 'uploads', f'Test{test_type}')
-    
-    # Always clear the test directory before uploading new data
-    if os.path.exists(base_path):
-        import shutil
-        shutil.rmtree(base_path)
-    os.makedirs(base_path, exist_ok=True)
+    cleanup_old_temp_dirs()
+    base_path = tempfile.mkdtemp(prefix=f"npd_app_test{test_type}_")
     
     # Clean up previous state files to prevent cross-contamination
     import glob
@@ -357,13 +376,6 @@ def upload_test_data():
                 os.remove(txt_file)
             except:
                 pass
-                
-    additional_cal_path = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
-    if os.path.exists(additional_cal_path):
-        try:
-            shutil.rmtree(additional_cal_path)
-        except:
-            pass
                 
     def save_files(files_list, subfolder):
         dest_folder = os.path.join(base_path, subfolder)
@@ -423,9 +435,16 @@ def upload_run_files():
     chunk_index = request.form.get('chunk_index', '0')
     test_type = request.form.get('testType', '1')
     
-    # Completely sever ties to upload_path.txt and path.txt. 
-    # Uploaded runs ALWAYS go into a strict, isolated local test folder.
-    base_path = os.path.join(os.getcwd(), 'uploads', f'Test{test_type}')
+    global _RUN_BASE_PATHS, _ADDITIONAL_CAL_PATH
+    if chunk_index == '0' and run_index == '0':
+        cleanup_old_temp_dirs()
+        _RUN_BASE_PATHS[test_type] = tempfile.mkdtemp(prefix=f"npd_app_run{test_type}_")
+        _ADDITIONAL_CAL_PATH = None
+        
+    base_path = _RUN_BASE_PATHS.get(test_type)
+    if not base_path:
+        base_path = tempfile.mkdtemp(prefix=f"npd_app_run{test_type}_")
+        _RUN_BASE_PATHS[test_type] = base_path
         
     if folder_name:
         dest_folder = os.path.join(base_path, folder_name)
@@ -441,16 +460,8 @@ def upload_run_files():
                 except:
                     pass
         if os.path.exists(dest_folder):
-            shutil.rmtree(dest_folder)
+            shutil.rmtree(dest_folder, ignore_errors=True)
             
-        if run_index == '0':
-            additional_cal_path = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
-            if os.path.exists(additional_cal_path):
-                try:
-                    shutil.rmtree(additional_cal_path)
-                except:
-                    pass
-        
     os.makedirs(dest_folder, exist_ok=True)
     
     saved_files = []
@@ -478,13 +489,10 @@ def upload_additional_cal():
         return jsonify({"error": "No files part"}), 400
     
     files = request.files.getlist('files')
-    dest_folder = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
-    
-    # Clear directory to prevent stale additional cal files from leaking
-    import shutil
-    if os.path.exists(dest_folder):
-        shutil.rmtree(dest_folder, ignore_errors=True)
-    os.makedirs(dest_folder, exist_ok=True)
+    global _ADDITIONAL_CAL_PATH
+    cleanup_old_temp_dirs()
+    _ADDITIONAL_CAL_PATH = tempfile.mkdtemp(prefix="npd_app_addcal_")
+    dest_folder = _ADDITIONAL_CAL_PATH
     
     saved_count = 0
     for file in files:
@@ -497,10 +505,8 @@ def upload_additional_cal():
 
 @app.route('/api/delete_additional_cal', methods=['POST'])
 def delete_additional_cal():
-    dest_folder = os.path.join(os.getcwd(), 'uploads', 'AdditionalCal')
-    import shutil
-    if os.path.exists(dest_folder):
-        shutil.rmtree(dest_folder, ignore_errors=True)
+    global _ADDITIONAL_CAL_PATH
+    _ADDITIONAL_CAL_PATH = None
     return jsonify({"success": True})
 
 @app.route('/api/upload_generic', methods=['POST'])
@@ -511,8 +517,15 @@ def upload_generic():
     upload_type = request.form.get('type', 'data') # 'data' or 'cal'
     files = request.files.getlist('files')
     
-    dest_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', upload_type.capitalize())
-    os.makedirs(dest_folder, exist_ok=True)
+    global _GENERIC_PATHS
+    if 'files' in request.files and request.files.getlist('files'):
+        cleanup_old_temp_dirs()
+        new_dir = tempfile.mkdtemp(prefix=f"npd_app_generic_{upload_type}_")
+        _GENERIC_PATHS[upload_type.capitalize()] = new_dir
+    dest_folder = _GENERIC_PATHS.get(upload_type.capitalize())
+    if not dest_folder:
+        dest_folder = tempfile.mkdtemp(prefix=f"npd_app_generic_{upload_type}_")
+        _GENERIC_PATHS[upload_type.capitalize()] = dest_folder
     
     saved_files = []
     for file in files:
@@ -528,10 +541,8 @@ def upload_generic():
 @app.route('/api/clear_generic', methods=['POST'])
 def clear_generic():
     upload_type = request.args.get('type', 'data')
-    dest_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', upload_type.capitalize())
-    import shutil
-    if os.path.exists(dest_folder):
-        shutil.rmtree(dest_folder, ignore_errors=True)
+    global _GENERIC_PATHS
+    _GENERIC_PATHS[upload_type.capitalize()] = None
     return jsonify({"success": True})
 
 @app.route('/api/folders', methods=['GET'])
@@ -877,8 +888,8 @@ def api_generate_plots():
 
     try:
         if test == 5:
-            data_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', 'Data')
-            cal_folder = os.path.join(os.getcwd(), 'uploads', 'Generic', 'Cal')
+            data_folder = _GENERIC_PATHS.get('Data') or ""
+            cal_folder = _GENERIC_PATHS.get('Cal') or "" 
             # Extract generic plot params
             freq_min = float(params.get('freq_min')) if params.get('freq_min') not in [None, ""] else None
             freq_max = float(params.get('freq_max')) if params.get('freq_max') not in [None, ""] else None
