@@ -5,7 +5,7 @@ import './App.css';
 import InteractivePlot from './InteractivePlot';
 import GenericPlotter from './GenericPlotter';
 
-const API_BASE = window.location.port === '5173' ? `http://${window.location.hostname}:5001/api` : '/api';
+const API_BASE = window.location.port === '5173' ? `http://${window.location.hostname}:5001/api` : `${import.meta.env.BASE_URL}api`.replace('//api', '/api');
 
 const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls', '.txt', '.tdms', '.json', '.log', '.s1p', '.s2p'];
 const filterValidFiles = (files) => {

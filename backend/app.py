@@ -60,6 +60,16 @@ BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 STATIC_FOLDER = os.path.join(BASE_PATH, 'static')
 app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
 CORS(app)
+class PrefixMiddleware(object):
+    def __init__(self, app):
+        self.app = app
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO', '')
+        if '/api/' in path:
+            environ['PATH_INFO'] = '/api/' + path.split('/api/', 1)[1]
+        return self.app(environ, start_response)
+
+app.wsgi_app = PrefixMiddleware(app.wsgi_app)
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
 app.config['MAX_FORM_PARTS'] = 50000 # Prevent 413 error when uploading many files (Werkzeug >= 3.0)
