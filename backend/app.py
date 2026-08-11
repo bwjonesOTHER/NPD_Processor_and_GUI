@@ -56,7 +56,9 @@ _ensure_dependencies()
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 
-app = Flask(__name__, static_folder=os.path.join(os.getcwd(), 'frontend', 'dist'))
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+STATIC_FOLDER = os.path.join(BASE_PATH, 'static')
+app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
 CORS(app)
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
@@ -968,6 +970,8 @@ def save_plots():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
+    if path.startswith('api/'):
+        return jsonify({"error": "Not found", "success": False}), 404
     if path != "" and os.path.exists(app.static_folder + '/' + path):
         return send_from_directory(app.static_folder, path)
     else:

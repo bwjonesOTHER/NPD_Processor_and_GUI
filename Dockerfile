@@ -5,6 +5,8 @@ COPY frontend/package*.json ./
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install
 COPY frontend/ ./
+ARG VITE_BASE_PATH=/npd-processor-gui/
+ENV VITE_BASE_PATH=/npd-processor-gui/
 RUN npm run build
 
 # Stage 2: Setup the Python backend
@@ -28,7 +30,7 @@ RUN pip install --no-cache-dir -r backend/requirements.txt gunicorn werkzeug
 COPY backend/ ./backend/
 
 # Copy built frontend from Stage 1
-COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+COPY --from=frontend-builder /app/frontend/dist ./backend/static/
 
 # Expose the port
 EXPOSE 5001
