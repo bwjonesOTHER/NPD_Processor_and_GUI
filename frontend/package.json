@@ -10,12 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "express": "^5.2.1",
     "jszip": "^3.10.1",
     "lucide-react": "^1.23.0",
-    "playwright": "^1.62.0",
     "plotly.js-dist-min": "^3.7.0",
-    "puppeteer": "^25.3.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-plotly.js": "^4.0.0"
