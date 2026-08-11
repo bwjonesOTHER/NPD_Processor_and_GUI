@@ -1,0 +1,26 @@
+The Dockerfile builds the React frontend but never copies the output into the Flask backend's static folder. The container has /app/frontend/dist/ with the built React app, but /app/backend/static/ doesn't exist, so Flask can't serve the frontend.
+Fix the Dockerfile -- in the Python runtime stage, add this COPY line after copying the backend:
+ 
+COPY --from=frontend /app/frontend/dist/ ./backend/static/
+ 
+Also Flask's app.py must be configured to serve static files:
+ 
+import os
+from flask import Flask, send_from_directory
+ 
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+STATIC_FOLDER = os.path.join(BASE_PATH, 'static')
+ 
+app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
+ 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    if path.startswith('api/'):
+        return {"error": "Not found", "success": False}, 404
+    if path and os.path.exists(os.path.join(STATIC_FOLDER, path)):
+        return send_from_directory(STATIC_FOLDER, path)
+    return send_from_directory(STATIC_FOLDER, 'index.html')
+ 
+Also confirm vite.config.ts has base: '/npd-processor-gui/' and the Dockerfile has ARG VITE_BASE_PATH=/npd-processor-gui/ before ENV VITE_BASE_PATH=/npd-processor-gui/ before RUN npm run build.
+Push to GitHub.
