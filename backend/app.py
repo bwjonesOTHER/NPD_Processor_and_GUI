@@ -73,6 +73,7 @@ app.wsgi_app = PrefixMiddleware(app.wsgi_app)
 # Allow massive uploads (e.g., thousands of files in a directory)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 * 1024 # 16 GB
 app.config['MAX_FORM_PARTS'] = 50000 # Prevent 413 error when uploading many files (Werkzeug >= 3.0)
+app.config['MAX_FORM_MEMORY_SIZE'] = 500 * 1024 * 1024 # 500 MB – override Werkzeug 3.x default of 500 KB
 
 from werkzeug.exceptions import HTTPException
 
