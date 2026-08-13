@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,12 +8,59 @@ from glob import glob
 from datetime import datetime
 
 def win_long(path):
+    if path is None:
+        return None
     if os.name == "nt":
         ap = os.path.abspath(path)
         if not ap.startswith("\\\\?\\"):
             ap = "\\\\?\\" + ap
         return ap
     return path
+
+def folder_label(path):
+    # Basename that tolerates mixed \ and / separators (win_long can prefix
+    # \\?\ on Windows), so plot titles reflect the actual folder found.
+    return re.split(r"[\\/]+", path.rstrip("\\/"))[-1] or path
+
+def find_group_folder(root, keyword, group_num):
+    # Group 1/2 data sometimes lives in its own subfolder (e.g. "AMB 1",
+    # "Cold 2", "HOT2") and sometimes group 1's files just sit directly in
+    # the parent temperature folder with no "1" subfolder at all. Search for
+    # a child folder whose name contains the keyword and the group number as
+    # its own token (so "1" doesn't match inside "10"); fall back to the
+    # parent so group 1 keeps working when there's no dedicated subfolder.
+    if not os.path.isdir(root):
+        return root
+    digit_re = re.compile(rf"(?<!\d){group_num}(?!\d)")
+    for name in sorted(os.listdir(root)):
+        full = os.path.join(root, name)
+        if os.path.isdir(full) and keyword in name.lower() and digit_re.search(name):
+            return full
+    return root
+
+def find_folder_by_keyword(root, keyword):
+    # For one-off subfolders (e.g. "Anomaly AMB") that don't fit the
+    # group-1/group-2 pattern — matched by keyword only, no digit required.
+    if not os.path.isdir(root):
+        return None
+    for name in sorted(os.listdir(root)):
+        full = os.path.join(root, name)
+        if os.path.isdir(full) and keyword in name.lower():
+            return full
+    return None
+
+def find_cable_file(folder, include_kw, exclude_kw=None):
+    # Cable-loss filenames are date-stamped (e.g. "20260713_..."), so match
+    # on the descriptive part of the name instead of hardcoding the date.
+    candidates = glob(os.path.join(folder, "*.s2p")) + glob(os.path.join(folder, "*.S2P"))
+    matches = [
+        f for f in candidates
+        if include_kw in os.path.basename(f).lower()
+        and (exclude_kw is None or exclude_kw not in os.path.basename(f).lower())
+    ]
+    if not matches:
+        raise FileNotFoundError(f"No cable-loss file containing '{include_kw}' found in {folder}")
+    return sorted(matches)[0]
 
 MAIN = win_long(
     r"C:\Users\brannon.jones\Desktop\Fake Sharepoint\LON-10095.1-Macallan - Documents\03 - Technical\06 - Test & Demonstrations\06 Flight Phase Test Data\PMA ARRAY\Test Hat\SN0001_LMO1157-1-59-7"
@@ -22,28 +70,39 @@ MAIN = win_long(
 OUTDIR = win_long(os.path.join(MAIN, "ENG_review"))
 os.makedirs(OUTDIR, exist_ok=True)
 
-AMBIENT  = win_long(MAIN + r"\Ambient Measurements")
-AMBIENT2 = win_long(AMBIENT + r"\AMB 2")
-COLD     = win_long(MAIN + r"\Cold Measurements")
-COLD2    = win_long(COLD + r"\Cold 2")
-HOT      = win_long(MAIN + r"\Hot Measurements")
-HOT2     = win_long(HOT + r"\HOT2")
-CABLE    = win_long(MAIN + r"\Cable Loss")
+AMBIENT_ROOT = win_long(MAIN + r"\Ambient Measurements")
+COLD_ROOT    = win_long(MAIN + r"\Cold Measurements")
+HOT_ROOT     = win_long(MAIN + r"\Hot Measurements")
+CABLE        = win_long(MAIN + r"\Cable Loss")
+
+# AMB 1/Cold 1/Hot 1 are their own group, kept separate from AMB 2/Cold
+# 2/Hot2 — resolved dynamically so each points at whichever subfolder
+# actually holds that group's data (see find_group_folder above).
+AMBIENT  = win_long(find_group_folder(AMBIENT_ROOT, "amb", 1))
+AMBIENT2 = win_long(find_group_folder(AMBIENT_ROOT, "amb", 2))
+COLD     = win_long(find_group_folder(COLD_ROOT, "cold", 1))
+COLD2    = win_long(find_group_folder(COLD_ROOT, "cold", 2))
+HOT      = win_long(find_group_folder(HOT_ROOT, "hot", 1))
+HOT2     = win_long(find_group_folder(HOT_ROOT, "hot", 2))
+
+# Third, ungrouped ambient run (fault/anomaly capture) — plotted on its own,
+# not paired into the AMB1/AMB2 group overlay.
+AMBIENT_ANOMALY = win_long(find_folder_by_keyword(AMBIENT_ROOT, "anomaly"))
 
 # SPECAN calibrates NP/NPD (its chain has an amplifier in line, so its
 # figure is net gain and gets subtracted, not added); BASE/HAT calibrate
 # S21 only — see plot_npd/overlay_temperature vs. plot_s21.
-SPECAN = win_long(os.path.join(CABLE, "20260713_SpecAnBaseCableAssy_pathloss.s2p"))
-BASE   = win_long(os.path.join(CABLE, "20260713_BaseCableAssy_pathloss.s2p"))
-HAT    = win_long(os.path.join(CABLE, "20260713_HatCableAssy_pathloss.s2p"))
+SPECAN = win_long(find_cable_file(CABLE, "specan"))
+BASE   = win_long(find_cable_file(CABLE, "base", exclude_kw="specan"))
+HAT    = win_long(find_cable_file(CABLE, "hat"))
 
 n_avg = 20
 
-freq_min = 2.0
-freq_max = 5.0
+freq_min = 2.6
+freq_max = 4.2
 
-npd_ylim = (-170, -140)
-s21_ylim = (-105, 5)
+npd_ylim = (-160, -140)
+s21_ylim = (-20, 0)
 
 show_plot = True
 
@@ -237,9 +296,13 @@ def plot_s21(files, title_suffix):
 # ============================================================
 # OVERLAY PLOTS
 # ============================================================
-def overlay_temperature(temp_name, folder1, folder2):
+def overlay_temperature(folders):
+    folders = [f for f in folders if f]
+    labels = [folder_label(f) for f in folders]
+    combined_label = " & ".join(labels)
+    file_tag = "_".join(labels)
 
-    files = get_csv(folder1) + get_csv(folder2)
+    files = [f for folder in folders for f in get_csv(folder)]
 
     # NP/NPD only needs the SpecAn cal file — Base/Hat don't apply to it
     # (they calibrate S21 instead; see the S21 overlay below). SpecAn's real
@@ -265,7 +328,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"{DATE_STR} NPD OVERLAY — {temp_name} & {temp_name}2 ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
+    plt.title(f"{DATE_STR} NPD OVERLAY — {combined_label} ({'Calibrated' if APPLY_NPD_CAL else 'Raw'})")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("Noise Power (dBm)")
     plt.xlim(freq_min, freq_max)
@@ -283,14 +346,14 @@ def overlay_temperature(temp_name, folder1, folder2):
 
     plt.subplots_adjust(bottom=0.45)
 
-    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_OVERLAY_{temp_name}.png"))
+    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_OVERLAY_{file_tag}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
     print("Saved:", out)
 
     # ---------------------
     # S21 overlay
     # ---------------------
-    files_s2p = get_s2p(folder1) + get_s2p(folder2)
+    files_s2p = [f for folder in folders for f in get_s2p(folder)]
 
     base_freq, base_s21 = load_s2p(BASE)
     hat_freq, hat_s21 = load_s2p(HAT)
@@ -312,7 +375,7 @@ def overlay_temperature(temp_name, folder1, folder2):
         plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
 
     plt.grid(True)
-    plt.title(f"{DATE_STR} S21 OVERLAY — {temp_name} & {temp_name}2")
+    plt.title(f"{DATE_STR} S21 OVERLAY — {combined_label}")
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("S21 (dB)")
     plt.xlim(freq_min, freq_max)
@@ -330,7 +393,7 @@ def overlay_temperature(temp_name, folder1, folder2):
 
     plt.subplots_adjust(bottom=0.45)
 
-    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_OVERLAY_{temp_name}.png"))
+    out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_OVERLAY_{file_tag}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
     print("Saved:", out)
 
@@ -338,23 +401,19 @@ def overlay_temperature(temp_name, folder1, folder2):
 # MAIN DRIVER
 # ============================================================
 def process_all():
-    folders = [
-        ("Ambient", AMBIENT),
-        ("Ambient2", AMBIENT2),
-        ("Cold", COLD),
-        ("Cold2", COLD2),
-        ("Hot", HOT),
-        ("Hot2", HOT2)
-    ]
+    folders = [AMBIENT, AMBIENT2, AMBIENT_ANOMALY, COLD, COLD2, HOT, HOT2]
 
-    for label, folder in folders:
+    for folder in folders:
+        if not folder:
+            continue
+        label = folder_label(folder)
         print(f"\n=== Processing: {label} ===")
         plot_npd(get_csv(folder), label)
         plot_s21(get_s2p(folder), label)
 
-    overlay_temperature("Ambient", AMBIENT, AMBIENT2)
-    overlay_temperature("Cold", COLD, COLD2)
-    overlay_temperature("Hot", HOT, HOT2)
+    overlay_temperature([AMBIENT, AMBIENT2, AMBIENT_ANOMALY])
+    overlay_temperature([COLD, COLD2])
+    overlay_temperature([HOT, HOT2])
 
 
 if __name__ == "__main__":
