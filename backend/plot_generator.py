@@ -644,9 +644,9 @@ def plot_npd_delta(ambient, other, other_label, bounds, output_folder, date_str=
 # ============================================================
 _OTA_COLORS = ["blue", "orange", "green", "red", "purple", "cyan", "magenta", "brown", "gold", "black"]
 _OTA_NP_YLIM = (-130, -80)
-_OTA_NPD_YLIM = (-170, -140)
-_OTA_S21_YLIM = (-105, 5)
-_OTA_XLIM = (2.0, 5.0)
+_OTA_NPD_YLIM = (-160, -140)
+_OTA_S21_YLIM = (-20, 0)
+_OTA_XLIM = (2.6, 4.2)
 
 # Non-fatal issues from the most recent generate_plots() call (e.g. a
 # reference-average file the user pointed to that couldn't be read) — surfaced
@@ -689,6 +689,22 @@ def _ota_find_dir(base, keywords):
         if os.path.isdir(full) and _ota_matches(name, keywords):
             return full
     return None
+
+def _ota_find_group_dir(root, keyword, group_num):
+    """Group 1/2 data sometimes lives in its own subfolder (e.g. "AMB1",
+    "COLD2") and sometimes group 1's files just sit directly in the parent
+    temperature folder with no "1" subfolder at all. Search for a child
+    folder whose name contains the keyword and the group number as its own
+    token (so "1" doesn't match inside "10"); fall back to the parent so
+    group 1 keeps working when there's no dedicated subfolder."""
+    if not root or not os.path.isdir(root):
+        return root
+    digit_re = re.compile(rf"(?<!\d){group_num}(?!\d)")
+    for name in sorted(os.listdir(root)):
+        full = os.path.join(root, name)
+        if os.path.isdir(full) and keyword in name.lower() and digit_re.search(name):
+            return full
+    return root
 
 def _ota_find_cal_file(folder, must_include, must_exclude=()):
     if not folder or not os.path.isdir(folder):
@@ -996,14 +1012,26 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     if avg_ref is None and average_data_path and avg_err:
         _warn(f"Reference average file could not be used ({avg_err}): {average_data_path}")
 
-    ambient = _ota_find_dir(base_folder, ["ambient"])
-    cold = _ota_find_dir(base_folder, ["cold"])
-    hot = _ota_find_dir(base_folder, ["hot"])
+    ambient_root = _ota_find_dir(base_folder, ["ambient"])
+    cold_root = _ota_find_dir(base_folder, ["cold"])
+    hot_root = _ota_find_dir(base_folder, ["hot"])
     cable = _ota_find_dir(base_folder, ["cable"])
 
-    ambient2 = _ota_find_dir(ambient, ["2"]) if ambient else None
-    cold2 = _ota_find_dir(cold, ["2"]) if cold else None
-    hot2 = _ota_find_dir(hot, ["2"]) if hot else None
+    # AMB1/COLD1/HOT1 are their own group, kept separate from AMB2/COLD2/
+    # HOT2 — resolved dynamically so each points at whichever subfolder
+    # actually holds that group's data (see _ota_find_group_dir above).
+    ambient = _ota_find_group_dir(ambient_root, "amb", 1)
+    ambient2 = _ota_find_group_dir(ambient_root, "amb", 2)
+    cold = _ota_find_group_dir(cold_root, "cold", 1)
+    cold2 = _ota_find_group_dir(cold_root, "cold", 2)
+    hot = _ota_find_group_dir(hot_root, "hot", 1)
+    hot2 = _ota_find_group_dir(hot_root, "hot", 2)
+
+    # Third, ungrouped ambient run (fault/anomaly capture) — plotted on its
+    # own and shown in the Ambient overlay, but never folded into the
+    # Ambient-Hot/Ambient-Cold reference average (see the overlay loop
+    # below) since its data is intentionally out-of-spec.
+    ambient_anomaly = _ota_find_dir(ambient_root, ["anomaly"])
 
     # Two separate calibration chains: NP/NPD only needs the SpecAn cal file
     # (see _ota_plot_noise). S21 is measured directly through the passive
@@ -1030,7 +1058,7 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     npd_avg_by_label = {}
 
     folder_specs = [
-        ("Ambient", ambient), ("Ambient2", ambient2),
+        ("Ambient", ambient), ("Ambient2", ambient2), ("Ambient Anomaly", ambient_anomaly),
         ("Cold", cold), ("Cold2", cold2),
         ("Hot", hot), ("Hot2", hot2),
     ]
@@ -1049,17 +1077,32 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
 
-    for label, folder1, folder2 in [("Ambient", ambient, ambient2), ("Cold", cold, cold2), ("Hot", hot, hot2)]:
-        if not folder1 or not folder2:
+    # Ambient overlays all three folders (AMB1/AMB2/Anomaly AMB); Cold/Hot
+    # stay two-way (no anomaly run for those temperatures).
+    overlay_specs = [
+        ("Ambient", [ambient, ambient2, ambient_anomaly]),
+        ("Cold", [cold, cold2]),
+        ("Hot", [hot, hot2]),
+    ]
+    for label, group_folders in overlay_specs:
+        group_folders = [f for f in group_folders if f]
+        if len(group_folders) < 2:
             continue
-        npd_files = _ota_get_files(folder1, ".csv") + _ota_get_files(folder2, ".csv")
-        s21_files = _ota_get_files(folder1, ".s2p") + _ota_get_files(folder2, ".s2p")
+        npd_files = [f for folder in group_folders for f in _ota_get_files(folder, ".csv")]
+        s21_files = [f for folder in group_folders for f in _ota_get_files(folder, ".s2p")]
         is_ambient = label == "Ambient"
         p = _ota_plot_noise(npd_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, plot_density=True, apply_cal=apply_npd_cal, date_str=date_str,
                              avg_ref=avg_ref if is_ambient else None, u_bound=u_bound_npd if is_ambient else None, l_bound=l_bound_npd if is_ambient else None)
         if p:
             generated.append(p)
-            if p.get("avg_raw") is not None:
+            # Only fold the overlay's average back into the Ambient-Hot/
+            # Ambient-Cold reference baseline when it's a clean group-1 +
+            # group-2 combination (exactly 2 folders) — the Anomaly AMB
+            # run is intentionally out-of-spec, and averaging it in would
+            # skew that baseline. When Anomaly AMB is present, the
+            # per-folder "Ambient" (AMB1-only) average from folder_specs
+            # above is kept as the baseline instead.
+            if p.get("avg_raw") is not None and len(group_folders) == 2:
                 npd_avg_by_label[label] = (p["freq"], p["avg_raw"])
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
