@@ -1,5 +1,6 @@
 import os
 import re
+import traceback
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -240,6 +241,7 @@ def plot_npd(files, title_suffix):
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_{title_suffix}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
+    plt.close()
     print("Saved:", out)
 
 
@@ -291,6 +293,7 @@ def plot_s21(files, title_suffix):
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_{title_suffix}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
+    plt.close()
     print("Saved:", out)
 
 # ============================================================
@@ -302,8 +305,24 @@ def overlay_temperature(folders):
     combined_label = " & ".join(labels)
     file_tag = "_".join(labels)
 
-    files = [f for folder in folders for f in get_csv(folder)]
+    for folder, label in zip(folders, labels):
+        n_csv = len(get_csv(folder))
+        n_s2p = len(get_s2p(folder))
+        print(f"  overlay input {label:16s} -> {folder}  [csv={n_csv}, s2p={n_s2p}]")
 
+    files = [f for folder in folders for f in get_csv(folder)]
+    if not files:
+        print(f"No NPD files for overlay {combined_label} — skipping NPD overlay")
+    else:
+        _plot_npd_overlay(files, combined_label, file_tag)
+
+    files_s2p = [f for folder in folders for f in get_s2p(folder)]
+    if not files_s2p:
+        print(f"No S21 files for overlay {combined_label} — skipping S21 overlay")
+    else:
+        _plot_s21_overlay(files_s2p, combined_label, file_tag)
+
+def _plot_npd_overlay(files, combined_label, file_tag):
     # NP/NPD only needs the SpecAn cal file — Base/Hat don't apply to it
     # (they calibrate S21 instead; see the S21 overlay below). SpecAn's real
     # signal-path figure (S12, not S21 — see load_s2p_s12) is net GAIN and
@@ -348,13 +367,10 @@ def overlay_temperature(folders):
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_NPD_OVERLAY_{file_tag}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
+    plt.close()
     print("Saved:", out)
 
-    # ---------------------
-    # S21 overlay
-    # ---------------------
-    files_s2p = [f for folder in folders for f in get_s2p(folder)]
-
+def _plot_s21_overlay(files_s2p, combined_label, file_tag):
     base_freq, base_s21 = load_s2p(BASE)
     hat_freq, hat_s21 = load_s2p(HAT)
 
@@ -395,25 +411,79 @@ def overlay_temperature(folders):
 
     out = win_long(os.path.join(OUTDIR, f"{DATE_STR}_S21_OVERLAY_{file_tag}.png"))
     plt.savefig(out, dpi=300, bbox_inches="tight")
+    plt.close()
     print("Saved:", out)
 
 # ============================================================
 # MAIN DRIVER
 # ============================================================
-def process_all():
-    folders = [AMBIENT, AMBIENT2, AMBIENT_ANOMALY, COLD, COLD2, HOT, HOT2]
+def _describe_folder(name, folder):
+    if not folder:
+        print(f"  {name:14s} -> NOT FOUND")
+        return
+    exists = os.path.isdir(folder)
+    n_csv = len(get_csv(folder)) if exists else 0
+    n_s2p = len(get_s2p(folder)) if exists else 0
+    print(f"  {name:14s} -> {folder}  [exists={exists}, csv={n_csv}, s2p={n_s2p}]")
 
-    for folder in folders:
+def _describe_cal_file(name, path):
+    print(f"  {name:14s} -> {path}  [exists={bool(path) and os.path.isfile(path)}]")
+
+def process_all():
+    named_folders = [
+        ("AMB1", AMBIENT),
+        ("AMB2", AMBIENT2),
+        ("Anomaly AMB", AMBIENT_ANOMALY),
+        ("COLD1", COLD),
+        ("COLD2", COLD2),
+        ("HOT1", HOT),
+        ("HOT2", HOT2),
+    ]
+
+    print("=== Resolved paths ===")
+    for name, folder in named_folders:
+        _describe_folder(name, folder)
+    _describe_cal_file("SPECAN", SPECAN)
+    _describe_cal_file("BASE", BASE)
+    _describe_cal_file("HAT", HAT)
+
+    succeeded, skipped, failed = [], [], []
+
+    for name, folder in named_folders:
         if not folder:
+            print(f"\n=== Skipping {name}: folder not found ===")
+            skipped.append(name)
             continue
         label = folder_label(folder)
         print(f"\n=== Processing: {label} ===")
-        plot_npd(get_csv(folder), label)
-        plot_s21(get_s2p(folder), label)
+        try:
+            plot_npd(get_csv(folder), label)
+            plot_s21(get_s2p(folder), label)
+            succeeded.append(label)
+        except Exception:
+            print(f"!!! ERROR processing {label} — continuing with remaining folders !!!")
+            traceback.print_exc()
+            failed.append(label)
 
-    overlay_temperature([AMBIENT, AMBIENT2, AMBIENT_ANOMALY])
-    overlay_temperature([COLD, COLD2])
-    overlay_temperature([HOT, HOT2])
+    overlay_groups = [
+        ("Ambient overlay", [AMBIENT, AMBIENT2, AMBIENT_ANOMALY]),
+        ("Cold overlay", [COLD, COLD2]),
+        ("Hot overlay", [HOT, HOT2]),
+    ]
+    for name, group in overlay_groups:
+        print(f"\n=== Processing: {name} ===")
+        try:
+            overlay_temperature(group)
+            succeeded.append(name)
+        except Exception:
+            print(f"!!! ERROR processing {name} — continuing !!!")
+            traceback.print_exc()
+            failed.append(name)
+
+    print("\n=== Summary ===")
+    print("Succeeded:", succeeded or "(none)")
+    print("Skipped (folder not found):", skipped or "(none)")
+    print("Failed (see traceback above):", failed or "(none)")
 
 
 if __name__ == "__main__":
