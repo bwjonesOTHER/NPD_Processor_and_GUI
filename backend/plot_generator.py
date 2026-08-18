@@ -646,6 +646,7 @@ _OTA_COLORS = ["blue", "orange", "green", "red", "purple", "cyan", "magenta", "b
 _OTA_NP_YLIM = (-130, -80)
 _OTA_NPD_YLIM = (-160, -140)
 _OTA_S21_YLIM = (-20, 0)
+_OTA_S22_YLIM = (-20, 0)
 _OTA_XLIM = (2.6, 4.2)
 
 # Non-fatal issues from the most recent generate_plots() call (e.g. a
@@ -754,6 +755,12 @@ def _ota_load_s12(filepath):
     freq = net.f / 1e9
     s12 = net.s_db[:, 0, 1]
     return freq, s12
+
+def _ota_load_s22(filepath):
+    net = rf.Network(filepath)
+    freq = net.f / 1e9
+    s22 = net.s_db[:, 1, 1]
+    return freq, s22
 
 def _ota_equal_len(freq, val):
     n = min(len(freq), len(val))
@@ -997,6 +1004,49 @@ def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_fo
     plt.close()
     return {"path": save_path, "status": "passed"}
 
+def _ota_plot_s22(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None):
+    if not files:
+        return None
+    date_str = date_str or datetime.now().strftime('%Y%m%d')
+    base_freq, base_s21 = cal["base"]
+
+    plt.figure(figsize=(8, 4), dpi=150)
+    color_cycle = iter(_OTA_COLORS)
+
+    for f in files:
+        freq, s22 = _ota_load_s22(f)
+        s22_smooth = _ota_smooth(s22, n_avg)
+        freq_smooth = freq[:len(s22_smooth)]
+
+        # S22 is a reflection at the DUT port reached through the Base
+        # cable, so a signal contributing to S22 travels that cable twice
+        # (out to the DUT and back) — its loss is added back in twice,
+        # unlike S21's single pass through Base+Hat (see _ota_plot_s21).
+        corrected = s22_smooth
+        if base_freq is not None:
+            corrected = corrected + 2 * np.abs(np.interp(freq_smooth, base_freq, base_s21))
+
+        plt.plot(freq_smooth, corrected, label=os.path.basename(f), color=next(color_cycle))
+
+    plt.grid(True)
+    plt.title(f"{date_str} S22 {title_suffix}")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("S22 (dB)")
+    plt.xlim(_OTA_XLIM)
+    plt.ylim(_OTA_S22_YLIM)
+    plt.axvline(x=freq_min, color='g')
+    plt.axvline(x=freq_max, color='g')
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
+
+    filename_safe_title = f"{date_str}_S22_{title_suffix}".replace(" ", "_") + ".png"
+    save_path = os.path.join(output_folder, filename_safe_title)
+    plt.subplots_adjust(bottom=0.45)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    return {"path": save_path, "status": "passed"}
+
 def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, output_folder, apply_npd_cal=False, average_data_path="", u_bound_npd=None, l_bound_npd=None):
     generated = []
     base_folder = _ota_resolve_data_root(base_folder)
@@ -1076,6 +1126,9 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
                 npd_avg_by_label[label] = (p["freq"], p["avg_raw"])
         p = _ota_plot_s21(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
+        if label == "Ambient2":
+            p = _ota_plot_s22(s21_files, label, freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
+            if p: generated.append(p)
 
     # Ambient overlays all three folders (AMB1/AMB2/Anomaly AMB); Cold/Hot
     # stay two-way (no anomaly run for those temperatures).

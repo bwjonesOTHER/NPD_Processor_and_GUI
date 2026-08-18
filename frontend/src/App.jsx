@@ -975,7 +975,7 @@ function App() {
                   <div className="toggle-row" style={{ gridColumn: '1 / -1' }}>
                     <label htmlFor="apply_npd_cal" className="toggle-row-label">
                       Apply cable-loss calibration to NPD
-                      <span className="toggle-row-hint">Unchecked = raw data as measured. S21 is always calibrated.</span>
+                      <span className="toggle-row-hint">Unchecked = raw data as measured. S21 and S22 (Ambient2) are always calibrated.</span>
                     </label>
                     <span className="toggle-switch">
                       <input
