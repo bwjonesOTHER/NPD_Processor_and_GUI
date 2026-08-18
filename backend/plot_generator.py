@@ -646,7 +646,7 @@ _OTA_COLORS = ["blue", "orange", "green", "red", "purple", "cyan", "magenta", "b
 _OTA_NP_YLIM = (-130, -80)
 _OTA_NPD_YLIM = (-160, -140)
 _OTA_S21_YLIM = (-20, 0)
-_OTA_S22_YLIM = (-20, 0)
+_OTA_S22_YLIM = (-35, 0)
 _OTA_XLIM = (2.6, 4.2)
 
 # Non-fatal issues from the most recent generate_plots() call (e.g. a
