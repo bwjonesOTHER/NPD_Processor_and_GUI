@@ -960,23 +960,39 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     plt.close()
     return {"path": save_path, "status": "failed" if failed_files else "passed", "freq": avg_curve_freq, "avg": avg_curve, "avg_raw": avg_curve_raw}
 
+_SN_RE = re.compile(r"SN\d+", re.IGNORECASE)
+
+def _ota_extract_serial(files):
+    """Pulls a serial number token (e.g. "SN0003") out of the first
+    filename that has one, for labeling the All Temps plot title."""
+    for f in files:
+        m = _SN_RE.search(os.path.basename(f))
+        if m:
+            return m.group(0).upper()
+    return None
+
 def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_folder, apply_cal=False, date_str=None):
-    """Overlays NPD (dBm/Hz) traces from every temperature group (AMB1/2,
-    COLD1/2, HOT1/2, and Ambient Anomaly if present) on a single plot, same
-    styling/calibration as _ota_plot_noise's density mode — just every group
-    at once instead of one at a time. Each trace is labeled "<group> <file>"
-    since filenames (e.g. "Pri"/"Red") repeat across groups."""
+    """Overlays NPD (dBm/Hz) traces from every temperature group (Ambient
+    1/2, Cold 1/2, Hot 1/2, and Ambient Anomaly if present) on a single
+    plot, same styling/calibration as _ota_plot_noise's density mode —
+    just every group at once instead of one at a time. All files within a
+    group (e.g. the Pri/Red pair) share one color and one legend entry
+    named after the group, rather than the individual filenames."""
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     specan_freq, specan_s12 = cal["specan"]
+
+    group_file_lists = [(label, _ota_get_files(folder, ".csv")) for label, folder in group_specs if folder]
+    sn = _ota_extract_serial([f for _, files in group_file_lists for f in files])
 
     plt.figure(figsize=(8, 4), dpi=150)
     color_cycle = itertools.cycle(_OTA_COLORS)
 
     plotted = 0
-    for label, folder in group_specs:
-        if not folder:
+    for label, files in group_file_lists:
+        if not files:
             continue
-        for f in _ota_get_files(folder, ".csv"):
+        group_color = next(color_cycle)
+        for i, f in enumerate(files):
             freq, raw = _ota_load_csv(f, 2)
             if len(freq) == 0:
                 continue
@@ -987,7 +1003,7 @@ def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_
             if apply_cal and specan_freq is not None:
                 corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
 
-            plt.plot(freq_smooth, corrected, label=f"{label} {os.path.basename(f)}", color=next(color_cycle))
+            plt.plot(freq_smooth, corrected, label=label if i == 0 else None, color=group_color)
             plotted += 1
 
     if plotted == 0:
@@ -996,7 +1012,10 @@ def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_
 
     cal_suffix = "Calibrated" if apply_cal else "Raw"
     plt.grid(True)
-    plt.title(f"{date_str} Noise Power Density All Temps ({cal_suffix})")
+    title = f"{date_str} Noise Power Density All Temps ({cal_suffix})"
+    if sn:
+        title += f" - {sn}"
+    plt.title(title)
     plt.xlabel("Frequency (GHz)")
     plt.ylabel("NPD (dBm/Hz)")
     plt.xlim(_OTA_XLIM)
@@ -1220,9 +1239,9 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
     # per-temperature overlays above, which only combine a group with its
     # own "2" repeat run.
     all_temp_groups = [
-        ("AMB1", ambient), ("AMB2", ambient2), ("AMB Anomaly", ambient_anomaly),
-        ("COLD1", cold), ("COLD2", cold2),
-        ("HOT1", hot), ("HOT2", hot2),
+        ("Ambient 1", ambient), ("Ambient 2", ambient2), ("Ambient Anomaly", ambient_anomaly),
+        ("Cold 1", cold), ("Cold 2", cold2),
+        ("Hot 1", hot), ("Hot 2", hot2),
     ]
     p = _ota_plot_npd_all_temps(all_temp_groups, freq_min, freq_max, n_avg, cal, output_folder, apply_cal=apply_npd_cal, date_str=date_str)
     if p: generated.append(p)
