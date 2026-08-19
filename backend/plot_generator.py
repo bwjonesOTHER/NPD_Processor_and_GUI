@@ -975,13 +975,13 @@ def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_
     """Overlays NPD (dBm/Hz) traces from every temperature group (Ambient
     1/2, Cold 1/2, Hot 1/2, and Ambient Anomaly if present) on a single
     plot, same styling/calibration as _ota_plot_noise's density mode —
-    just every group at once instead of one at a time. All files within a
-    group (e.g. the Pri/Red pair) share one color and one legend entry
-    named after the group, rather than the individual filenames."""
+    just every group at once instead of one at a time. Only the Pri
+    (primary chain) file from each group's folder is plotted, one line per
+    group, labeled by group name rather than filename."""
     date_str = date_str or datetime.now().strftime('%Y%m%d')
     specan_freq, specan_s12 = cal["specan"]
 
-    group_file_lists = [(label, _ota_get_files(folder, ".csv")) for label, folder in group_specs if folder]
+    group_file_lists = [(label, [f for f in _ota_get_files(folder, ".csv") if "pri" in os.path.basename(f).lower()]) for label, folder in group_specs if folder]
     sn = _ota_extract_serial([f for _, files in group_file_lists for f in files])
 
     plt.figure(figsize=(8, 4), dpi=150)
@@ -989,10 +989,7 @@ def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_
 
     plotted = 0
     for label, files in group_file_lists:
-        if not files:
-            continue
-        group_color = next(color_cycle)
-        for i, f in enumerate(files):
+        for f in files:
             freq, raw = _ota_load_csv(f, 2)
             if len(freq) == 0:
                 continue
@@ -1003,7 +1000,7 @@ def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_
             if apply_cal and specan_freq is not None:
                 corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
 
-            plt.plot(freq_smooth, corrected, label=label if i == 0 else None, color=group_color)
+            plt.plot(freq_smooth, corrected, label=label, color=next(color_cycle))
             plotted += 1
 
     if plotted == 0:
@@ -1024,11 +1021,11 @@ def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_
     plt.axvline(x=freq_max, color='g')
 
     handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
+    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=len(labels), fontsize="8")
 
     filename_safe_title = f"{date_str}_NPD_All_Temps".replace(" ", "_") + ".png"
     save_path = os.path.join(output_folder, filename_safe_title)
-    plt.subplots_adjust(bottom=0.45)
+    plt.subplots_adjust(bottom=0.25)
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
     return {"path": save_path, "status": "passed"}
