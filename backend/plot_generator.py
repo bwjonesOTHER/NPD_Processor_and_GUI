@@ -9,6 +9,7 @@ plot data dictionaries back to the Flask backend.
 
 import os
 import re
+import itertools
 import skrf as rf
 import matplotlib
 matplotlib.use('Agg')
@@ -959,6 +960,60 @@ def _ota_plot_noise(files, title_suffix, freq_min, freq_max, n_avg, cal, output_
     plt.close()
     return {"path": save_path, "status": "failed" if failed_files else "passed", "freq": avg_curve_freq, "avg": avg_curve, "avg_raw": avg_curve_raw}
 
+def _ota_plot_npd_all_temps(group_specs, freq_min, freq_max, n_avg, cal, output_folder, apply_cal=False, date_str=None):
+    """Overlays NPD (dBm/Hz) traces from every temperature group (AMB1/2,
+    COLD1/2, HOT1/2, and Ambient Anomaly if present) on a single plot, same
+    styling/calibration as _ota_plot_noise's density mode — just every group
+    at once instead of one at a time. Each trace is labeled "<group> <file>"
+    since filenames (e.g. "Pri"/"Red") repeat across groups."""
+    date_str = date_str or datetime.now().strftime('%Y%m%d')
+    specan_freq, specan_s12 = cal["specan"]
+
+    plt.figure(figsize=(8, 4), dpi=150)
+    color_cycle = itertools.cycle(_OTA_COLORS)
+
+    plotted = 0
+    for label, folder in group_specs:
+        if not folder:
+            continue
+        for f in _ota_get_files(folder, ".csv"):
+            freq, raw = _ota_load_csv(f, 2)
+            if len(freq) == 0:
+                continue
+            smoothed = _ota_smooth(raw, n_avg_for_freq_step(freq))
+            freq_smooth = freq[:len(smoothed)]
+
+            corrected = smoothed
+            if apply_cal and specan_freq is not None:
+                corrected = corrected - np.abs(np.interp(freq_smooth, specan_freq, specan_s12))
+
+            plt.plot(freq_smooth, corrected, label=f"{label} {os.path.basename(f)}", color=next(color_cycle))
+            plotted += 1
+
+    if plotted == 0:
+        plt.close()
+        return None
+
+    cal_suffix = "Calibrated" if apply_cal else "Raw"
+    plt.grid(True)
+    plt.title(f"{date_str} Noise Power Density All Temps ({cal_suffix})")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("NPD (dBm/Hz)")
+    plt.xlim(_OTA_XLIM)
+    plt.ylim(_OTA_NPD_YLIM)
+    plt.axvline(x=freq_min, color='g')
+    plt.axvline(x=freq_max, color='g')
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    plt.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=1, fontsize="8")
+
+    filename_safe_title = f"{date_str}_NPD_All_Temps".replace(" ", "_") + ".png"
+    save_path = os.path.join(output_folder, filename_safe_title)
+    plt.subplots_adjust(bottom=0.45)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    return {"path": save_path, "status": "passed"}
+
 def _ota_plot_s21(files, title_suffix, freq_min, freq_max, n_avg, cal, output_folder, date_str=None):
     if not files:
         return None
@@ -1159,6 +1214,18 @@ def generate_over_temp_array_plots(base_folder, freq_min, freq_max, n_avg, outpu
                 npd_avg_by_label[label] = (p["freq"], p["avg_raw"])
         p = _ota_plot_s21(s21_files, f"{label} Overlay", freq_min, freq_max, n_avg, cal, output_folder, date_str=date_str)
         if p: generated.append(p)
+
+    # Single NPD overlay spanning every temperature group at once (AMB1/2,
+    # COLD1/2, HOT1/2, and Ambient Anomaly if present) — distinct from the
+    # per-temperature overlays above, which only combine a group with its
+    # own "2" repeat run.
+    all_temp_groups = [
+        ("AMB1", ambient), ("AMB2", ambient2), ("AMB Anomaly", ambient_anomaly),
+        ("COLD1", cold), ("COLD2", cold2),
+        ("HOT1", hot), ("HOT2", hot2),
+    ]
+    p = _ota_plot_npd_all_temps(all_temp_groups, freq_min, freq_max, n_avg, cal, output_folder, apply_cal=apply_npd_cal, date_str=date_str)
+    if p: generated.append(p)
 
     # NPD (density) deltas, pass/fail-checked against fixed dBm/Hz bounds
     # and plotted separately (not overlaid together) - see
