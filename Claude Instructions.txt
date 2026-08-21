@@ -1,0 +1,129 @@
+I am building a web tool that will be deployed on a shared internal engineering server running Ubuntu with Docker and nginx. The server hosts multiple tools, each in its own container behind an nginx reverse proxy. My tool will be accessed at a subpath, e.g. http://rf-tools.corp.local/my-tool/
+Read all of the following requirements carefully before writing any code. These are non-negotiable and based on hard-won lessons from deploying multiple tools to this server.
+ARCHITECTURE
+The server uses this pattern:
+Browser -> nginx :80 -> /my-tool/ -> my container :PORT
+My tool must be a single Docker container that runs internally on a specific port, is accessed externally only through nginx at a subpath, and never assumes it is served from the root URL /.
+REQUIREMENT 1 - HEALTH ENDPOINT (CRITICAL)
+The Flask/FastAPI backend MUST have this exact route:
+@app.route('/api/health', methods=['GET'])
+def health_check():
+return jsonify({"status": "healthy", "message": "My Tool is running"})
+The dashboard polls this every 30 seconds. Without it the tool shows permanently red/unreachable. The response MUST say "healthy" not "ok" or anything else.
+REQUIREMENT 2 - FLASK MUST SERVE THE REACT FRONTEND
+Flask must serve the built React app as static files. The Dockerfile must copy the React build output into backend/static/ and Flask must have a catch-all route:
+import os
+from flask import Flask, jsonify, send_from_directory
+BASE_PATH = os.path.dirname(os.path.abspath(file))
+STATIC_FOLDER = os.path.join(BASE_PATH, 'static')
+app = Flask(name, static_folder=STATIC_FOLDER, static_url_path='')
+@app.route('/', defaults={'path': ''})
+@app.route('/path:path')
+def serve_frontend(path):
+if path.startswith('api/'):
+return jsonify({"error": "Not found"}), 404
+if path and os.path.exists(os.path.join(STATIC_FOLDER, path)):
+return send_from_directory(STATIC_FOLDER, path)
+return send_from_directory(STATIC_FOLDER, 'index.html')
+REQUIREMENT 3 - SERVER BINDING (CRITICAL)
+The server MUST bind to 0.0.0.0 not 127.0.0.1. Binding to 127.0.0.1 inside a container makes the app completely unreachable even though docker ps shows it running.
+Use Waitress as the production server:
+if name == 'main':
+from waitress import serve
+port = int(os.environ.get('FLASK_PORT', 'YOUR_PORT'))
+threads = int(os.environ.get('WAITRESS_THREADS', '4'))
+serve(app, host='0.0.0.0', port=port, threads=threads)
+Add waitress>=2.0.0 to requirements.txt
+If using gunicorn instead, the CMD in Dockerfile must be:
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:YOUR_PORT", "app:app"]
+REQUIREMENT 4 - PORT CONFIGURATION
+These three things MUST match: the port the server actually binds to, the EXPOSE directive in the Dockerfile, and the FLASK_PORT environment variable default. If they don't match, the container silently fails.
+Example:
+ENV FLASK_PORT=5001
+EXPOSE 5001
+port = int(os.environ.get('FLASK_PORT', '5001'))
+serve(app, host='0.0.0.0', port=port)
+REQUIREMENT 5 - VITE BASE PATH (CRITICAL)
+The React frontend MUST be built with the correct base path or the browser will get a blank white screen. Asset requests go to /assets/... instead of /my-tool/assets/...
+In vite.config.ts:
+base: process.env.VITE_BASE_PATH || '/my-tool/',
+In the Dockerfile frontend build stage, order matters -- ARG must come before ENV:
+ARG VITE_BASE_PATH=/my-tool/
+ENV VITE_BASE_PATH=/my-tool/
+RUN npm run build
+After building, verify dist/index.html shows /my-tool/assets/... in the script and link tags, not /assets/...
+REQUIREMENT 6 - API FETCH CALLS (CRITICAL)
+Every fetch call in the React frontend MUST use the Vite base path, not a hardcoded /api/ path. Behind nginx the app is at /my-tool/ so hardcoded /api/ calls hit the wrong URL.
+At the top of your main component or in a shared file:
+const API_BASE = import.meta.env.BASE_URL.replace(//$/, '');
+Every fetch call:
+const response = await fetch(${API_BASE}/api/your-endpoint, {
+method: 'POST',
+body: formData,
+});
+Search the entire codebase for any hardcoded /api/ and replace them all. Missing even one will cause mysterious failures in production.
+REQUIREMENT 7 - MULTI-STAGE DOCKERFILE
+The Dockerfile MUST be multi-stage. Node stays out of the runtime image.
+FROM node:22-slim AS frontend
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+ARG VITE_BASE_PATH=/my-tool/
+ENV VITE_BASE_PATH=/my-tool/
+RUN npm run build
+FROM python:3.11-slim AS runtime
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_PORT=YOUR_PORT
+WORKDIR /app
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
+COPY backend/ ./backend/
+COPY --from=frontend /app/frontend/dist/ ./backend/static/
+EXPOSE YOUR_PORT
+WORKDIR /app/backend
+CMD ["python", "app.py"]
+REQUIREMENT 8 - NO PUPPETEER OR HEADLESS BROWSERS
+Do not include Puppeteer or any headless browser library in package.json. The corporate network blocks Chrome/Chromium downloads during npm install and will cause the build to fail with SSL certificate errors.
+REQUIREMENT 9 - PIN REALISTIC PACKAGE VERSIONS
+Do not pin packages to versions that do not exist. Use minimum version constraints rather than exact pins where possible, for example numpy>=1.24.0 and scipy>=1.10.0. If you must pin exactly, verify the version exists on PyPI before committing.
+REQUIREMENT 10 - NO UNNECESSARY DEPENDENCIES
+Do not add databases, authentication, or persistence unless explicitly asked for. Most RF analysis tools are stateless -- they take inputs, run calculations, return results.
+VERIFICATION BEFORE COMMITTING
+Backend:
+•	/api/health returns {"status": "healthy"}
+•	Server binds to 0.0.0.0 not 127.0.0.1
+•	Port reads from FLASK_PORT env var
+•	EXPOSE matches actual bind port
+•	waitress in requirements.txt
+•	Flask catch-all serves index.html for non-API routes
+Frontend:
+•	vite.config.ts has base: process.env.VITE_BASE_PATH || '/my-tool/'
+•	Dockerfile ARG VITE_BASE_PATH comes before ENV VITE_BASE_PATH
+•	Both set to /my-tool/
+•	Every fetch call uses ${API_BASE}/api/...
+•	dist/index.html shows /my-tool/assets/... after build
+Docker:
+•	Multi-stage Dockerfile
+•	React build output copied into backend/static/
+•	EXPOSE matches server bind port
+•	No Puppeteer or headless browser dependencies
+•	No non-existent package versions pinned
+WHAT TO SEND TO THE SERVER ADMIN WHEN DONE
+Provide this docker-compose snippet:
+my-tool-name:
+build: ./my_tool_folder
+container_name: my-tool-name
+restart: unless-stopped
+ports:
+- "127.0.0.1:YOUR_PORT:YOUR_PORT"
+environment:
+FLASK_PORT: "YOUR_PORT"
+Provide this nginx location block:
+location /my-tool/ {
+proxy_pass http://127.0.0.1:YOUR_PORT/;
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+client_max_body_size 512M;
+}
+Both trailing slashes on location and proxy_pass are required. Missing either causes 404s.
